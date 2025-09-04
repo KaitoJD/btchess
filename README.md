@@ -36,7 +36,7 @@ For detailed installation instructions, platform setup, and build commands, see 
 ## Documentation
 
 - **[Gameplay Guide](GAMEPLAY.md)** - Learn how to play, game controls, and UI features
-- **🛠[Installation Guide](INSTALLATION.md)** - Setup instructions for all platforms
+- **[Installation Guide](INSTALLATION.md)** - Setup instructions for all platforms
 - **[Technical Documentation](TECHNICAL.md)** - Architecture, dependencies, and development details
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
 

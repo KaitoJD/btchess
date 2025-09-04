@@ -1,6 +1,6 @@
 # 🔧 BTChess Technical Documentation
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 ### Core Technologies
 - **Flutter**: Cross-platform UI framework
@@ -20,7 +20,7 @@
 - **Game State Management**: Check, checkmate, stalemate detection
 - **Move History**: Full game recording with replay capability
 
-## 🔨 Development
+## Development
 
 ### Project Structure
 ```
