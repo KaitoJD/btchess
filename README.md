@@ -65,4 +65,6 @@ For detailed development information, see [TECHNICAL.md](TECHNICAL.md).
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).  
+You are free to share and adapt the material for non-commercial purposes, as long as you give appropriate credit and distribute your contributions under the same license.  
+See the [LICENSE](./LICENSE) file for details.
