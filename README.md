@@ -14,15 +14,14 @@ A beautiful, cross-platform chess game that allows two players on different devi
 
 ## 🚀 Quick Start
 
-For detailed installation instructions, platform setup, and build commands, see **[INSTALLATION.md](INSTALLATION.md)**.
-
-**TL;DR:**
 ```bash
-git clone <repository-url>
+git clone https://github.com/KaitoJD/btchess.git
 cd btchess
 flutter pub get
 ./run.sh  # Runs on current platform
 ```
+
+For detailed installation instructions, platform setup, and build commands, see **[INSTALLATION.md](INSTALLATION.md)**.
 
 ##  Platform Support Matrix
 
