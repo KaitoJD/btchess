@@ -37,8 +37,8 @@ dependencies:
   
   # Bluetooth connectivity - Multi-platform support
   flutter_bluetooth_serial: ^0.4.0  # Android & Linux
-  flutter_blue_plus: ^1.31.0        # iOS, macOS, Windows (BLE)
-  permission_handler: ^11.3.1
+  flutter_blue_plus: ^1.35.7        # iOS, macOS, Windows (BLE)
+  permission_handler: ^12.0.1
   
   # Platform detection
   universal_platform: ^1.1.0
@@ -59,7 +59,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
