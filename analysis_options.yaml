@@ -1,0 +1,50 @@
+# Analysis options for BTChess
+# Configures static analysis for Dart code quality and consistency.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Treat these as errors
+    missing_required_param: error
+    missing_return: error
+    must_be_immutable: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+    - ".dart_tool/**"
+
+linter:
+  rules:
+    # Error Prevention
+    avoid_print: true
+    avoid_empty_else: true
+    avoid_returning_null_for_future: true
+    cancel_subscriptions: true
+    close_sinks: true
+    
+    # Code Style
+    prefer_single_quotes: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    sort_constructors_first: true
+    sort_unnamed_constructors_first: true
+    
+    # Documentation
+    public_member_api_docs: false  # Enable later for API documentation
+    
+    # Clarity
+    always_declare_return_types: true
+    always_put_required_named_parameters_first: true
+    avoid_bool_literals_in_conditional_expressions: true
+    avoid_catches_without_on_clauses: false
+    avoid_positional_boolean_parameters: true
+    avoid_redundant_argument_values: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    unnecessary_await_in_return: true
+    unnecessary_null_checks: true
+    use_super_parameters: true
