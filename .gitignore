@@ -27,11 +27,36 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# iOS/Xcode
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+*.xcuserstate
+
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.*
+
+# Windows
+**/windows/flutter/ephemeral/
+
+# macOS
+**/macos/Flutter/ephemeral/
+
+# Linux
+**/linux/flutter/ephemeral/
+
+# Generated files (if using build_runner with Hive/Freezed)
+*.g.dart
+*.freezed.dart
 
 # Symbolication related
 app.*.symbols
