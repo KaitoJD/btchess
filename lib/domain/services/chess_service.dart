@@ -130,7 +130,7 @@ class ChessService {
       final isEnPassant = _isEnPassantMove(position, from, to);
       final newPosition = position.play(dcMove);
       final newFen = newPosition.fen;
-      final san = position.makeSan(dcMove);
+      final (_, san) = position.makeSan(dcMove);
       final status = _getGameStatus(newPosition);
       final move = Move(
         from: from,
@@ -336,7 +336,7 @@ class ChessService {
   }
 
   Square _fromDartchessSquare(dc.Square square) {
-    return Square.fromIndex(square.value);
+    return Square.fromIndex(square);
   }
 
   dc.Move _createDartchessMove(Square from, Square to, PromotionPiece? promotion) {
