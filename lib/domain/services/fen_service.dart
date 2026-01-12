@@ -68,6 +68,8 @@ class FenValidationResult {
 }
 
 class FenService {
+  const FenService();
+
   FenComponents parse(String fen) {
     final validation = validate(fen);
     if (!validation.isValid) {
