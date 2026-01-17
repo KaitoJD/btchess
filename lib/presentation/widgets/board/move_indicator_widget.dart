@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/move.dart';
 import '../../../domain/models/square.dart';
 import '../../themes/board_themes.dart';
+import 'dart:math' as math;
 
 class MoveIndicatorWidget extends StatelessWidget {
   final Move? lastMove;
@@ -82,13 +83,13 @@ class _MoveArrowPainter extends CustomPainter {
     final rightAngle = direction - 2.5;
 
     final left = Offset(
-      to.dx - headLength * cos(leftAngle),
-      to.dy - headLength * sin(leftAngle)
+      to.dx - headLength * math.cos(leftAngle),
+      to.dy - headLength * math.sin(leftAngle)
     );
 
     final right = Offset(
-      to.dx - headLength * cos(rightAngle),
-      to.dy - headLength * sin(rightAngle),
+      to.dx - headLength * math.cos(rightAngle),
+      to.dy - headLength * math.sin(rightAngle),
     );
 
     final path = Path()
@@ -98,25 +99,6 @@ class _MoveArrowPainter extends CustomPainter {
       ..lineTo(right.dx, right.dy);
 
     canvas.drawPath(path, paint);
-  }
-
-  double cos(double radians) => _cos(radians);
-  double sin(double radians) => _sin(radians);
-
-  static double _cos(double x) {
-    return x.isNaN ? 0 : _cosImpl(x);
-  }
-
-  static double _sin(double x) {
-    return x.isNaN ? 0 : _sinImpl(x);
-  }
-
-  static double _cosImpl(double x) {
-    return x - (x * x * x) / 6 + (x * x * x * x * x) / 120; // approximated using Taylor series
-  }
-
-  static double _sinImpl(double x) {
-    return 1 - (x * x) / 2 + (x * x * x * x) / 24; // approximated using Taylor series
   }
 
   @override
