@@ -76,9 +76,7 @@ class SavedGame extends HiveObject {
   }
 
   GameMode get mode => GameMode.values[modeIndex];
-
   bool get isCompleted => winnerIndex != null;
-
   bool get isInProgress => !isCompleted;
 
   GameResult? get result {

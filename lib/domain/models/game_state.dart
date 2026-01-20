@@ -46,7 +46,6 @@ class GameState extends Equatable {
     Player? blackPlayer,
   }) {
     final now = DateTime.now();
-
     return GameState(
       id: id,
       fen: initialFen,
@@ -73,7 +72,6 @@ class GameState extends Equatable {
     final parts = fen.split(' ');
     final turn = parts.length > 1 && parts[1] == 'b' ? PieceColor.black : PieceColor.white;
     final now = DateTime.now();
-
     return GameState(
       id: id,
       fen: fen,
@@ -108,25 +106,15 @@ class GameState extends Equatable {
   }
 
   bool get isInProgress => status == GameStatus.playing || status == GameStatus.check;
-
   bool get isEnded => result != null;
-
   bool get isWhiteTurn => currentTurn == PieceColor.white;
-
   bool get isBlackTurn => currentTurn == PieceColor.black;
-
   Player get currentPlayer => isWhiteTurn ? whitePlayer : blackPlayer;
-
   Player get waitingPlayer => isWhiteTurn ? blackPlayer : whitePlayer;
-
   Move? get lastMove => moves.isNotEmpty ? moves.last : null;
-
   bool get isCheck => status == GameStatus.check;
-
   bool get isCheckmate => status == GameStatus.checkmate;
-
   bool get isStalemate => status == GameStatus.stalemate;
-
   bool get isDraw => result?.isDraw ?? false;
 
   GameState copyWith({

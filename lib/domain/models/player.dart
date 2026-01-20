@@ -63,7 +63,6 @@ class Player extends Equatable {
   }
 
   bool get isWhite => color == PieceColor.white;
-
   bool get isBlack => color == PieceColor.black;
 
   Player copyWith({

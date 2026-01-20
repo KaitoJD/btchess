@@ -4,11 +4,8 @@ enum GameMode {
   bleClient;
 
   bool get isBle => this == bleHost || this == bleClient;
-
   bool get isHotseat => this == hotseat;
-
   bool get isHost => this == hotseat || this == bleHost;
-
   bool get allowsUndo => this == hotseat;
 
   String get displayName {

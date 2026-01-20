@@ -3,11 +3,13 @@ import 'piece.dart';
 import 'square.dart';
 import '../enums/promotion_piece.dart';
 
+// Represents a chess move
+
 class Move extends Equatable {
   final Square from;
   final Square to;
   final PromotionPiece? promotion;
-  final String? san;
+  final String? san; // The Standard Algebraic Notation of the move("e4", "Nf3", ..)
   final Piece? capturedPiece;
   final Piece? movedPiece;
   final bool isCastling;
@@ -52,13 +54,13 @@ class Move extends Equatable {
     );
   }
 
+  // Returns the Universal Chess Interface notation
   String get uci {
     final promoSuffix = promotion?.letter ?? '';
     return '${from.algebraic}${to.algebraic}$promoSuffix';
   }
 
   bool get isPromotion => promotion != null;
-
   bool get isCapture => capturedPiece != null;
 
   Move copyWith({

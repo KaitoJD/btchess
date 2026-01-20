@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 
+// Represents a square on the chess board. Uses 0-63 indexing
+// Index mapping: a1 = 0, b1 = 1, .. , h1 = 7, a2 = 8, .. , h8 = 63
+
 class Square extends Equatable {
-  final int file; /// column index
-  final int rank; /// row index
+  final int file;
+  final int rank;
   
   const Square._({required this.file, required this.rank})
       : assert(file >= 0 && file <= 7, 'File must be between 0 and 7'),
-        assert(rank >= 0 && file <= 7, 'File must be between 0 and 7');
+        assert(rank >= 0 && file <= 7, 'Rank must be between 0 and 7');
 
   factory Square(int file, int rank) {
     if (file < 0 || file > 7) {
@@ -58,18 +61,6 @@ class Square extends Equatable {
     }
   }
 
-  int get index => rank * 8 + file;
-
-  String get fileLetter => String.fromCharCode('a'.codeUnitAt(0) + file);
-
-  String get rankNumber => (rank + 1).toString();
-
-  bool get isLight => (file + rank) % 2 == 1;
-
-  bool get isDark => !isLight;
-
-  String get algebraic => '$fileLetter$rankNumber';
-
   Square? offset(int fileDelta, int rankDelta) {
     final newFile = file + fileDelta;
     final newRank = rank + rankDelta;
@@ -81,27 +72,16 @@ class Square extends Equatable {
     return Square._(file: newFile, rank: newRank);
   }
 
+  int get index => rank * 8 + file;
+  String get fileLetter => String.fromCharCode('a'.codeUnitAt(0) + file);
+  String get rankNumber => (rank + 1).toString();
+  bool get isLight => (file + rank) % 2 == 1;
+  bool get isDark => !isLight;
+  String get algebraic => '$fileLetter$rankNumber';
+
   @override
   List<Object?> get props => [file, rank];
 
   @override
   String toString() => algebraic;
-
-  static const a1 = Square._(file: 0, rank: 0);
-  static const b1 = Square._(file: 1, rank: 0);
-  static const c1 = Square._(file: 2, rank: 0);
-  static const d1 = Square._(file: 3, rank: 0);
-  static const e1 = Square._(file: 4, rank: 0);
-  static const f1 = Square._(file: 5, rank: 0);
-  static const g1 = Square._(file: 6, rank: 0);
-  static const h1 = Square._(file: 7, rank: 0);
-
-  static const a8 = Square._(file: 0, rank: 7);
-  static const b8 = Square._(file: 1, rank: 7);
-  static const c8 = Square._(file: 2, rank: 7);
-  static const d8 = Square._(file: 3, rank: 7);
-  static const e8 = Square._(file: 4, rank: 7);
-  static const f8 = Square._(file: 5, rank: 7);
-  static const g8 = Square._(file: 6, rank: 7);
-  static const h8 = Square._(file: 7, rank: 7);
 }

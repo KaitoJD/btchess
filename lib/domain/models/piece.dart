@@ -30,10 +30,6 @@ enum PieceColor {
   white,
   black;
 
-  PieceColor get opposite => this == white ? black : white;
-
-  String get fenChar => this == white ? 'w' : 'b';
-
   static PieceColor? fromFenChar(String char) {
     switch (char.toLowerCase()) {
       case 'w':
@@ -44,6 +40,9 @@ enum PieceColor {
       return null;
     }
   }
+
+  PieceColor get opposite => this == white ? black : white;
+  String get fenChar => this == white ? 'w' : 'b';
 }
 
 class Piece extends Equatable {
@@ -91,7 +90,6 @@ class Piece extends Equatable {
   }
 
   bool get isWhite => color == PieceColor.white;
-
   bool get isBlack => color == PieceColor.black;
 
   @override
@@ -99,18 +97,4 @@ class Piece extends Equatable {
 
   @override
   String toString() => '${color.name} ${type.displayName}';
-
-  factory Piece.whiteKing() => const Piece(type: PieceType.king, color: PieceColor.white);
-  factory Piece.whiteQueen() => const Piece(type: PieceType.queen, color: PieceColor.white);
-  factory Piece.whiteRook() => const Piece(type: PieceType.rook, color: PieceColor.white);
-  factory Piece.whiteBishop() => const Piece(type: PieceType.bishop, color: PieceColor.white);
-  factory Piece.whiteKnight() => const Piece(type: PieceType.knight, color: PieceColor.white);
-  factory Piece.whitePawn() => const Piece(type: PieceType.pawn, color: PieceColor.white);
-
-  factory Piece.blackKing() => const Piece(type: PieceType.king, color: PieceColor.black);
-  factory Piece.blackQueen() => const Piece(type: PieceType.queen, color: PieceColor.black);
-  factory Piece.blackRook() => const Piece(type: PieceType.rook, color: PieceColor.black);
-  factory Piece.blackBishop() => const Piece(type: PieceType.bishop, color: PieceColor.black);
-  factory Piece.blackKnight() => const Piece(type: PieceType.knight, color: PieceColor.black);
-  factory Piece.blackPawn() => const Piece(type: PieceType.pawn, color: PieceColor.black);
 }

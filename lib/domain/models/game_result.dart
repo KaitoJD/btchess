@@ -7,6 +7,7 @@ class GameResult extends Equatable {
   final GameEndReason reason;
   final String? finalFen;
   final String? pgn;
+
   const GameResult({
     required this.winner,
     required this.reason,
@@ -87,9 +88,7 @@ class GameResult extends Equatable {
   }
 
   bool get isDraw => winner == Winner.draw;
-
   bool get whiteWon => winner == Winner.white;
-
   bool get blackWon => winner == Winner.black;
 
   String get description {
