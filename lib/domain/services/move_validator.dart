@@ -4,7 +4,6 @@ import '../models/piece.dart';
 import '../models/square.dart';
 import 'chess_service.dart';
 
-/// The result of move validation.
 enum MoveValidationError {
   none,
   noPieceOnSquare,
@@ -58,8 +57,10 @@ class MoveValidationResult {
   }
 }
 
+// Service for validating chess moves
 class MoveValidator {
   final ChessService _chessService;
+
   const MoveValidator(this._chessService);
 
   MoveValidationResult validateMove({

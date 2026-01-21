@@ -41,9 +41,14 @@ class MoveResult {
   }
 }
 
+// Service that wraps dartchess.dart to provide chess logic
+// This is the primary interface for chess rules in the application
+
 class ChessService {
   const ChessService();
 
+  // Returns a list of destination squares
+  // Gets all legal moves for a piece on the given square
   List<Square> getLegalMoves(String fen, Square square) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
@@ -65,6 +70,8 @@ class ChessService {
     }
   }
 
+  // Returns a map of from-square to list of to-squares
+  // Gets all legal moves for the current position
   Map<Square, List<Square>> getAllLegalMoves(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
@@ -108,6 +115,8 @@ class ChessService {
     }
   }
 
+  // Returns a MoveResult containing the new FEN, the move with metadata
+  // and the game status after the move
   MoveResult makeMove(
     String fen,
     Square from,
@@ -158,7 +167,6 @@ class ChessService {
   GameStatus getGameStatus(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-      
       return _getGameStatus(position);
     } catch (e) {
       return GameStatus.playing;
@@ -168,7 +176,6 @@ class ChessService {
   bool isCheck(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-
       return position.isCheck;
     } catch (e) {
       return false;
@@ -178,7 +185,6 @@ class ChessService {
   bool isCheckmate(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-      
       return position.isCheckmate;
     } catch (e) {
       return false;
@@ -188,7 +194,6 @@ class ChessService {
   bool isStalemate(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-
       return position.isStalemate;
     } catch (e) {
       return false;
@@ -198,7 +203,6 @@ class ChessService {
   bool isInsufficientMaterial(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-
       return position.isInsufficientMaterial;
     } catch (e) {
       return false;
@@ -208,7 +212,6 @@ class ChessService {
   bool isGameOver(String fen) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-
       return position.isGameOver;
     } catch (e) {
       return false;
@@ -218,11 +221,9 @@ class ChessService {
   PieceColor getCurrentTurn(String fen) {
     try {
       final parts = fen.split(' ');
-
       if (parts.length > 1) {
         return parts[1] == 'b' ? PieceColor.black : PieceColor.white;
       }
-
       return PieceColor.white;
     } catch (e) {
       return PieceColor.white;
@@ -232,7 +233,6 @@ class ChessService {
   Piece? getPieceAt(String fen, Square square) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-
       return _getPieceAt(position, square);
     } catch (e) {
       return null;
@@ -286,7 +286,6 @@ class ChessService {
       if (kingSquare != null) {
         return _fromDartchessSquare(kingSquare);
       }
-
       return null;
     } catch (e) {
       return null;
@@ -296,7 +295,6 @@ class ChessService {
   bool isValidFen(String fen) {
     try {
       dc.Setup.parseFen(fen);
-
       return true;
     } catch (e) {
       return false;
@@ -306,11 +304,9 @@ class ChessService {
   int getHalfMoveClock(String fen) {
     try {
       final parts = fen.split(' ');
-
       if (parts.length >= 5) {
         return int.tryParse(parts[4]) ?? 0;
       }
-
       return 0;
     } catch (e) {
       return 0;
@@ -320,11 +316,9 @@ class ChessService {
   int getFullMoveNumber(String fen) {
     try {
       final parts = fen.split(' ');
-
       if (parts.length >= 6) {
         return int.tryParse(parts[5]) ?? 1;
       }
-
       return 1;
     } catch (e) {
       return 1;
@@ -401,19 +395,16 @@ class ChessService {
     final dcPiece = position.board.pieceAt(dcSquare);
 
     if (dcPiece == null) return null;
-
     return _fromDartchessPiece(dcPiece);
   }
 
   Piece? _getCapturedPiece(dc.Position position, Square from, Square to) {
+    // Check for en passant capture
     final movingPiece = position.board.pieceAt(_toDartchessSquare(from));
-
     if (movingPiece?.role == dc.Role.pawn) {
       final epSquare = position.epSquare;
-
       if (epSquare != null && _toDartchessSquare(to) == epSquare) {
         final capturedColor = movingPiece!.color == dc.Side.white ? PieceColor.black : PieceColor.white;
-
         return Piece(
           type: PieceType.pawn,
           color: capturedColor,
@@ -421,30 +412,25 @@ class ChessService {
       }
     }
 
+    // Normal capture
     final targetPiece = position.board.pieceAt(_toDartchessSquare(to));
-
     if (targetPiece == null) return null;
-
     return _fromDartchessPiece(targetPiece);
   }
 
   bool _isCastlingMove(dc.Position position, Square from, Square to) {
     final piece = position.board.pieceAt(_toDartchessSquare(from));
-
     if (piece?.role != dc.Role.king) return false;
 
     final fileDiff = (to.file - from.file).abs();
-
     return fileDiff > 1;
   }
 
   bool _isEnPassantMove(dc.Position position, Square from, Square to) {
     final piece = position.board.pieceAt(_toDartchessSquare(from));
-
     if (piece?.role != dc.Role.pawn) return false;
 
     final epSquare = position.epSquare;
-
     if (epSquare == null) return false;
 
     return _toDartchessSquare(to) == epSquare;

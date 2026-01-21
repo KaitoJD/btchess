@@ -98,6 +98,12 @@ class ParsedPgn {
 class PgnService {
   const PgnService();
 
+  /* Generates a PGN string from a list of moves
+   *
+   * moves - List of moves with SAN notation
+   * headers - Optional PGN headers. If null, default headers are used
+   * result - The game result ("1-0", "0-1", "1/2-1/2", "*")
+   */
   String generate({
     required List<Move> moves,
     PgnHeaders? headers,
@@ -114,6 +120,8 @@ class PgnService {
     return buffer.toString();
   }
 
+  // Generates a simple move list string (without headers)
+  // Example: "1. e4 e5 2. Nf3 Nc6"
   String generateMovetext(List<Move> moves) {
     return _formatMovetext(moves, null);
   }
@@ -386,6 +394,8 @@ class PgnService {
   }
 
   bool _isValidSan(String san) {
+    // Basic SAN validation
+    // Matches: e4, Nf3, Bxc6, O-O, O-O-O, Qxh7+, Rxa8#, e8=Q, etc
     final sanPattern = RegExp(
       r'^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(=[QRBN])?([+#])?$|^O-O(-O)?[+#]?$',
       caseSensitive: true,

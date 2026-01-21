@@ -135,6 +135,11 @@ class FenService {
 
   bool isValid(String fen) => validate(fen).isValid;
 
+  /* Gets the board as a 2D array of pieces
+   *
+   * Returns a list of 8 rows, each containing 8 pieces (or null for empty squares)
+   * Index 0 is rank 8, index 7 is rank 1
+   */
   List<List<Piece?>> getBoard(String fen) {
     final components = tryParse(fen);
     if (components == null) {
@@ -146,10 +151,8 @@ class FenService {
 
     for (final rank in ranks) {
       final row = <Piece?>[];
-
       for (final char in rank.split('')) {
         final digit = int.tryParse(char);
-
         if (digit != null) {
           row.addAll(List.filled(digit, null));
         } else {
@@ -170,7 +173,6 @@ class FenService {
     for (int rankIndex = 0; rankIndex < 8; rankIndex++) {
       for (int fileIndex = 0; fileIndex < 8; fileIndex++) {
         final piece = board[rankIndex][fileIndex];
-
         if (piece != null) {
           final rank = 7 - rankIndex;
           pieces[Square(fileIndex, rank)] = piece;
