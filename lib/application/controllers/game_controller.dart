@@ -15,9 +15,6 @@ import '../../domain/services/chess_service.dart';
 import '../../infrastructure/persistence/game_repository.dart';
 
 class GameController extends StateNotifier<GameState?> {
-  final ChessService _chessService;
-  final GameRepository? _gameRepository;
-  final Uuid _uuid = const Uuid();
 
   GameController({
     required ChessService chessService,
@@ -25,6 +22,10 @@ class GameController extends StateNotifier<GameState?> {
   }) : _chessService = chessService,
        _gameRepository = gameRepository,
        super(null);
+       
+  final ChessService _chessService;
+  final GameRepository? _gameRepository;
+  final Uuid _uuid = const Uuid();
 
   bool get hasActiveGame => state != null;
   bool get isGameInProgress => state?.isInProgress ?? false;
@@ -59,7 +60,7 @@ class GameController extends StateNotifier<GameState?> {
       }
     }
 
-    state = GameState.newGame(id: id, mode: mode, whitePlayer: whitePlayer, blackPlayer: blackPlayer);
+    state = GameState.newGame(id: id, mode: mode, whitePlayer: white, blackPlayer: black);
 
     _autoSave();
   }
@@ -142,7 +143,6 @@ class GameController extends StateNotifier<GameState?> {
       status: gameResult != null ? _statusFromResult(gameResult) : newStatus,
       result: gameResult,
       drawOffered: false,
-      drawOfferedBy: null,
     );
 
     _autoSave();
@@ -179,7 +179,6 @@ class GameController extends StateNotifier<GameState?> {
       moves: replayedMoves,
       currentTurn: _chessService.getCurrentTurn(fen),
       status: status,
-      result: null,
     );
 
     _autoSave();
@@ -232,7 +231,6 @@ class GameController extends StateNotifier<GameState?> {
       status: GameStatus.draw,
       result: result,
       drawOffered: false,
-      drawOfferedBy: null,
     );
 
     _autoSave();
@@ -316,16 +314,13 @@ class GameController extends StateNotifier<GameState?> {
 
   Future<void> _autoSave() async {
     if (state == null || _gameRepository == null) return;
-
     try {
       await _gameRepository.saveGame(state!);
     } catch (e) {
       assert(() {
         print('GameController: Failed to auto-save game: $e');
-
         return true;
       }());
     }
   }
 }
-
