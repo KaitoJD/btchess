@@ -8,8 +8,8 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 });
 
 final settingsControllerProvider = StateNotifierProvider<SettingsController, SettingsState>((ref) {
-  final repository = ref.watch(settingsControllerProvider);
-  
+  final repository = ref.watch(settingsRepositoryProvider);
+
   return SettingsController(repository: repository);
 });
 
