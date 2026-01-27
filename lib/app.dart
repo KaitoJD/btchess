@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/providers/settings_provider.dart';
+import 'presentation/routes/app_router.dart';
+import 'presentation/screens/home_screen.dart';
 import 'presentation/themes/app_theme.dart';
 
 class BTChessApp extends ConsumerStatefulWidget {
@@ -22,14 +24,13 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsControllerProvider);
-
     return MaterialApp(
       title: 'BTChess',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
+      onGenerateRoute: AppRouter.onGenerateRoute,
       home: const _AppLoader(),
     );
   }
@@ -69,51 +70,6 @@ class _AppLoader extends ConsumerWidget {
       );
     }
 
-    // TODO: Replace with HomeScreen when implemented
-
-    return const _PlaceholderHome();
-  }
-}
-
-/// placeholder home screen
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('BTChess'),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle,
-              size: 80,
-              color: Colors.green,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Phase 2 Complete',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Persistence layer initialized',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const HomeScreen();
   }
 }
