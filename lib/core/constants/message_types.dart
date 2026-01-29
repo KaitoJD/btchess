@@ -1,6 +1,6 @@
 // These are 1-byte message type indentifiers used in the protocol
 
-enum MessageTypes {
+enum MessageType {
   handshake(0x00),
   move(0x01),
   ack(0x02),
@@ -14,11 +14,11 @@ enum MessageTypes {
   ping(0x0A),
   pong(0x0B);
 
-  const MessageTypes(this.value);
+  const MessageType(this.value);
 
   final int value;
 
-  static MessageTypes? fromValue(int value) {
+  static MessageType? fromValue(int value) {
     for (final type in values) {
       if (type.value == value) return type;
     }
