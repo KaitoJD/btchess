@@ -353,6 +353,9 @@ class ConnectionManager {
     }
   }
 
+  // Returns the next message ID (public accessor for controllers that build messages externally).
+  int getNextPublicMessageId() => _getNextMessageId();
+
   int _getNextMessageId() {
     _nextMessageId = (_nextMessageId + 1) % 65536;
     return _nextMessageId;
