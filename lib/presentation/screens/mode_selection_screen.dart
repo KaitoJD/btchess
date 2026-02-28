@@ -4,6 +4,7 @@ import '../../application/providers/game_provider.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/game_mode.dart';
 import '../routes/app_router.dart';
+import 'lobby_screen.dart';
 
 class ModeSelectionScreen extends ConsumerWidget {
   const ModeSelectionScreen({super.key});
@@ -48,7 +49,7 @@ class ModeSelectionScreen extends ConsumerWidget {
                 icon: Icons.bluetooth,
                 title: 'Host Bluetooth Game',
                 subtitle: 'Create a game and wait for opponent',
-                onTap: () => _showColorSelection(context, ref, GameMode.bleHost),
+                onTap: () => _showHostColorThenLobby(context),
                 badge: 'HOST',
               ),
               const SizedBox(height: 16),
@@ -57,7 +58,10 @@ class ModeSelectionScreen extends ConsumerWidget {
                 title: 'Join Bluetooth Game',
                 subtitle: 'Connect to a nearby host',
                 onTap: () {
-                  Navigator.of(context).pushNamed(AppRoutes.lobby);
+                  Navigator.of(context).pushNamed(
+                    AppRoutes.lobby,
+                    arguments: const LobbyScreenArgs(isHost: false),
+                  );
                 },
                 badge: 'JOIN',
               ),
@@ -100,14 +104,17 @@ class ModeSelectionScreen extends ConsumerWidget {
     Navigator.of(context).pushReplacementNamed(AppRoutes.game);
   }
 
-  Future<void> _showColorSelection(BuildContext context, WidgetRef ref, GameMode mode) async {
+  Future<void> _showHostColorThenLobby(BuildContext context) async {
     final color = await showDialog<PieceColor?>(
       context: context,
       builder: (context) => const _ColorSelectionDialog(),
     );
 
     if (color != null && context.mounted) {
-      _startGame(context, ref, mode, color: color);
+      Navigator.of(context).pushNamed(
+        AppRoutes.lobby,
+        arguments: LobbyScreenArgs(isHost: true, hostColor: color),
+      );
     }
   }
 }
@@ -213,8 +220,6 @@ class _ColorSelectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
       title: const Text('Choose Your Color'),
       content: Column(
