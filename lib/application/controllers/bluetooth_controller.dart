@@ -353,8 +353,11 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   void _onConnectionStateChanged(cm.ConnectionState connState) {
     if (!mounted) return;
 
+    final previousStatus = state.connectionStatus;
+    final newStatus = connState.toBleStatus();
+
     state = state.copyWith(
-      connectionStatus: connState.toBleStatus(),
+      connectionStatus: newStatus,
     );
 
     if (connState == cm.ConnectionState.disconnected) {
@@ -362,6 +365,13 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         clearPendingMove: true,
         clearConnectedDevice: true,
       );
+    }
+
+    // Auto-sync after successful reconnection (client only)
+    if (previousStatus == BleConnectionStatus.reconnecting &&
+        newStatus == BleConnectionStatus.connected &&
+        !state.isHost) {
+      Future.microtask(() => requestSync());
     }
   }
 
