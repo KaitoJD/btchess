@@ -1,18 +1,6 @@
 import 'package:flutter/material.dart';
 
 class GameActionBar extends StatelessWidget {
-  final bool isGameInProgress;
-  final bool canUndo;
-  final bool isDrawOffered;
-  final bool isLocalPlayerTurn;
-  final bool isBleGame;
-  final VoidCallback? onResign;
-  final VoidCallback? onOfferDraw;
-  final VoidCallback? onAcceptDraw;
-  final VoidCallback? onRejectDraw;
-  final VoidCallback? onUndo;
-  final VoidCallback? onFlipBoard;
-  final VoidCallback? onNewGame;
 
   const GameActionBar({
     super.key,
@@ -21,6 +9,7 @@ class GameActionBar extends StatelessWidget {
     this.isDrawOffered = false,
     this.isLocalPlayerTurn = true,
     this.isBleGame = false,
+    this.isWaitingForAck = false,
     this.onResign,
     this.onOfferDraw,
     this.onAcceptDraw,
@@ -29,6 +18,19 @@ class GameActionBar extends StatelessWidget {
     this.onFlipBoard,
     this.onNewGame,
   });
+  final bool isGameInProgress;
+  final bool canUndo;
+  final bool isDrawOffered;
+  final bool isLocalPlayerTurn;
+  final bool isBleGame;
+  final bool isWaitingForAck;
+  final VoidCallback? onResign;
+  final VoidCallback? onOfferDraw;
+  final VoidCallback? onAcceptDraw;
+  final VoidCallback? onRejectDraw;
+  final VoidCallback? onUndo;
+  final VoidCallback? onFlipBoard;
+  final VoidCallback? onNewGame;
 
   @override
   Widget build(BuildContext context) {
@@ -81,17 +83,17 @@ class GameActionBar extends StatelessWidget {
               label: 'Undo',
               onPressed: onUndo,
             ),
-          if (isGameInProgress && isLocalPlayerTurn && !isBleGame)
+          if (isGameInProgress && isLocalPlayerTurn)
             _ActionButton(
               icon: Icons.handshake_outlined,
               label: 'Draw',
-              onPressed: onOfferDraw,
+              onPressed: isWaitingForAck ? null : onOfferDraw,
             ),
           if (isGameInProgress)
             _ActionButton(
               icon: Icons.flag_outlined,
               label: 'Resign',
-              onPressed: onResign,
+              onPressed: isWaitingForAck ? null : onResign,
               isDestructive: true,
             ),
           if (!isGameInProgress)
@@ -107,10 +109,6 @@ class GameActionBar extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isDestructive;
 
   const _ActionButton({
     required this.icon,
@@ -118,6 +116,10 @@ class _ActionButton extends StatelessWidget {
     this.onPressed,
     this.isDestructive = false,
   });
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isDestructive;
 
   @override
   Widget build(BuildContext context) {
