@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/providers/board_provider.dart';
+import '../../application/providers/bluetooth_provider.dart';
 import '../../application/providers/game_provider.dart';
 import '../../application/providers/settings_provider.dart';
+import '../../application/states/bluetooth_state.dart';
 import '../../domain/enums/promotion_piece.dart';
 import '../../domain/models/game_mode.dart';
+import '../../domain/models/move.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/square.dart';
 import '../themes/board_themes.dart';
@@ -62,8 +64,34 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     final gameController = ref.read(gameControllerProvider.notifier);
     final isInProgress = gameState.isInProgress;
-    final isBleGame = gameState.mode == GameMode.bleClient || gameState.mode == GameMode.bleHost;
-    
+    final isBleGame = gameState.mode.isBle;
+
+    // BLE-specific state
+    final hasPendingMove = isBleGame ? ref.watch(hasPendingMoveProvider) : false;
+    final bleConnectionStatus = isBleGame ? ref.watch(bleConnectionStatusProvider) : null;
+
+    // Listen for BLE errors and show snackbar
+    if (isBleGame) {
+      ref.listen<String?>(bleErrorProvider, (previous, next) {
+        if (next != null && next.isNotEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      });
+    }
+
+    final isDisconnected = isBleGame &&
+        isInProgress &&
+        (bleConnectionStatus == BleConnectionStatus.disconnected ||
+            bleConnectionStatus == BleConnectionStatus.reconnecting ||
+            bleConnectionStatus == BleConnectionStatus.error);
+    final isReconnecting = bleConnectionStatus == BleConnectionStatus.reconnecting;
+
     return PopScope(
       canPop: !isInProgress,
       onPopInvokedWithResult: (didPop, result) async {
@@ -86,6 +114,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         body: SafeArea(
           child: Column(
             children: [
+              // BLE connection-loss banner
+              if (isDisconnected)
+                _buildConnectionBanner(context, isReconnecting: isReconnecting),
               if (gameState.isEnded)
                 GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, result: gameState.result, asBanner: true),
               if (gameState.isCheck && !gameState.isEnded)
@@ -105,19 +136,35 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: BoardWidget(
-                      pieces: _getPiecesMap(gameController),
-                      selectedSquare: _selectedSquare,
-                      legalMoves: _legalMoves,
-                      lastMove: gameState.lastMove,
-                      checkSquare: _getCheckSquare(gameState, gameController),
-                      isFlipped: _isFlipped,
-                      showCoordinates: settings.showCoordinates,
-                      interactive: isInProgress,
-                      interactiveColor: _getInteractiveColor(gameState),
-                      theme: BoardThemesColors.fromTheme(settings.boardTheme),
-                      onSquareSelected: (square) => _handleSquareSelected(square, gameState, gameController),
-                      onMove: (from, to) => _handleMove(from, to, gameState, gameController),
+                    child: Stack(
+                      children: [
+                        BoardWidget(
+                          pieces: _getPiecesMap(gameController),
+                          selectedSquare: _selectedSquare,
+                          legalMoves: _legalMoves,
+                          lastMove: gameState.lastMove,
+                          checkSquare: _getCheckSquare(gameState, gameController),
+                          isFlipped: _isFlipped,
+                          showCoordinates: settings.showCoordinates,
+                          interactive: isInProgress && !hasPendingMove && !isDisconnected,
+                          interactiveColor: _getInteractiveColor(gameState),
+                          theme: BoardThemesColors.fromTheme(settings.boardTheme),
+                          onSquareSelected: (square) => _handleSquareSelected(square, gameState, gameController),
+                          onMove: (from, to) => _handleMove(from, to, gameState, gameController),
+                        ),
+                        // Spinner overlay while waiting for host ACK
+                        if (hasPendingMove)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: Container(
+                                color: Colors.black26,
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -130,13 +177,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   isInCheck: gameState.isCheck && ((_isFlipped && gameState.isBlackTurn) || (!_isFlipped && gameState.isWhiteTurn)),
                   capturedPieces: _getCapturedPieces(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
                   materialAdvantage: _getMaterialAdvantage(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
-                  isTopPlayer: false,
                 ),
               ),
               Container(
                 height: 60,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: MoveListWidget(moves: gameState.moves, showMoveNumbers: true),
+                child: MoveListWidget(moves: gameState.moves),
               ),
               GameActionBar(
                 isGameInProgress: isInProgress,
@@ -144,10 +190,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 isDrawOffered: gameState.drawOffered,
                 isLocalPlayerTurn: gameController.isLocalPlayerTurn(),
                 isBleGame: isBleGame,
-                onResign: () => _handleResign(gameState.currentTurn),
-                onOfferDraw: () => _handleOfferDraw(gameState.currentTurn),
-                onAcceptDraw: () => gameController.acceptDraw(),
-                onRejectDraw: () => gameController.rejectDraw(),
+                isWaitingForAck: hasPendingMove,
+                onResign: () => _handleResign(gameState.currentTurn, isBleGame),
+                onOfferDraw: () => _handleOfferDraw(gameState.currentTurn, isBleGame),
+                onAcceptDraw: () => _handleAcceptDraw(isBleGame),
+                onRejectDraw: () => _handleRejectDraw(isBleGame),
                 onUndo: () => gameController.undoMove(),
                 onFlipBoard: () => setState(() => _isFlipped = !_isFlipped),
                 onNewGame: _handleNewGame,
@@ -252,16 +299,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Future<void> _handleMove(Square from, Square to, dynamic gameState, dynamic gameController) async {
+    final isBleGame = gameState.mode.isBle as bool;
+    PromotionPiece? promotion;
+
     if (gameController.requiresPromotion(from, to)) {
       final piece = gameController.getPieceAt(from);
       if (piece != null) {
-        final promotion = await showPromotionDialog(context, color: piece.color);
-        if (promotion != null) {
-          gameController.makeMove(from: from, to: to, promotion: promotion);
+        promotion = await showPromotionDialog(context, color: piece.color);
+        if (promotion == null) {
+          // User cancelled promotion dialog
+          setState(() {
+            _selectedSquare = null;
+            _legalMoves = [];
+          });
+          return;
         }
       }
+    }
+
+    if (isBleGame) {
+      // BLE mode: send move to host via BluetoothController; it applies on ACK OK
+      final move = Move(from: from, to: to, promotion: promotion);
+      ref.read(bluetoothControllerProvider.notifier).sendMove(move);
     } else {
-      gameController.makeMove(from: from, to: to);
+      // Hotseat mode: apply move locally
+      gameController.makeMove(from: from, to: to, promotion: promotion);
     }
 
     setState(() {
@@ -270,18 +332,90 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
-  Future<void> _handleResign(PieceColor currentTurn) async {
+  Future<void> _handleResign(PieceColor currentTurn, bool isBleGame) async {
     final confirmed = await showResignConfirmationDialog(context);
     if (confirmed) {
-      ref.read(gameControllerProvider.notifier).resign(currentTurn);
+      if (isBleGame) {
+        ref.read(bluetoothControllerProvider.notifier).sendResign();
+      } else {
+        ref.read(gameControllerProvider.notifier).resign(currentTurn);
+      }
     }
   }
 
-  Future<void> _handleOfferDraw(PieceColor currentTurn) async {
+  Future<void> _handleOfferDraw(PieceColor currentTurn, bool isBleGame) async {
     final confirmed = await showDrawOfferDialog(context);
     if (confirmed) {
-      ref.read(gameControllerProvider.notifier).offerDraw(currentTurn);
+      if (isBleGame) {
+        ref.read(bluetoothControllerProvider.notifier).sendDrawOffer();
+      } else {
+        ref.read(gameControllerProvider.notifier).offerDraw(currentTurn);
+      }
     }
+  }
+
+  void _handleAcceptDraw(bool isBleGame) {
+    if (isBleGame) {
+      ref.read(bluetoothControllerProvider.notifier).sendDrawResponse(accepted: true);
+    } else {
+      ref.read(gameControllerProvider.notifier).acceptDraw();
+    }
+  }
+
+  void _handleRejectDraw(bool isBleGame) {
+    if (isBleGame) {
+      ref.read(bluetoothControllerProvider.notifier).sendDrawResponse(accepted: false);
+    } else {
+      ref.read(gameControllerProvider.notifier).rejectDraw();
+    }
+  }
+
+  Widget _buildConnectionBanner(BuildContext context, {required bool isReconnecting}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: colorScheme.errorContainer,
+      child: Row(
+        children: [
+          Icon(
+            isReconnecting ? Icons.sync : Icons.bluetooth_disabled,
+            size: 20,
+            color: colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isReconnecting ? 'Reconnecting...' : 'Connection lost',
+                  style: TextStyle(
+                    color: colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (isReconnecting)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: LinearProgressIndicator(),
+                  ),
+              ],
+            ),
+          ),
+          if (!isReconnecting)
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Exit',
+                style: TextStyle(color: colorScheme.onErrorContainer),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleBack(bool isInProgress, bool isBleGame) async {
