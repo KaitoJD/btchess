@@ -4,6 +4,7 @@ import '../../application/providers/game_provider.dart';
 import '../../application/providers/persistence_provider.dart';
 import '../../domain/models/saved_game.dart';
 import '../routes/app_router.dart';
+import 'game_over_screen.dart';
 
 class GameHistoryScreen extends ConsumerStatefulWidget {
   const GameHistoryScreen({super.key});
@@ -62,11 +63,19 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> with Sing
   }
 
   void _resumeGame(SavedGame game) {
-    // TODO: Load saved game state
+    final gameRepository = ref.read(gameRepositoryProvider);
+    final gameState = gameRepository.savedGameToState(game);
+    ref.read(gameControllerProvider.notifier).loadGame(gameState);
+    AppRouter.navigateAndReplace(context, AppRoutes.game);
   }
 
   void _viewGame(SavedGame game) {
-    // TODO: Navigate to PGN viewer
+    final pgn = game.pgn ?? 'No PGN available for this game.';
+    AppRouter.navigateTo(
+      context,
+      AppRoutes.pgnViewer,
+      arguments: PgnViewerScreenArgs(pgn: pgn),
+    );
   }
 
   Future<void> _deleteGame(SavedGame game) async {
