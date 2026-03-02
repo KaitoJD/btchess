@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/bluetooth_provider.dart';
 import '../../application/providers/game_provider.dart';
+import '../../application/providers/services_provider.dart';
 import '../../application/providers/settings_provider.dart';
 import '../../application/states/bluetooth_state.dart';
 import '../../domain/enums/promotion_piece.dart';
 import '../../domain/models/game_mode.dart';
+import '../../domain/models/game_state.dart';
 import '../../domain/models/move.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/square.dart';
+import '../../domain/services/pgn_service.dart';
+import '../routes/app_router.dart';
 import '../themes/board_themes.dart';
 import '../widgets/board/board_widget.dart';
 import '../widgets/dialogs/exit_game_dialog.dart';
@@ -16,6 +20,7 @@ import '../widgets/dialogs/promotion_dialog.dart';
 import '../widgets/dialogs/resign_confirmation_dialog.dart';
 import '../widgets/dialogs/draw_offer_dialog.dart';
 import '../widgets/game/game.dart';
+import 'game_over_screen.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -28,13 +33,54 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Square? _selectedSquare;
   List<Square> _legalMoves = [];
   bool _isFlipped = false;
+  bool _navigatingToGameOver = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeBoardOrientation();
+      _listenForGameEnd();
     });
+  }
+
+  void _listenForGameEnd() {
+    ref.listenManual<GameState?>(gameControllerProvider, (previous, next) {
+      if (next != null && next.isEnded && !(previous?.isEnded ?? false) && !_navigatingToGameOver) {
+        _navigatingToGameOver = true;
+        // Delay to let the player see the final board position
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            _navigateToGameOver(next);
+          }
+        });
+      }
+    });
+  }
+
+  void _navigateToGameOver(GameState gameState) {
+    final pgnService = ref.read(pgnServiceProvider);
+    final pgn = pgnService.generate(
+      moves: gameState.moves,
+      headers: PgnHeaders.newGame(
+        whiteName: gameState.whitePlayer.name,
+        blackName: gameState.blackPlayer.name,
+      ),
+      result: gameState.result,
+    );
+
+    AppRouter.navigateAndReplace(
+      context,
+      AppRoutes.gameOver,
+      arguments: GameOverScreenArgs(
+        result: gameState.result!,
+        mode: gameState.mode,
+        moveCount: gameState.moveCount,
+        pgn: pgn,
+        whitePlayerName: gameState.whitePlayer.name,
+        blackPlayerName: gameState.blackPlayer.name,
+      ),
+    );
   }
 
   void _initializeBoardOrientation() {
