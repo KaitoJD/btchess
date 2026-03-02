@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../screens/game_history_screen.dart';
+import '../screens/game_over_screen.dart';
 import '../screens/game_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/lobby_screen.dart';
 import '../screens/mode_selection_screen.dart';
+import '../screens/pgn_viewer_screen.dart';
 import '../screens/settings_screen.dart';
 
 abstract class AppRoutes {
@@ -13,6 +15,8 @@ abstract class AppRoutes {
   static const String settings = '/settings';
   static const String history = '/history';
   static const String lobby = '/lobby';
+  static const String gameOver = '/game-over';
+  static const String pgnViewer = '/pgn-viewer';
 }
 
 class AppRouter {
@@ -46,6 +50,16 @@ class AppRouter {
       case AppRoutes.lobby:
         return MaterialPageRoute(
           builder: (_) => const LobbyScreen(),
+          settings: settings,
+        );
+      case AppRoutes.gameOver:
+        return MaterialPageRoute(
+          builder: (_) => const GameOverScreen(),
+          settings: settings,
+        );
+      case AppRoutes.pgnViewer:
+        return MaterialPageRoute(
+          builder: (_) => const PgnViewerScreen(),
           settings: settings,
         );
       default:
