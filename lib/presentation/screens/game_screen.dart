@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/providers/audio_provider.dart';
 import '../../application/providers/bluetooth_provider.dart';
 import '../../application/providers/game_provider.dart';
 import '../../application/providers/services_provider.dart';
@@ -41,6 +42,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeBoardOrientation();
       _listenForGameEnd();
+      _listenForAudio();
+    });
+  }
+
+  void _listenForAudio() {
+    ref.listenManual<GameState?>(gameControllerProvider, (previous, next) {
+      if (next == null || previous == null) return;
+      if (next.moves.length <= previous.moves.length) return;
+
+      final lastMove = next.lastMove;
+      if (lastMove == null) return;
+
+      final audioService = ref.read(audioServiceProvider);
+      audioService.playMoveSound(
+        isCheckmate: lastMove.isCheckmate,
+        isGameEnd: next.isEnded,
+        isCheck: lastMove.isCheck,
+        isCapture: lastMove.isCapture,
+        isCastling: lastMove.isCastling,
+      );
     });
   }
 
