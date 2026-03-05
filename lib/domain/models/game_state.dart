@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../core/constants/app_constants.dart';
 import 'game_mode.dart';
 import 'game_result.dart';
 import 'move.dart';
@@ -6,22 +7,10 @@ import 'piece.dart';
 import 'player.dart';
 import '../enums/game_status.dart';
 
-const String initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+// Re-export for backward compatibility
+const String initialFen = AppConstants.standardStartFen;
 
 class GameState extends Equatable {
-  final String id;
-  final String fen;
-  final List<Move> moves;
-  final PieceColor currentTurn;
-  final GameStatus status;
-  final GameResult? result;
-  final GameMode mode;
-  final Player whitePlayer;
-  final Player blackPlayer;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool drawOffered;
-  final PieceColor? drawOfferedBy;
 
   const GameState({
     required this.id,
@@ -29,12 +18,7 @@ class GameState extends Equatable {
     required this.moves,
     required this.currentTurn,
     required this.status,
-    this.result,
-    required this.mode,
-    required this.whitePlayer,
-    required this.blackPlayer,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.mode, required this.whitePlayer, required this.blackPlayer, required this.createdAt, required this.updatedAt, this.result,
     this.drawOffered = false,
     this.drawOfferedBy,
   });
@@ -52,7 +36,6 @@ class GameState extends Equatable {
       moves: const [],
       currentTurn: PieceColor.white,
       status: GameStatus.playing,
-      result: null,
       mode: mode,
       whitePlayer: whitePlayer ?? Player.white(),
       blackPlayer: blackPlayer ?? Player.black(),
@@ -78,7 +61,6 @@ class GameState extends Equatable {
       moves: moves,
       currentTurn: turn,
       status: GameStatus.playing,
-      result: null,
       mode: mode,
       whitePlayer: whitePlayer ?? Player.white(),
       blackPlayer: blackPlayer ?? Player.black(),
@@ -86,6 +68,20 @@ class GameState extends Equatable {
       updatedAt: now,
     );
   }
+  
+  final String id;
+  final String fen;
+  final List<Move> moves;
+  final PieceColor currentTurn;
+  final GameStatus status;
+  final GameResult? result;
+  final GameMode mode;
+  final Player whitePlayer;
+  final Player blackPlayer;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool drawOffered;
+  final PieceColor? drawOfferedBy;
 
   int get moveCount => moves.length;
 
@@ -152,7 +148,6 @@ class GameState extends Equatable {
   GameState clearDrawOffer() {
     return copyWith(
       drawOffered: false,
-      drawOfferedBy: null,
     );
   }
 
