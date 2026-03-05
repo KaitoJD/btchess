@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/game_provider.dart';
 import '../../application/providers/persistence_provider.dart';
+import '../../core/constants/app_constants.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/saved_game.dart';
 import '../routes/app_router.dart';
@@ -53,7 +54,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         Text(
-          'BTChess',
+          AppConstants.appName,
           style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
