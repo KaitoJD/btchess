@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/providers/settings_provider.dart';
+import 'core/constants/app_constants.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/themes/app_theme.dart';
@@ -25,7 +26,7 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BTChess',
+      title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
@@ -56,7 +57,7 @@ class _AppLoader extends ConsumerWidget {
               ),
               SizedBox(height: 24),
               Text(
-                'BTChess',
+                AppConstants.appName,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
