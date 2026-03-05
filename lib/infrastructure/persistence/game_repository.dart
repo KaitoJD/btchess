@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '../../core/constants/app_constants.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/game_state.dart';
 // import '../../domain/models/move.dart';
@@ -6,12 +7,11 @@ import '../../domain/models/saved_game.dart';
 import '../../domain/services/pgn_service.dart';
 
 class GameRepository {
-  static const String _boxName = 'games';
-  static const int _maxSavedGames = 100;
-  final PgnService _pgnService;
-  Box<SavedGame>? _box;
 
   GameRepository({PgnService? pgnService}) : _pgnService = pgnService ?? const PgnService();
+  static const String _boxName = 'games';
+  final PgnService _pgnService;
+  Box<SavedGame>? _box;
 
   Future<void> init() async {
     if (_box != null && _box!.isOpen) return;
@@ -109,7 +109,6 @@ class GameRepository {
       id: savedGame.id,
       fen: savedGame.fen,
       mode: savedGame.mode,
-      moves: const [],
     ).copyWith(
       createdAt: savedGame.createdAt,
       updatedAt: savedGame.updatedAt,
@@ -131,12 +130,12 @@ class GameRepository {
   Future<void> _cleanupOldGames() async {
     final box = await _getBox();
 
-    if (box.length <= _maxSavedGames) return;
+    if (box.length <= AppConstants.maxSavedGames) return;
 
     final games = box.values.toList();
     games.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
 
-    final toDelete = games.take(games.length - _maxSavedGames);
+    final toDelete = games.take(games.length - AppConstants.maxSavedGames);
     for (final game in toDelete) {
       await box.delete(game.id);
     }
