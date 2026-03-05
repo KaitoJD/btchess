@@ -1,15 +1,11 @@
+import '../../core/constants/app_constants.dart';
 import '../models/piece.dart';
 import '../models/square.dart';
 
-const String standardStartFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+// Re-export for backward compatibility
+const String standardStartFen = AppConstants.standardStartFen;
 
 class FenComponents {
-  final String piecePlacement;
-  final String activeColor;
-  final String castling;
-  final String enPassant;
-  final int halfMoveClock;
-  final int fullMoveNumber;
 
   const FenComponents({
     required this.piecePlacement,
@@ -19,6 +15,12 @@ class FenComponents {
     required this.halfMoveClock,
     required this.fullMoveNumber,
   });
+  final String piecePlacement;
+  final String activeColor;
+  final String castling;
+  final String enPassant;
+  final int halfMoveClock;
+  final int fullMoveNumber;
 
   String toFen() {
     return '$piecePlacement $activeColor $castling $enPassant $halfMoveClock $fullMoveNumber';
@@ -58,13 +60,13 @@ class FenComponents {
 }
 
 class FenValidationResult {
-  final bool isValid;
-  final String? error;
 
   const FenValidationResult._(this.isValid, this.error);
 
   factory FenValidationResult.valid() => const FenValidationResult._(true, null);
   factory FenValidationResult.invalid(String error) => FenValidationResult._(false, error);
+  final bool isValid;
+  final String? error;
 }
 
 class FenService {
