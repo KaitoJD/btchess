@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../core/constants/ble_constants.dart';
 import '../../core/errors/ble_exception.dart';
+import '../../core/utils/logger.dart';
 import 'message_codec.dart';
 import 'message_models.dart';
 
@@ -113,12 +114,12 @@ class BleConnection {
       final message = _codec.decode(bytes);
       _messageController.add(message);
     } catch (e) {
-      print('BleConnection: Failed to decode message: $e');
+      Logger.error('Failed to decode message: $e', tag: 'BleConnection');
     }
   }
 
   void _handleError(Object error) {
-    print('BleConnection: Stream error: $error');
+    Logger.error('Stream error: $error', tag: 'BleConnection');
   }
 
   // Sends a move messge (for clients)
