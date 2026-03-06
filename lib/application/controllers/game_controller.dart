@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/utils/logger.dart';
 import '../../domain/enums/game_end_reason.dart';
 import '../../domain/enums/game_status.dart';
 import '../../domain/enums/promotion_piece.dart';
@@ -318,7 +319,7 @@ class GameController extends StateNotifier<GameState?> {
       await _gameRepository.saveGame(state!);
     } catch (e) {
       assert(() {
-        print('GameController: Failed to auto-save game: $e');
+        Logger.error('Failed to auto-save game: $e', tag: 'GameController');
         return true;
       }());
     }
