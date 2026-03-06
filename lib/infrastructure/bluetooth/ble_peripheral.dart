@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:ble_peripheral/ble_peripheral.dart';
 import '../../core/constants/ble_constants.dart';
 import '../../core/errors/ble_exception.dart';
+import '../../core/utils/logger.dart';
 import 'message_codec.dart';
 import 'message_models.dart';
 
@@ -187,7 +188,7 @@ class BlePeripheralManager {
 
       return WriteRequestResult(status: 0); // GATT_SUCCESS
     } catch (e) {
-      print('BlePeripheralManager: Failed to handle write request: $e');
+      Logger.error('Failed to handle write request: $e', tag: 'BlePeripheralManager');
       return WriteRequestResult(status: 0x0D); // error
     }
   }
