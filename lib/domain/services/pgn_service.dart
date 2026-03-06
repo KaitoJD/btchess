@@ -1,17 +1,11 @@
+import '../../core/constants/app_constants.dart';
+import '../../core/extensions/datetime_extensions.dart';
 import '../enums/game_end_reason.dart';
 import '../enums/winner.dart';
 import '../models/game_result.dart';
 import '../models/move.dart';
 
 class PgnHeaders {
-  final String? event;
-  final String? site;
-  final String? date;
-  final String? round;
-  final String? white;
-  final String? black;
-  final String? result;
-  final Map<String, String> additional;
 
   const PgnHeaders({
     this.event,
@@ -30,11 +24,11 @@ class PgnHeaders {
     String? event,
   }) {
     final now = DateTime.now();
-    final dateStr = '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
+    final dateStr = now.toPgnDate();
 
     return PgnHeaders(
-      event: event ?? 'BTChess Game',
-      site: 'BTChess App',
+      event: event ?? '${AppConstants.appName} Game',
+      site: '${AppConstants.appName} App',
       date: dateStr,
       round: '?',
       white: whiteName ?? 'White',
@@ -42,6 +36,14 @@ class PgnHeaders {
       result: '*',
     );
   }
+  final String? event;
+  final String? site;
+  final String? date;
+  final String? round;
+  final String? white;
+  final String? black;
+  final String? result;
+  final Map<String, String> additional;
 
   PgnHeaders withResult(String result) {
     return PgnHeaders(
@@ -82,10 +84,6 @@ class PgnHeaders {
 }
 
 class ParsedPgn {
-  final PgnHeaders headers;
-  final List<String> moves;
-  final String? result;
-  final List<String> comments;
 
   const ParsedPgn({
     required this.headers,
@@ -93,6 +91,10 @@ class ParsedPgn {
     this.result,
     this.comments = const [],
   });
+  final PgnHeaders headers;
+  final List<String> moves;
+  final String? result;
+  final List<String> comments;
 }
 
 class PgnService {
@@ -249,7 +251,7 @@ class PgnService {
 
   String _formatMovetext(List<Move> moves, String? result) {
     final buffer = StringBuffer();
-    final lineLength = 80;
+    const lineLength = 80;
     var currentLineLength = 0;
 
     for (int i = 0; i < moves.length; i++) {
@@ -398,7 +400,6 @@ class PgnService {
     // Matches: e4, Nf3, Bxc6, O-O, O-O-O, Qxh7+, Rxa8#, e8=Q, etc
     final sanPattern = RegExp(
       r'^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(=[QRBN])?([+#])?$|^O-O(-O)?[+#]?$',
-      caseSensitive: true,
     );
 
     return sanPattern.hasMatch(san);
