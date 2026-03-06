@@ -3,6 +3,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../core/constants/ble_constants.dart';
 import '../../core/constants/timing_constants.dart';
 import '../../core/errors/ble_exception.dart';
+import '../../core/utils/logger.dart';
 import 'ble_connection.dart';
 
 class BleDeviceInfo {
@@ -114,7 +115,7 @@ class BluetoothService {
   }
 
   void _handleScanError(Object error) {
-    print('BluetoothService: Scan error: $error');
+    Logger.error('Scan error: $error', tag: 'BluetoothService');
     _isScanning = false;
   }
 
