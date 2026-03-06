@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../infrastructure/bluetooth/bluetooth_service.dart';
 
 // Displays a list of discovered BLE devices that can be tapped to connect.
@@ -95,8 +96,8 @@ class _DeviceTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Display a friendly name by stripping the BTChess prefix
-    final displayName = device.name.replaceFirst('BTChess_', '');
+    // Display a friendly name by stripping the app name prefix
+    final displayName = device.name.replaceFirst('${AppConstants.appName}_', '');
     final signalStrength = _signalStrengthLabel(device.rssi);
     final signalIcon = _signalStrengthIcon(device.rssi);
 
