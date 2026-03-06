@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/settings_provider.dart';
+import '../../core/constants/app_constants.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -90,7 +91,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 32),
           Center(
             child: Text(
-              'BTChess',
+              AppConstants.appName,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
