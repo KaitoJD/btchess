@@ -11,6 +11,7 @@ import '../../domain/models/move.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/square.dart';
 import '../../infrastructure/bluetooth/ble_connection.dart';
+import '../../infrastructure/bluetooth/ble_host_transport.dart';
 import '../../infrastructure/bluetooth/ble_permissions.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../../infrastructure/bluetooth/connection_manager.dart' as cm;
@@ -41,6 +42,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   StreamSubscription<cm.ConnectionState>? _connectionStateSubscription;
   StreamSubscription<BleMessage>? _messageSubscription;
   StreamSubscription<List<BleDeviceInfo>>? _deviceScanSubscription;
+  StreamSubscription<String>? _clientConnectedSubscription;
 
   void _init() {
     // Listen to infrastructure connection state changes
@@ -157,6 +159,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         clearError: true,
       );
 
+      // Listen for client connections from the peripheral manager
+      _clientConnectedSubscription?.cancel();
+      _clientConnectedSubscription = _bluetoothService.peripheralManager
+          .clientConnected
+          .listen(_onHostClientConnected);
+
       await _bluetoothService.startAdvertising(gameName);
     } catch (e) {
       state = state.copyWith(
@@ -169,6 +177,8 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   // Stops advertising (host tears down lobby)
   Future<void> stopAdvertising() async {
     try {
+      _clientConnectedSubscription?.cancel();
+      _clientConnectedSubscription = null;
       await _bluetoothService.stopAdvertising();
     } catch (_) {
       // Ignore stop errors
@@ -198,6 +208,14 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         clearConnectedDevice: true,
       );
     }
+  }
+
+  // Called when a client connects to this host's peripheral
+  void _onHostClientConnected(String deviceId) {
+    if (!mounted) return;
+
+    final transport = BleHostTransport(_bluetoothService.peripheralManager);
+    _connectionManager.setupConnection(transport);
   }
 
   // Called when the host accepts a client connection
@@ -628,6 +646,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     _connectionStateSubscription?.cancel();
     _messageSubscription?.cancel();
     _deviceScanSubscription?.cancel();
+    _clientConnectedSubscription?.cancel();
     _connectionManager.dispose();
     _bluetoothService.dispose();
     super.dispose();
