@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/bluetooth_provider.dart';
 import '../../application/states/bluetooth_state.dart';
 import '../../application/states/lobby_state.dart';
+import '../../core/constants/app_constants.dart';
 import '../../domain/models/piece.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../routes/app_router.dart';
@@ -36,7 +37,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   @override
   void initState() {
     super.initState();
-    _gameNameController.text = 'BTChess_Game';
+    _gameNameController.text = AppConstants.defaultGameName;
     _playerNameController.text = 'Player';
   }
 
@@ -142,7 +143,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             controller: _gameNameController,
             decoration: const InputDecoration(
               labelText: 'Game Name',
-              hintText: 'BTChess_MyGame',
+              hintText: '${AppConstants.appName}_MyGame',
               prefixIcon: Icon(Icons.label_outline),
             ),
             textInputAction: TextInputAction.next,
