@@ -182,7 +182,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Future<void> _resumeGame(BuildContext context, WidgetRef ref, SavedGame savedGame) async {
-    // TODO: Load saved game into game controller
+    final gameRepository = ref.read(gameRepositoryProvider);
+    final gameState = gameRepository.savedGameToState(savedGame);
+    ref.read(gameControllerProvider.notifier).loadGame(gameState);
+    AppRouter.navigateAndReplace(context, AppRoutes.game);
   }
 
   String _formatDate(DateTime date) {
