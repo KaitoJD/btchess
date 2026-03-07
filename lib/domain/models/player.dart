@@ -2,11 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'piece.dart';
 
 class Player extends Equatable {
-  final String id;
-  final String name;
-  final PieceColor color;
-  final bool isLocal;
-  final bool isHost;
 
   const Player({
     required this.id,
@@ -25,7 +20,6 @@ class Player extends Equatable {
       id: 'local_${color.name}',
       name: name,
       color: color,
-      isLocal: true,
       isHost: isHost,
     );
   }
@@ -39,8 +33,7 @@ class Player extends Equatable {
       id: id,
       name: name,
       color: color,
-      isLocal: true,
-      isHost: false,
+      isLocal: false,
     );
   }
 
@@ -49,7 +42,6 @@ class Player extends Equatable {
       id: 'white',
       name: name,
       color: PieceColor.white,
-      isLocal: true,
     );
   }
 
@@ -58,9 +50,13 @@ class Player extends Equatable {
       id: 'black',
       name: name,
       color: PieceColor.black,
-      isLocal: true,
     );
   }
+  final String id;
+  final String name;
+  final PieceColor color;
+  final bool isLocal;
+  final bool isHost;
 
   bool get isWhite => color == PieceColor.white;
   bool get isBlack => color == PieceColor.black;
