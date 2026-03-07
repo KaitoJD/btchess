@@ -3,11 +3,10 @@ import '../../core/constants/ble_constants.dart';
 import '../../core/constants/error_codes.dart';
 import '../../core/constants/timing_constants.dart';
 import '../../core/errors/ble_exception.dart';
-import 'ble_connection.dart';
+import '../../core/utils/logger.dart';
+import 'ble_transport.dart';
 import 'chunk_handler.dart';
-import 'message_codec.dart';
 import 'message_models.dart';
-import 'message_queue.dart';
 import 'rate_limiter.dart';
 
 enum ConnectionState {
@@ -20,14 +19,11 @@ enum ConnectionState {
 }
 
 class ConnectionManager {
-  // The active connection
-  BleConnection? _connection;
+  // The active transport (client or host)
+  BleTransport? _connection;
 
   // Current connection state
   ConnectionState _state = ConnectionState.disconnected;
-
-  // Message codec
-  final MessageCodec _codec = const MessageCodec();
 
   // Chunk handler for large messages
   final ChunkHandler _chunkHandler = ChunkHandler();
@@ -77,8 +73,8 @@ class ConnectionManager {
   // The connected device name
   String? get connectedDeviceName => _connection?.deviceName;
 
-  // Sets up connection with an existing BleConnection
-  Future<void> setupConnection(BleConnection connection) async {
+  // Sets up connection with an existing BleTransport (client or host)
+  Future<void> setupConnection(BleTransport connection) async {
     _connection = connection;
     _updateState(ConnectionState.handshaking);
 
@@ -99,24 +95,46 @@ class ConnectionManager {
   }
 
   Future<void> _performHandshake() async {
-    final messageId = _getNextMessageId();
-    final handshake = HandshakeMessage(
-      messageId: messageId,
-      protocolVersion: BleConstants.protocolVersion,
-      role: isHost ? BleConstants.roleHost : BleConstants.roleClient,
-    );
-
-    await _connection!.sendControl(handshake);
-
-    final response = await _waitForMessage<HandshakeMessage>(
-      timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
-    );
-
-    if (response.protocolVersion != BleConstants.protocolVersion) {
-      throw BleProtocolException(
-        'Protocol version mismatch: expected ${BleConstants.protocolVersion}, got ${response.protocolVersion}',
-        errorCode: BleErrorCode.versionMismatch.value,
+    if (isHost) {
+      // Host waits for client handshake first, then responds
+      final clientHandshake = await _waitForMessage<HandshakeMessage>(
+        timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
       );
+
+      if (clientHandshake.protocolVersion != BleConstants.protocolVersion) {
+        throw BleProtocolException(
+          'Protocol version mismatch: expected ${BleConstants.protocolVersion}, got ${clientHandshake.protocolVersion}',
+          errorCode: BleErrorCode.versionMismatch.value,
+        );
+      }
+
+      final messageId = _getNextMessageId();
+      final response = HandshakeMessage(
+        messageId: messageId,
+        protocolVersion: BleConstants.protocolVersion,
+        role: BleConstants.roleHost,
+      );
+      await _connection!.sendControl(response);
+    } else {
+      // Client sends handshake first, then waits for host response
+      final messageId = _getNextMessageId();
+      final handshake = HandshakeMessage(
+        messageId: messageId,
+        protocolVersion: BleConstants.protocolVersion,
+        role: BleConstants.roleClient,
+      );
+      await _connection!.sendControl(handshake);
+
+      final response = await _waitForMessage<HandshakeMessage>(
+        timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
+      );
+
+      if (response.protocolVersion != BleConstants.protocolVersion) {
+        throw BleProtocolException(
+          'Protocol version mismatch: expected ${BleConstants.protocolVersion}, got ${response.protocolVersion}',
+          errorCode: BleErrorCode.versionMismatch.value,
+        );
+      }
     }
   }
 
@@ -191,7 +209,7 @@ class ConnectionManager {
   }
 
   void _handleError(Object error) {
-    print('ConnectionManager: Error: $error');
+    Logger.error('Error: $error', tag: 'ConnectionManager');
     _updateState(ConnectionState.error);
   }
 
