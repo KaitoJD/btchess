@@ -4,10 +4,11 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../core/constants/ble_constants.dart';
 import '../../core/errors/ble_exception.dart';
 import '../../core/utils/logger.dart';
+import 'ble_transport.dart';
 import 'message_codec.dart';
 import 'message_models.dart';
 
-class BleConnection {
+class BleConnection implements BleTransport {
   BleConnection({
     required this.device,
     required this.isHost,
@@ -17,6 +18,7 @@ class BleConnection {
   final BluetoothDevice device;
   
   // Whether this device is the host
+  @override
   final bool isHost;
 
   // Message codec
@@ -46,8 +48,10 @@ class BleConnection {
   // Connection state
   bool _isConnected = false;
 
+  @override
   Stream<BleMessage> get messages => _messageController.stream;
   bool get isConnected => _isConnected;
+  @override
   String get deviceName => device.platformName;
   String get deviceId => device.remoteId.str;
 
@@ -123,6 +127,7 @@ class BleConnection {
   }
 
   // Sends a move messge (for clients)
+  @override
   Future<void> sendMove(MoveMessage message) async {
     if (!isConnected) {
       throw const BleDisconnectedException('Not connected');
@@ -137,6 +142,7 @@ class BleConnection {
   }
 
   // Sends a control message (handshake, sync, etc.)
+  @override
   Future<void> sendControl(BleMessage message) async {
     if (!isConnected) {
       throw const BleDisconnectedException('Not connected');
@@ -151,6 +157,7 @@ class BleConnection {
   }
   
   // Sends a state notification (for host)
+  @override
   Future<void> sendStateNotification(BleMessage message) async {
     if (!isConnected) {
       throw const BleDisconnectedException('Not connected');
@@ -166,6 +173,7 @@ class BleConnection {
   }
 
   // Disconnects from the device
+  @override
   Future<void> disconnect() async {
     _isConnected = false;
 
