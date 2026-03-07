@@ -5,6 +5,7 @@ import '../../core/constants/timing_constants.dart';
 import '../../core/errors/ble_exception.dart';
 import '../../core/utils/logger.dart';
 import 'ble_connection.dart';
+import 'ble_peripheral.dart';
 
 class BleDeviceInfo {
   const BleDeviceInfo({
@@ -21,6 +22,9 @@ class BleDeviceInfo {
 }
 
 class BluetoothService {
+  // BLE peripheral manager for host advertising mode
+  final BlePeripheralManager _peripheralManager = BlePeripheralManager();
+
   // Stream controller for scanned devices
   final StreamController<List<BleDeviceInfo>> _devicesController = StreamController<List<BleDeviceInfo>>.broadcast();
 
@@ -153,19 +157,18 @@ class BluetoothService {
     }
   }
 
-  /* Starts advertising as a host
-   * 
-   * Note: flutter_blue_plus doesn't support peripheral mode
-   * This requires platform-specific implementation or additional package
-   */
+  // The peripheral manager for host mode
+  BlePeripheralManager get peripheralManager => _peripheralManager;
+
+  // Starts advertising as a host using BlePeripheralManager
   Future<void> startAdvertising(String gameName) async {
-    // TODO: Implement advertising using platform channels or ble_peripheral package
-    throw UnimplementedError('Advertising requires additional platform-specific implementation');
+    await _peripheralManager.initialize();
+    await _peripheralManager.startAdvertising(gameName);
   }
 
   // Stops advertising
   Future<void> stopAdvertising() async {
-    // TODO: Implement
+    await _peripheralManager.stopAdvertising();
   }
 
   // Gets currently connected devices
@@ -176,6 +179,7 @@ class BluetoothService {
   // Disposes resources
   void dispose() {
     stopScanning();
+    _peripheralManager.dispose();
     _devicesController.close();
   }
 }
