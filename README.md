@@ -18,38 +18,6 @@ A mobile chess app for Android and iOS with local multiplayer via Bluetooth Low 
 - **flutter_blue_plus** – Bluetooth Low Energy communication
 - **Hive** – Local persistence
 
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK (3.x or later)
-- Android Studio / Xcode for device builds
-- Physical devices recommended for BLE testing
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/KaitoJD/btchess.git
-cd btchess
-
-# Install dependencies
-flutter pub get
-
-# Run the app
-flutter run
-```
-
-## Project Structure
-
-```
-lib/
-├── domain/          # Core models, chess logic, value objects
-├── application/     # Controllers, providers, state management
-├── presentation/    # Screens, widgets, themes
-└── infrastructure/  # BLE communication, persistence
-```
-
 ## Documentation
 
 See the [docs/](docs/) folder for detailed documentation:
