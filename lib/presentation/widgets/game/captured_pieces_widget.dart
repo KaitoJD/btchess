@@ -3,16 +3,14 @@ import '../../../domain/models/move.dart';
 import '../../../domain/models/piece.dart';
 
 class CapturedPiecesWidget extends StatelessWidget {
+
+  const CapturedPiecesWidget({
+    required this.moves, required this.capturedByColor, super.key,
+    this.pieceSize = 16,
+  });
   final List<Move> moves;
   final PieceColor capturedByColor;
   final double pieceSize;
-
-  const CapturedPiecesWidget({
-    super.key,
-    required this.moves,
-    required this.capturedByColor,
-    this.pieceSize = 16,
-  });
 
   @override
   Widget build(BuildContext context) {

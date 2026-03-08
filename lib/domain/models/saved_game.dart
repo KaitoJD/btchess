@@ -7,36 +7,6 @@ part 'saved_game.g.dart';
 
 @HiveType(typeId: 0)
 class SavedGame extends HiveObject {
-  @HiveField(0)
-  final String id;
-
-  @HiveField(1)
-  final String fen;
-
-  @HiveField(2)
-  final List<String> moves;
-
-  @HiveField(3)
-  final DateTime createdAt;
-
-  @HiveField(4)
-  final DateTime updatedAt;
-
-  @HiveField(5)
-  final int modeIndex;
-
-  @HiveField(6)
-  final int? winnerIndex;
-
-  @HiveField(7)
-  final int? endReasonIndex;
-
-  @HiveField(8)
-  final String? opponentName;
-
-  @HiveField(9)
-  final String? pgn;
-
   SavedGame({
     required this.id,
     required this.fen,
@@ -74,6 +44,36 @@ class SavedGame extends HiveObject {
       pgn: pgn,
     );
   }
+  
+  @HiveField(0)
+  final String id;
+
+  @HiveField(1)
+  final String fen;
+
+  @HiveField(2)
+  final List<String> moves;
+
+  @HiveField(3)
+  final DateTime createdAt;
+
+  @HiveField(4)
+  final DateTime updatedAt;
+
+  @HiveField(5)
+  final int modeIndex;
+
+  @HiveField(6)
+  final int? winnerIndex;
+
+  @HiveField(7)
+  final int? endReasonIndex;
+
+  @HiveField(8)
+  final String? opponentName;
+
+  @HiveField(9)
+  final String? pgn;
 
   GameMode get mode => GameMode.values[modeIndex];
   bool get isCompleted => winnerIndex != null;

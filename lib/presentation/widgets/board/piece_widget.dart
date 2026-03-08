@@ -63,7 +63,7 @@ class DraggablePieceWidget extends StatelessWidget {
       data: dragData ?? piece,
       onDragStarted: onDragStarted,
       onDragEnd: (_) => onDragEnd?.call(),
-      onDraggableCanceled: (_, __) => onDraggableCanceled?.call(),
+      onDraggableCanceled: (_, _) => onDraggableCanceled?.call(),
       feedback: Material(
         color: Colors.transparent,
         child: Transform.scale(

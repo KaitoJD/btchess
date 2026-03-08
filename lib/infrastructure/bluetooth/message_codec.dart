@@ -13,17 +13,17 @@ class MessageCodec {
   // Encodes a message to bytes
   Uint8List encode(BleMessage message) {
     return switch(message) {
-      HandshakeMessage m => _encodeHandshake(m),
-      MoveMessage m => _encodeMove(m),
-      AckMessage m => _encodeAck(m),
-      SyncRequestMessage m => _encodeSyncRequest(m),
-      SyncResponseMessage m => _encodeSyncResponse(m),
-      GameEndMessage m => _encodeGameEnd(m),
-      DrawOfferMessage m => _encodeDrawOffer(m),
-      DrawResponseMessage m => _encodeDrawResponse(m),
-      ResignMessage m => _encodeResign(m),
-      PingMessage m => _encodePing(m),
-      PongMessage m => _encodePong(m),
+      final HandshakeMessage m => _encodeHandshake(m),
+      final MoveMessage m => _encodeMove(m),
+      final AckMessage m => _encodeAck(m),
+      final SyncRequestMessage m => _encodeSyncRequest(m),
+      final SyncResponseMessage m => _encodeSyncResponse(m),
+      final GameEndMessage m => _encodeGameEnd(m),
+      final DrawOfferMessage m => _encodeDrawOffer(m),
+      final DrawResponseMessage m => _encodeDrawResponse(m),
+      final ResignMessage m => _encodeResign(m),
+      final PingMessage m => _encodePing(m),
+      final PongMessage m => _encodePong(m),
     };
   }
 

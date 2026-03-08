@@ -13,7 +13,6 @@ abstract class AppTheme {
 
             colorScheme: ColorScheme.fromSeed(
                 seedColor: primaryColor,
-                brightness: Brightness.light,
             ),
 
             appBarTheme: const AppBarTheme(

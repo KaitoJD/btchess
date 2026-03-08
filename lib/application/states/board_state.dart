@@ -4,15 +4,6 @@ import '../../domain/models/piece.dart';
 import '../../domain/models/square.dart';
 
 class BoardState extends Equatable {
-  final Square? selectedSquare;
-  final List<Square> legalMoves;
-  final Move? lastMove;
-  final Square? checkSquare;
-  final bool showPromotionDialog;
-  final (Square, Square)? pendingPromotion;
-  final bool isFlipped;
-  final Map<int, Piece> pieces;
-  final PieceColor currentTurn;
 
   const BoardState({
     this.selectedSquare,
@@ -27,6 +18,16 @@ class BoardState extends Equatable {
   });
 
   factory BoardState.initial() => const BoardState();
+  
+  final Square? selectedSquare;
+  final List<Square> legalMoves;
+  final Move? lastMove;
+  final Square? checkSquare;
+  final bool showPromotionDialog;
+  final (Square, Square)? pendingPromotion;
+  final bool isFlipped;
+  final Map<int, Piece> pieces;
+  final PieceColor currentTurn;
 
   BoardState copyWith({
     Square? selectedSquare,

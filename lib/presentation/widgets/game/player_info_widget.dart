@@ -3,22 +3,21 @@ import '../../../domain/models/piece.dart';
 import '../../../domain/models/player.dart';
 
 class PlayerInfoWidget extends StatelessWidget {
-  final Player player;
-  final bool isActive;
-  final bool isInCheck;
-  final List<Piece> capturedPieces;
-  final int materialAdvantage;
-  final bool isTopPlayer;
 
   const PlayerInfoWidget({
-    super.key,
-    required this.player,
+    required this.player, super.key,
     this.isActive = false,
     this.isInCheck = false,
     this.capturedPieces = const [],
     this.materialAdvantage = 0,
     this.isTopPlayer = false,
   });
+  final Player player;
+  final bool isActive;
+  final bool isInCheck;
+  final List<Piece> capturedPieces;
+  final int materialAdvantage;
+  final bool isTopPlayer;
 
   @override
   Widget build(BuildContext context) {

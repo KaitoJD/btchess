@@ -6,18 +6,16 @@ import '../../../domain/models/game_result.dart';
 import '../../../domain/models/piece.dart';
 
 class GameStatusWidget extends StatelessWidget {
+
+  const GameStatusWidget({
+    required this.status, required this.currentTurn, super.key,
+    this.result,
+    this.asBanner = false,
+  });
   final GameStatus status;
   final GameResult? result;
   final PieceColor currentTurn;
   final bool asBanner;
-
-  const GameStatusWidget({
-    super.key,
-    required this.status,
-    this.result,
-    required this.currentTurn,
-    this.asBanner = false,
-  });
 
   @override
   Widget build(BuildContext context) {

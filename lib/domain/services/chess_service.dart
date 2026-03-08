@@ -6,11 +6,6 @@ import '../models/piece.dart';
 import '../models/square.dart';
 
 class MoveResult {
-  final bool success;
-  final String? fen;
-  final Move? move;
-  final String? error;
-  final GameStatus? status;
 
   const MoveResult._({
     required this.success,
@@ -39,6 +34,11 @@ class MoveResult {
       error: error,
     );
   }
+  final bool success;
+  final String? fen;
+  final Move? move;
+  final String? error;
+  final GameStatus? status;
 }
 
 // Service that wraps dartchess.dart to provide chess logic
@@ -245,7 +245,7 @@ class ChessService {
       final result = <Square, Piece>{};
 
       for (int i = 0; i < 64; i++) {
-        final dcSquare = dc.Square(i);
+        final dcSquare = i;
         final dcPiece = position.board.pieceAt(dcSquare);
 
         if (dcPiece != null) {
@@ -326,7 +326,7 @@ class ChessService {
   }
 
   dc.Square _toDartchessSquare(Square square) {
-    return dc.Square(square.index);
+    return square.index;
   }
 
   Square _fromDartchessSquare(dc.Square square) {

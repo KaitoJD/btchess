@@ -16,11 +16,6 @@ enum MoveValidationError {
 }
 
 class MoveValidationResult {
-  final bool isValid;
-  final MoveValidationError error;
-  final String? message;
-  final Piece? piece;
-  final bool requiresPromotion;
 
   const MoveValidationResult._({
     required this.isValid,
@@ -55,13 +50,18 @@ class MoveValidationResult {
       message: message,
     );
   }
+  final bool isValid;
+  final MoveValidationError error;
+  final String? message;
+  final Piece? piece;
+  final bool requiresPromotion;
 }
 
 // Service for validating chess moves
 class MoveValidator {
-  final ChessService _chessService;
 
   const MoveValidator(this._chessService);
+  final ChessService _chessService;
 
   MoveValidationResult validateMove({
     required String fen,

@@ -6,16 +6,6 @@ import '../enums/promotion_piece.dart';
 // Represents a chess move
 
 class Move extends Equatable {
-  final Square from;
-  final Square to;
-  final PromotionPiece? promotion;
-  final String? san; // The Standard Algebraic Notation of the move("e4", "Nf3", ..)
-  final Piece? capturedPiece;
-  final Piece? movedPiece;
-  final bool isCastling;
-  final bool isEnPassant;
-  final bool isCheck;
-  final bool isCheckmate;
 
   const Move({
     required this.from,
@@ -53,6 +43,16 @@ class Move extends Equatable {
       promotion: promotion,
     );
   }
+  final Square from;
+  final Square to;
+  final PromotionPiece? promotion;
+  final String? san; // The Standard Algebraic Notation of the move("e4", "Nf3", ..)
+  final Piece? capturedPiece;
+  final Piece? movedPiece;
+  final bool isCastling;
+  final bool isEnPassant;
+  final bool isCheck;
+  final bool isCheckmate;
 
   // Returns the Universal Chess Interface notation
   String get uci {

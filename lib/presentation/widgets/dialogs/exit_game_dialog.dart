@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class ExitGameDialog extends StatelessWidget {
-  final bool isBleGame;
 
   const ExitGameDialog({
     super.key,
     this.isBleGame = false,
   });
+  final bool isBleGame;
 
   @override
   Widget build(BuildContext context) {

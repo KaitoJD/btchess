@@ -3,9 +3,10 @@ import '../../infrastructure/persistence/settings_repository.dart';
 import '../states/settings_state.dart';
 
 class SettingsController extends StateNotifier<SettingsState> {
-  final SettingsRepository _repository;
 
   SettingsController({required SettingsRepository repository}) : _repository = repository, super(const SettingsState());
+  
+  final SettingsRepository _repository;
 
   Future<void> loadSettings() async {
     try {

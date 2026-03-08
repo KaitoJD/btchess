@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId = "com.btchess"
         // Minimum SDK 21 required for BLE support
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

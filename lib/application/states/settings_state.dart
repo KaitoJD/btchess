@@ -2,15 +2,6 @@ import 'package:equatable/equatable.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 
 class SettingsState extends Equatable {
-  final bool soundEnabled;
-  final bool showLegalMoves;
-  final bool showCoordinates;
-  final BoardTheme boardTheme;
-  final PieceTheme pieceTheme;
-  final bool debugMode;
-  final String playerName;
-  final bool autoFlipBoard;
-  final bool isLoaded;
 
   const SettingsState({
     this.soundEnabled = true,
@@ -25,6 +16,16 @@ class SettingsState extends Equatable {
   });
 
   factory SettingsState.defaults() => const SettingsState(isLoaded: true);
+  
+  final bool soundEnabled;
+  final bool showLegalMoves;
+  final bool showCoordinates;
+  final BoardTheme boardTheme;
+  final PieceTheme pieceTheme;
+  final bool debugMode;
+  final String playerName;
+  final bool autoFlipBoard;
+  final bool isLoaded;
 
   SettingsState copyWith({
     bool? soundEnabled,

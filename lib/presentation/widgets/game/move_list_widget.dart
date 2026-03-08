@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/move.dart';
 
 class MoveListWidget extends StatefulWidget {
-  final List<Move> moves;
-  final int? selectedMoveIndex;
-  final void Function(int index)? onMoveTap;
-  final bool showMoveNumbers;
-  final bool autoScroll;
 
   const MoveListWidget({
-    super.key,
-    required this.moves,
+    required this.moves, super.key,
     this.selectedMoveIndex,
     this.onMoveTap,
     this.showMoveNumbers = true,
     this.autoScroll = true,
   });
+  final List<Move> moves;
+  final int? selectedMoveIndex;
+  final void Function(int index)? onMoveTap;
+  final bool showMoveNumbers;
+  final bool autoScroll;
 
   @override
   State<MoveListWidget> createState() => _MoveListWidgetState();
@@ -102,10 +101,6 @@ class _MoveListWidgetState extends State<MoveListWidget> {
 }
 
 class _MoveChip extends StatelessWidget {
-  final Move move;
-  final int index;
-  final bool isSelected;
-  final VoidCallback? onTap;
 
   const _MoveChip({
     required this.move,
@@ -113,6 +108,10 @@ class _MoveChip extends StatelessWidget {
     this.isSelected = false,
     this.onTap,
   });
+  final Move move;
+  final int index;
+  final bool isSelected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -154,14 +153,13 @@ class _MoveChip extends StatelessWidget {
 }
 
 class CompactMoveListWidget extends StatelessWidget {
-  final List<Move> moves;
-  final int? selectedMoveIndex;
 
   const CompactMoveListWidget({
-    super.key,
-    required this.moves,
+    required this.moves, super.key,
     this.selectedMoveIndex,
   });
+  final List<Move> moves;
+  final int? selectedMoveIndex;
 
   @override
   Widget build(BuildContext context) {

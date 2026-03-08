@@ -4,12 +4,6 @@ import 'package:equatable/equatable.dart';
 // Index mapping: a1 = 0, b1 = 1, .. , h1 = 7, a2 = 8, .. , h8 = 63
 
 class Square extends Equatable {
-  final int file;
-  final int rank;
-  
-  const Square._({required this.file, required this.rank})
-      : assert(file >= 0 && file <= 7, 'File must be between 0 and 7'),
-        assert(rank >= 0 && file <= 7, 'Rank must be between 0 and 7');
 
   factory Square(int file, int rank) {
     if (file < 0 || file > 7) {
@@ -20,6 +14,10 @@ class Square extends Equatable {
     }
     return Square._(file: file, rank: rank);
   }
+  
+  const Square._({required this.file, required this.rank})
+      : assert(file >= 0 && file <= 7, 'File must be between 0 and 7'),
+        assert(rank >= 0 && file <= 7, 'Rank must be between 0 and 7');
 
   factory Square.fromIndex(int index) {
     if (index < 0 || index > 63) {
@@ -52,6 +50,9 @@ class Square extends Equatable {
 
     return Square._(file: file, rank: rank - 1);
   }
+  
+  final int file;
+  final int rank;
 
   static Square? tryFromAlgebraic(String algebraic) {
     try {

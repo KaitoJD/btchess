@@ -24,12 +24,12 @@ class DrawOfferDialog extends StatelessWidget {
 }
 
 class DrawOfferedDialog extends StatelessWidget {
-  final String opponentName;
 
   const DrawOfferedDialog({
     super.key,
     this.opponentName = 'Opponent',
   });
+  final String opponentName;
 
   @override
   Widget build(BuildContext context) {

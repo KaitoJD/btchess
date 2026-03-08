@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 
 class BoardThemesColors {
-  final Color lightSquare;
-  final Color darkSquare;
-  final Color selection;
-  final Color legalMove;
-  final Color lastMove;
-  final Color check;
-  final Color border;
 
   const BoardThemesColors({
     required this.lightSquare,
@@ -19,6 +12,13 @@ class BoardThemesColors {
     this.check = const Color(0x80EF5350),
     this.border = const Color(0xFF5D4037),
   });
+  final Color lightSquare;
+  final Color darkSquare;
+  final Color selection;
+  final Color legalMove;
+  final Color lastMove;
+  final Color check;
+  final Color border;
 
   Color squareColor(int file, int rank) {
     final isLight = (file + rank) % 2 == 1;

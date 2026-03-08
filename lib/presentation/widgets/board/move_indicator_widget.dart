@@ -5,18 +5,16 @@ import '../../themes/board_themes.dart';
 import 'dart:math' as math;
 
 class MoveIndicatorWidget extends StatelessWidget {
+
+  const MoveIndicatorWidget({
+    required this.squareSize, required this.theme, super.key,
+    this.lastMove,
+    this.isFlipped = false,
+  });
   final Move? lastMove;
   final double squareSize;
   final bool isFlipped;
   final BoardThemesColors theme;
-
-  const MoveIndicatorWidget({
-    super.key,
-    this.lastMove,
-    required this.squareSize,
-    this.isFlipped = false,
-    required this.theme,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +34,6 @@ class MoveIndicatorWidget extends StatelessWidget {
 }
 
 class _MoveArrowPainter extends CustomPainter {
-  final Square from;
-  final Square to;
-  final double squareSize;
-  final bool isFlipped;
-  final Color color;
 
   _MoveArrowPainter({
     required this.from,
@@ -49,6 +42,11 @@ class _MoveArrowPainter extends CustomPainter {
     required this.isFlipped,
     required this.color,
   });
+  final Square from;
+  final Square to;
+  final double squareSize;
+  final bool isFlipped;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {

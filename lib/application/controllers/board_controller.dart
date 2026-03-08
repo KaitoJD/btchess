@@ -7,8 +7,6 @@ import '../../domain/services/chess_service.dart';
 import '../states/board_state.dart';
 
 class BoardController extends StateNotifier<BoardState> {
-  final ChessService _chessService;
-  String _currentFen;
 
   BoardController({
     required ChessService chessService,
@@ -18,6 +16,9 @@ class BoardController extends StateNotifier<BoardState> {
         super(const BoardState()) {
     _updateBoardFromFen();
   }
+  
+  final ChessService _chessService;
+  String _currentFen;
 
   void updateFromFen(String fen, {Move? lastMove}) {
     _currentFen = fen;

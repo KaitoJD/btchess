@@ -46,13 +46,13 @@ enum PieceColor {
 }
 
 class Piece extends Equatable {
-  final PieceType type;
-  final PieceColor color;
 
   const Piece({
     required this.type,
     required this.color,
   });
+  final PieceType type;
+  final PieceColor color;
 
   static Piece? fromFenChar(String char) {
     if (char.isEmpty) return null;

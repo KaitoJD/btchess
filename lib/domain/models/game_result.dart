@@ -3,10 +3,6 @@ import '../enums/game_end_reason.dart';
 import '../enums/winner.dart';
 
 class GameResult extends Equatable {
-  final Winner winner;
-  final GameEndReason reason;
-  final String? finalFen;
-  final String? pgn;
 
   const GameResult({
     required this.winner,
@@ -86,6 +82,11 @@ class GameResult extends Equatable {
       pgn: pgn,
     );
   }
+  
+  final Winner winner;
+  final GameEndReason reason;
+  final String? finalFen;
+  final String? pgn;
 
   bool get isDraw => winner == Winner.draw;
   bool get whiteWon => winner == Winner.white;

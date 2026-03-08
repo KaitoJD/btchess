@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import '../../themes/board_themes.dart';
 
 class BoardCoordinatesWidget extends StatelessWidget {
+
+  const BoardCoordinatesWidget({
+    required this.squareSize, required this.child, required this.theme, super.key,
+    this.isFlipped = false,
+    this.coordinatePadding = 16.0,
+  });
   final double squareSize;
   final bool isFlipped;
   final BoardThemesColors theme;
   final Widget child;
   final double coordinatePadding;
-
-  const BoardCoordinatesWidget({
-    super.key,
-    required this.squareSize,
-    required this.child,
-    this.isFlipped = false,
-    required this.theme,
-    this.coordinatePadding = 16.0,
-  });
 
   @override
   Widget build(BuildContext context) {

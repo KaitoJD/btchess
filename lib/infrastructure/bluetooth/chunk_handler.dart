@@ -105,7 +105,7 @@ class ChunkHandler {
 
   // Checks for and remove timed-out reassembly operations
   void cleanupTimedOut() {
-    final timeout = Duration(milliseconds: TimingConstants.chunkReassemblyTimeoutMs);
+    const timeout = Duration(milliseconds: TimingConstants.chunkReassemblyTimeoutMs);
     final now = DateTime.now();
 
     _reassemblyBuffers.removeWhere((_, state) {
