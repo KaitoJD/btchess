@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../domain/enums/promotion_piece.dart';
 import '../../../domain/models/piece.dart';
+import '../../../infrastructure/persistence/settings_repository.dart';
 import '../../themes/piece_themes.dart';
 
 class PromotionDialog extends StatelessWidget {
-  final PieceColor color;
-  final void Function(PromotionPiece) onPieceSelected;
-  final VoidCallback? onCancelled;
 
   const PromotionDialog({
-    super.key,
-    required this.color,
-    required this.onPieceSelected,
+    required this.color, required this.onPieceSelected, required this.pieceTheme, super.key,
     this.onCancelled,
   });
+  final PieceColor color;
+  final PieceTheme pieceTheme;
+  final void Function(PromotionPiece) onPieceSelected;
+  final VoidCallback? onCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +27,7 @@ class PromotionDialog extends StatelessWidget {
         children: PromotionPiece.values.map((promotionPiece) {
           return _PromotionOption(
             piece: Piece(type: _getPieceType(promotionPiece), color: color),
+            pieceTheme: pieceTheme,
             onTap: () => onPieceSelected(promotionPiece),
           );
         }).toList(),
@@ -57,31 +59,35 @@ class PromotionDialog extends StatelessWidget {
 }
 
 class _PromotionOption extends StatelessWidget {
-  final Piece piece;
-  final VoidCallback onTap;
   
   const _PromotionOption({
     required this.piece,
+    required this.pieceTheme,
     required this.onTap,
   });
+  final Piece piece;
+  final PieceTheme pieceTheme;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final assetPath = PieceThemes.getAssetPath(pieceTheme, piece);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(8),
-        child: Text(
-          PieceThemes.getSymbol(piece),
-          style: PieceThemes.getSymbolStyle(size: 60, color: piece.color),
+        child: SvgPicture.asset(
+          assetPath,
+          width: 48,
+          height: 48,
         ),
       ),
     );
   }
 }
 
-Future<PromotionPiece?> showPromotionDialog(BuildContext context, {required PieceColor color}) async {
+Future<PromotionPiece?> showPromotionDialog(BuildContext context, {required PieceColor color, required PieceTheme pieceTheme}) async {
   PromotionPiece? selected;
 
   await showDialog<void>(
@@ -89,6 +95,7 @@ Future<PromotionPiece?> showPromotionDialog(BuildContext context, {required Piec
     barrierDismissible: false,
     builder: (context) => PromotionDialog(
       color: color,
+      pieceTheme: pieceTheme,
       onPieceSelected: (piece) => {
         selected = piece,
         Navigator.of(context).pop,

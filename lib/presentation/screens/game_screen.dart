@@ -216,6 +216,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           interactive: isInProgress && !hasPendingMove && !isDisconnected,
                           interactiveColor: _getInteractiveColor(gameState),
                           theme: BoardThemesColors.fromTheme(settings.boardTheme),
+                          pieceTheme: settings.pieceTheme,
                           onSquareSelected: (square) => _handleSquareSelected(square, gameState, gameController),
                           onMove: (from, to) => _handleMove(from, to, gameState, gameController),
                         ),
@@ -372,7 +373,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (gameController.requiresPromotion(from, to)) {
       final piece = gameController.getPieceAt(from);
       if (piece != null) {
-        promotion = await showPromotionDialog(context, color: piece.color);
+        promotion = await showPromotionDialog(context, color: piece.color, pieceTheme: ref.read(settingsControllerProvider).pieceTheme);
         if (promotion == null) {
           // User cancelled promotion dialog
           setState(() {

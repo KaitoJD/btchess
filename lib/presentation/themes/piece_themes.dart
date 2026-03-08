@@ -8,7 +8,7 @@ abstract class PieceThemes {
     final colorName = piece.color == PieceColor.white ? 'w' : 'b';
     final pieceLetter = piece.type.letter.toUpperCase();
 
-    return 'assets/pieces/$themeName/$colorName$pieceLetter.svg';
+    return 'assets/piece/$themeName/$colorName$pieceLetter.svg';
   }
 
   static String getSymbol(Piece piece) {

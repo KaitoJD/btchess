@@ -1,42 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/piece.dart';
 import '../../../domain/models/square.dart';
+import '../../../infrastructure/persistence/settings_repository.dart';
 import '../../themes/board_themes.dart';
 import 'piece_widget.dart';
 
 class SquareDragData {
-  final Square square;
-  final Piece piece;
 
   const SquareDragData({
     required this.square,
     required this.piece,
   });
+  final Square square;
+  final Piece piece;
 }
 
 class SquareWidget extends StatelessWidget {
-  final Square square;
-  final Piece? piece;
-  final double size;
-  final BoardThemesColors theme;
-  final bool isSelected;
-  final bool isLegalMove;
-  final bool isLastMove;
-  final bool isCheck;
-  final bool canDrag;
-  final bool showFileCoordinate;
-  final bool showRankCoordinate;
-  final bool isFlipped;
-  final VoidCallback? onTap;
-  final VoidCallback? onDragStarted;
-  final VoidCallback? onDragEnd;
-  final void Function(SquareDragData)? onPieceDropped;
 
   const SquareWidget({
-    super.key,
-    required this.square,
-    required this.size,
-    required this.theme,
+    required this.square, required this.size, required this.theme, required this.pieceTheme, super.key,
     this.piece,
     this.isSelected = false,
     this.isLegalMove = false,
@@ -51,6 +33,23 @@ class SquareWidget extends StatelessWidget {
     this.onDragEnd,
     this.onPieceDropped,
   });
+  final Square square;
+  final Piece? piece;
+  final double size;
+  final BoardThemesColors theme;
+  final PieceTheme pieceTheme;
+  final bool isSelected;
+  final bool isLegalMove;
+  final bool isLastMove;
+  final bool isCheck;
+  final bool canDrag;
+  final bool showFileCoordinate;
+  final bool showRankCoordinate;
+  final bool isFlipped;
+  final VoidCallback? onTap;
+  final VoidCallback? onDragStarted;
+  final VoidCallback? onDragEnd;
+  final void Function(SquareDragData)? onPieceDropped;
 
   @override
   Widget build(BuildContext context) {
@@ -150,14 +149,14 @@ class SquareWidget extends StatelessWidget {
       return DraggablePieceWidget(
         piece: piece!,
         size: size,
-        canDrag: true,
+        pieceTheme: pieceTheme,
         dragData: SquareDragData(square: square, piece: piece!),
         onDragStarted: onDragStarted,
         onDragEnd: onDragEnd,
       );
     }
 
-    return PieceWidget(piece: piece!, size: size);
+    return PieceWidget(piece: piece!, size: size, pieceTheme: pieceTheme);
   }
 
   Widget _buildCoordinates() {

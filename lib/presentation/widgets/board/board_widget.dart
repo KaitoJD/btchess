@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/move.dart';
 import '../../../domain/models/piece.dart';
 import '../../../domain/models/square.dart';
+import '../../../infrastructure/persistence/settings_repository.dart';
 import '../../themes/board_themes.dart';
 import 'board_coordinates_widget.dart';
 import 'square_widget.dart';
@@ -10,6 +11,23 @@ typedef OnMoveCallBack = void Function(Square from, Square to);
 typedef OnSquareSelectedCallBack = void Function(Square square);
 
 class BoardWidget extends StatefulWidget {
+
+  const BoardWidget({
+    required this.pieces, super.key,
+    this.selectedSquare,
+    this.legalMoves = const [],
+    this.lastMove,
+    this.checkSquare,
+    this.isFlipped = false,
+    this.showCoordinates = true,
+    this.interactive = true,
+    this.interactiveColor,
+    this.theme = BoardThemesColors.classic,
+    this.pieceTheme = PieceTheme.standard,
+    this.onMove,
+    this.onSquareSelected,
+    this.size,
+  });
   final Map<int, Piece> pieces;
   final Square? selectedSquare;
   final List<Square> legalMoves;
@@ -20,26 +38,10 @@ class BoardWidget extends StatefulWidget {
   final bool interactive;
   final PieceColor? interactiveColor;
   final BoardThemesColors theme;
+  final PieceTheme pieceTheme;
   final OnMoveCallBack? onMove;
   final OnSquareSelectedCallBack? onSquareSelected;
   final double? size;
-
-  const BoardWidget({
-    super.key,
-    required this.pieces,
-    this.selectedSquare,
-    this.legalMoves = const [],
-    this.lastMove,
-    this.checkSquare,
-    this.isFlipped = false,
-    this.showCoordinates = true,
-    this.interactive = true,
-    this.interactiveColor,
-    this.theme = BoardThemesColors.classic,
-    this.onMove,
-    this.onSquareSelected,
-    this.size,
-  });
 
   @override
   State<BoardWidget> createState() => _BoardWidgetState();
@@ -119,6 +121,7 @@ class _BoardWidgetState extends State<BoardWidget> {
       square: square,
       size: squareSize,
       theme: widget.theme,
+      pieceTheme: widget.pieceTheme,
       piece: piece,
       isSelected: isSelected,
       isLegalMove: isLegalmove,

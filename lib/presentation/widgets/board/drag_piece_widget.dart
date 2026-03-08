@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/piece.dart';
 import '../../../domain/models/square.dart';
+import '../../../infrastructure/persistence/settings_repository.dart';
 import 'piece_widget.dart';
 import 'square_widget.dart';
 
 class DragPieceOverlay extends StatelessWidget {
+
+  const DragPieceOverlay({
+    required this.piece, required this.position, required this.size, required this.pieceTheme, super.key,
+  });
   final Piece piece;
   final Offset position;
   final double size;
-
-  const DragPieceOverlay({
-    super.key,
-    required this.piece,
-    required this.position,
-    required this.size,
-  });
+  final PieceTheme pieceTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +26,7 @@ class DragPieceOverlay extends StatelessWidget {
           child: PieceWidget(
             piece: piece,
             size: size,
+            pieceTheme: pieceTheme,
           ),
         ),
       ),
@@ -35,15 +35,15 @@ class DragPieceOverlay extends StatelessWidget {
 }
 
 class DragState {
-  final Square fromSquare;
-  final Piece piece;
-  final Offset position;
 
   const DragState({
     required this.fromSquare,
     required this.piece,
     required this.position,
   });
+  final Square fromSquare;
+  final Piece piece;
+  final Offset position;
 
   DragState copyWith({
     Square? fromSquare,
