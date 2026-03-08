@@ -54,7 +54,8 @@ class _BoardWidgetState extends State<BoardWidget> {
       builder: (context, constrains) {
         final availableSize = widget.size ?? (constrains.maxWidth < constrains.maxHeight ? constrains.maxWidth : constrains.maxHeight);
         final coordinatePadding = widget.showCoordinates ? 20.0 : 0.0;
-        final boardSize = availableSize - coordinatePadding;
+        const borderWidth = 2.0;
+        final boardSize = availableSize - coordinatePadding - (borderWidth * 2);
         final squareSize = boardSize / 8;
         final board = _buildBoard(squareSize);
 
