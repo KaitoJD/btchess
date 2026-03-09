@@ -55,11 +55,16 @@ class ChessService {
       final dcSquare = _toDartchessSquare(square);
       final legalMoves = position.legalMoves;
       final moves = <Square>[];
+      final isKing = position.board.pieceAt(dcSquare)?.role == dc.Role.king;
 
       for (final entry in legalMoves.entries) {
         if (entry.key == dcSquare) {
           for (final toSquare in entry.value.squares) {
-            moves.add(_fromDartchessSquare(toSquare));
+            var dest = _fromDartchessSquare(toSquare);
+            if (isKing) {
+              dest = _castlingRookToKingDest(square, dest);
+            }
+            moves.add(dest);
           }
         }
       }
@@ -80,10 +85,15 @@ class ChessService {
 
       for (final entry in legalMoves.entries) {
         final fromSquare = _fromDartchessSquare(entry.key);
+        final isKing = position.board.pieceAt(entry.key)?.role == dc.Role.king;
         final toSquares = <Square>[];
 
         for (final toSquare in entry.value.squares) {
-          toSquares.add(_fromDartchessSquare(toSquare));
+          var dest = _fromDartchessSquare(toSquare);
+          if (isKing) {
+            dest = _castlingRookToKingDest(fromSquare, dest);
+          }
+          toSquares.add(dest);
         }
 
         if (toSquares.isNotEmpty) {
@@ -107,7 +117,8 @@ class ChessService {
   ) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-      final move = _createDartchessMove(from, to, promotion);
+      final dcTo = _castlingKingDestToRook(position, from, to);
+      final move = _createDartchessMove(from, dcTo, promotion);
 
       return position.isLegal(move);
     } catch (e) {
@@ -127,16 +138,18 @@ class ChessService {
   ) {
     try {
       final position = dc.Chess.fromSetup(dc.Setup.parseFen(fen));
-      final dcMove = _createDartchessMove(from, to, promotion);
+      // Convert user-facing castling destination to dartchess rook-square
+      final dcTo = _castlingKingDestToRook(position, from, to);
+      final dcMove = _createDartchessMove(from, dcTo, promotion);
 
       if (!position.isLegal(dcMove)) {
         return MoveResult.failure('Illegal move');
       }
 
       final movedPiece = _getPieceAt(position, from);
-      final capturedPiece = _getCapturedPiece(position, from, to);
-      final isCastling = _isCastlingMove(position, from, to);
-      final isEnPassant = _isEnPassantMove(position, from, to);
+      final isCastling = _isCastlingMove(position, from, dcTo);
+      final capturedPiece = isCastling ? null : _getCapturedPiece(position, from, dcTo);
+      final isEnPassant = _isEnPassantMove(position, from, dcTo);
       final newPosition = position.play(dcMove);
       final newFen = newPosition.fen;
       final (_, san) = position.makeSan(dcMove);
@@ -434,6 +447,39 @@ class ChessService {
     if (epSquare == null) return false;
 
     return _toDartchessSquare(to) == epSquare;
+  }
+
+  // Converts dartchess "king captures rook" destination to the actual
+  // king landing square. For non-castling moves, returns `to` unchanged.
+  Square _castlingRookToKingDest(Square from, Square to) {
+    final fileDiff = (to.file - from.file).abs();
+    // Only king moves with fileDiff > 1 are castling in dartchess output
+    if (fileDiff <= 1) return to;
+
+    // Kingside: rook is on h-file → king lands on g-file
+    if (to.file > from.file) {
+      return Square(6, from.rank); // g-file
+    }
+    // Queenside: rook is on a-file → king lands on c-file
+    return Square(2, from.rank); // c-file
+  }
+
+  // Converts a user-facing castling king destination (g1/c1/g8/c8) back to
+  // the dartchess "king captures rook" square (h1/a1/h8/a8).
+  // For non-castling moves, returns `to` unchanged.
+  Square _castlingKingDestToRook(dc.Position position, Square from, Square to) {
+    final piece = position.board.pieceAt(_toDartchessSquare(from));
+    if (piece?.role != dc.Role.king) return to;
+
+    final fileDiff = (to.file - from.file).abs();
+    if (fileDiff != 2) return to;
+
+    // Kingside: g-file → h-file rook
+    if (to.file > from.file) {
+      return Square(7, from.rank); // h-file
+    }
+    // Queenside: c-file → a-file rook
+    return Square(0, from.rank); // a-file
   }
 
   GameStatus _getGameStatus(dc.Position position) {
