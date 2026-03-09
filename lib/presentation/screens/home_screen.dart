@@ -18,11 +18,11 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const Spacer(flex: 1),
+              const Spacer(),
               _buildHeader(context),
               const Spacer(flex: 2),
               _buildMainActions(context, ref),
-              const Spacer(flex: 1),
+              const Spacer(),
               _buildResumeGameCard(context, ref),
               const Spacer(flex: 2),
               _buildBottomNav(context),

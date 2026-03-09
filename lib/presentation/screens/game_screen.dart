@@ -133,7 +133,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final isBleGame = gameState.mode.isBle;
 
     // BLE-specific state
-    final hasPendingMove = isBleGame ? ref.watch(hasPendingMoveProvider) : false;
+    final hasPendingMove = isBleGame && ref.watch(hasPendingMoveProvider);
     final bleConnectionStatus = isBleGame ? ref.watch(bleConnectionStatusProvider) : null;
 
     // Listen for BLE errors and show snackbar

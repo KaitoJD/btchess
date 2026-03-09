@@ -30,7 +30,6 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
       onGenerateRoute: AppRouter.onGenerateRoute,
       home: const _AppLoader(),
     );

@@ -92,7 +92,6 @@ class BlePeripheralManager {
             permissions: [
               AttributePermissions.writeable.index,
             ],
-            value: null,
           ),
           BleCharacteristic(
             uuid: _stateNotifyCharUuid,
@@ -103,7 +102,6 @@ class BlePeripheralManager {
             permissions: [
               AttributePermissions.readable.index,
             ],
-            value: null,
           ),
           BleCharacteristic(
             uuid: _controlCharUuid,
@@ -117,7 +115,6 @@ class BlePeripheralManager {
               AttributePermissions.readable.index,
               AttributePermissions.writeable.index,
             ],
-            value: null,
           ),
         ],
       ),

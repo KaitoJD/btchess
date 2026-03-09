@@ -138,7 +138,7 @@ class BleConnection implements BleTransport {
     }
 
     final bytes = _codec.encode(message);
-    await _moveCharacteristic!.write(bytes.toList(), withoutResponse: false);
+    await _moveCharacteristic!.write(bytes.toList());
   }
 
   // Sends a control message (handshake, sync, etc.)
@@ -153,7 +153,7 @@ class BleConnection implements BleTransport {
     }
 
     final bytes = _codec.encode(message);
-    await _controlCharacteristic!.write(bytes.toList(), withoutResponse: false);
+    await _controlCharacteristic!.write(bytes.toList());
   }
   
   // Sends a state notification (for host)
@@ -169,7 +169,7 @@ class BleConnection implements BleTransport {
 
     final bytes = _codec.encode(message);
 
-    await _stateNotifyCharacteristic!.write(bytes.toList(), withoutResponse: false);
+    await _stateNotifyCharacteristic!.write(bytes.toList());
   }
 
   // Disconnects from the device
