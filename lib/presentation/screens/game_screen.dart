@@ -191,6 +191,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   capturedPieces: _getCapturedPieces(gameState.moves, _isFlipped ? PieceColor.white : PieceColor.black),
                   materialAdvantage: _getMaterialAdvantage(gameState.moves, _isFlipped ? PieceColor.white : PieceColor.black),
                   isTopPlayer: true,
+                  pieceTheme: settings.pieceTheme,
                 ),
               ),
               Expanded(
@@ -239,6 +240,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   isInCheck: gameState.isCheck && ((_isFlipped && gameState.isBlackTurn) || (!_isFlipped && gameState.isWhiteTurn)),
                   capturedPieces: _getCapturedPieces(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
                   materialAdvantage: _getMaterialAdvantage(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
+                  pieceTheme: settings.pieceTheme,
                 ),
               ),
               Container(

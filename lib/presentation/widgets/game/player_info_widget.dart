@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../domain/models/piece.dart';
 import '../../../domain/models/player.dart';
+import '../../../infrastructure/persistence/settings_repository.dart';
+import '../../themes/piece_themes.dart';
 
 class PlayerInfoWidget extends StatelessWidget {
 
@@ -11,6 +14,7 @@ class PlayerInfoWidget extends StatelessWidget {
     this.capturedPieces = const [],
     this.materialAdvantage = 0,
     this.isTopPlayer = false,
+    this.pieceTheme = PieceTheme.standard,
   });
   final Player player;
   final bool isActive;
@@ -18,6 +22,7 @@ class PlayerInfoWidget extends StatelessWidget {
   final List<Piece> capturedPieces;
   final int materialAdvantage;
   final bool isTopPlayer;
+  final PieceTheme pieceTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -119,15 +124,42 @@ class PlayerInfoWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCapturedPieces(ThemeData theme) {
-    final pieceSymbols = capturedPieces.map((p) => p.symbol).join();
+  static const _pieceOrder = {
+    PieceType.pawn: 0,
+    PieceType.knight: 1,
+    PieceType.bishop: 2,
+    PieceType.rook: 3,
+    PieceType.queen: 4,
+  };
 
-    return Text(
-      pieceSymbols,
-      style: theme.textTheme.bodySmall?.copyWith(
-        fontSize: 14,
-        letterSpacing: -1,
-      ),
+  Widget _buildCapturedPieces(ThemeData theme) {
+    final sorted = List<Piece>.from(capturedPieces)
+      ..sort((a, b) => (_pieceOrder[a.type] ?? 0) - (_pieceOrder[b.type] ?? 0));
+
+    final groups = <List<Piece>>[];
+    for (final piece in sorted) {
+      if (groups.isEmpty || groups.last.first.type != piece.type) {
+        groups.add([piece]);
+      } else {
+        groups.last.add(piece);
+      }
+    }
+
+    const double pieceSize = 16;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < groups.length; i++) ...[
+          if (i > 0) const SizedBox(width: 4),
+          for (final piece in groups[i])
+            SvgPicture.asset(
+              PieceThemes.getAssetPath(pieceTheme, piece),
+              width: pieceSize,
+              height: pieceSize,
+            ),
+        ],
+      ],
     );
   }
 }
