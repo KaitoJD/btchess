@@ -77,31 +77,51 @@ class GameActionBar extends StatelessWidget {
             label: 'Flip',
             onPressed: onFlipBoard,
           ),
-          if (canUndo)
-            _ActionButton(
+          Visibility(
+            visible: canUndo,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: _ActionButton(
               icon: Icons.undo,
               label: 'Undo',
               onPressed: onUndo,
             ),
-          if (isGameInProgress && isLocalPlayerTurn)
-            _ActionButton(
+          ),
+          Visibility(
+            visible: isGameInProgress && isLocalPlayerTurn,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: _ActionButton(
               icon: Icons.handshake_outlined,
               label: 'Draw',
               onPressed: isWaitingForAck ? null : onOfferDraw,
             ),
-          if (isGameInProgress)
-            _ActionButton(
+          ),
+          Visibility(
+            visible: isGameInProgress,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: _ActionButton(
               icon: Icons.flag_outlined,
               label: 'Resign',
               onPressed: isWaitingForAck ? null : onResign,
               isDestructive: true,
             ),
-          if (!isGameInProgress)
-            _ActionButton(
+          ),
+          Visibility(
+            visible: !isGameInProgress,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: _ActionButton(
               icon: Icons.add,
               label: 'New Game',
               onPressed: onNewGame,
             ),
+          ),
         ],
       ),
     );

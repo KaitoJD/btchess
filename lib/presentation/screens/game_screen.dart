@@ -178,15 +178,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ),
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              // BLE connection-loss banner
-              if (isDisconnected)
-                _buildConnectionBanner(context, isReconnecting: isReconnecting),
-              if (gameState.isEnded)
-                GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, result: gameState.result, asBanner: true),
-              if (gameState.isCheck && !gameState.isEnded)
-                GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, asBanner: true),
+              Column(
+                children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: PlayerInfoWidget(
@@ -266,6 +261,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 onFlipBoard: () => setState(() => _isFlipped = !_isFlipped),
                 onNewGame: _handleNewGame,
               ),
+            ],
+          ),
+              // Banners overlaid on top so they don't shift the layout
+              if (isDisconnected)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildConnectionBanner(context, isReconnecting: isReconnecting),
+                ),
+              if (gameState.isEnded)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, result: gameState.result, asBanner: true),
+                ),
+              if (gameState.isCheck && !gameState.isEnded)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, asBanner: true),
+                ),
             ],
           ),
         ),

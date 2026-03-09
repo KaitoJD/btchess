@@ -74,23 +74,24 @@ class PlayerInfoWidget extends StatelessWidget {
                     ],
                   ],
                 ),
-                if (capturedPieces.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  _buildCapturedPieces(theme),
-                ],
+                const SizedBox(height: 4),
+                capturedPieces.isNotEmpty
+                    ? _buildCapturedPieces(theme)
+                    : SizedBox(height: theme.textTheme.bodySmall?.fontSize ?? 14),
               ],
             ),
           ),
-          if (materialAdvantage > 0) ...[
-            const SizedBox(width: 8),
-            Text(
+          const SizedBox(width: 8),
+          Opacity(
+            opacity: materialAdvantage > 0 ? 1.0 : 0.0,
+            child: Text(
               '+$materialAdvantage',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.bold,
-              )
+              ),
             ),
-          ],
+          ),
         ],
       ),
     );
