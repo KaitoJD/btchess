@@ -96,7 +96,7 @@ void main() {
     testWidgets('handles square tap', (tester) async {
       Square? tappedSquare;
       await tester.pumpWidget(buildTestBoard(
-        onSquareSelected: (square) => tappedSquare = square,
+        onSquareSelected: (square) => tappedSquare == square,
       ));
 
       // Tap somewhere on the board
