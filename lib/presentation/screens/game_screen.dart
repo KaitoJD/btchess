@@ -207,7 +207,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         BoardWidget(
                           pieces: _getPiecesMap(gameController),
                           selectedSquare: _selectedSquare,
-                          legalMoves: _legalMoves,
+                          legalMoves: settings.showLegalMoves ? _legalMoves : [],
                           lastMove: gameState.lastMove,
                           checkSquare: _getCheckSquare(gameState, gameController),
                           isFlipped: _isFlipped,
