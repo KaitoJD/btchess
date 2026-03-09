@@ -278,13 +278,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   right: 0,
                   child: GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, result: gameState.result, asBanner: true),
                 ),
-              if (gameState.isCheck && !gameState.isEnded)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, asBanner: true),
-                ),
             ],
           ),
         ),

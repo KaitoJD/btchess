@@ -30,13 +30,11 @@ class GameStatusWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     String statusText;
-    Color? backgroundColor;
     Color? textColor;
 
     switch (status) {
       case GameStatus.check:
         statusText = '${currentTurn.name.toUpperCase()} is in CHECK';
-        backgroundColor = colorScheme.errorContainer;
         textColor = colorScheme.onErrorContainer;
         break;
       case GameStatus.playing:
@@ -44,22 +42,6 @@ class GameStatusWidget extends StatelessWidget {
         break;
       default:
         statusText = status.name;
-    }
-
-    if (asBanner && status == GameStatus.check) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        color: backgroundColor,
-        child: Text(
-          statusText,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
     }
 
     return Text(
