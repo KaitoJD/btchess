@@ -248,7 +248,51 @@ void main() {
           Square.fromAlgebraic('e1'),
         );
         final destinations = moves.map((s) => s.algebraic).toList();
-        expect(destinations, contains('h1')); // kingside castle (dartchess uses king-captures-rook)
+        expect(destinations, contains('g1')); // kingside castle destination
+        expect(destinations, isNot(contains('h1'))); // should not show rook square
+      });
+
+      test('king can castle queenside when available', () {
+        // White can castle queenside: king e1, rook a1, b1-d1 all clear
+        const fen = 'rnbqkbnr/pppppppp/8/8/8/1PN1BQ2/P1PPPPPP/R3K1NR w KQkq - 0 1';
+        final moves = service.getLegalMoves(fen, Square.fromAlgebraic('e1'));
+        final destinations = moves.map((s) => s.algebraic).toList();
+        expect(destinations, contains('c1')); // queenside castle destination
+        expect(destinations, isNot(contains('a1'))); // should not show rook square
+      });
+
+      test('castling move does not report captured piece', () {
+        final result = service.makeMove(
+          FenFixtures.whiteCanCastleKingside,
+          Square.fromAlgebraic('e1'),
+          Square.fromAlgebraic('g1'),
+        );
+        expect(result.success, isTrue);
+        expect(result.move!.isCastling, isTrue);
+        expect(result.move!.capturedPiece, isNull);
+        expect(result.move!.isCapture, isFalse);
+        expect(result.move!.san, 'O-O');
+      });
+
+      test('castling move stores king destination, not rook square', () {
+        final result = service.makeMove(
+          FenFixtures.whiteCanCastleKingside,
+          Square.fromAlgebraic('e1'),
+          Square.fromAlgebraic('g1'),
+        );
+        expect(result.success, isTrue);
+        expect(result.move!.to.algebraic, 'g1');
+      });
+
+      test('castling move is legal with king destination square', () {
+        expect(
+          service.isLegalMove(
+            FenFixtures.whiteCanCastleKingside,
+            Square.fromAlgebraic('e1'),
+            Square.fromAlgebraic('g1'),
+          ),
+          isTrue,
+        );
       });
     });
 
