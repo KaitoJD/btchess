@@ -14,9 +14,6 @@ abstract class AudioAssets {
   // Piece capture sound.
   static const String capture = '$_basePath/capture.mp3';
 
-  // Check notification sound.
-  static const String check = '$_basePath/check.mp3';
-
   // Castling sound.
   static const String castle = '$_basePath/castle.mp3';
 
@@ -33,7 +30,6 @@ abstract class AudioAssets {
   static const List<String> all = [
     move,
     capture,
-    check,
     castle,
     gameStart,
     gameEnd,

@@ -21,9 +21,6 @@ class AudioService {
   // Play the piece-capture sound.
   Future<void> playCapture() => _play(AudioAssets.capture);
 
-  // Play the check notification sound.
-  Future<void> playCheck() => _play(AudioAssets.check);
-
   // Play the castling sound.
   Future<void> playCastle() => _play(AudioAssets.castle);
 
@@ -38,18 +35,15 @@ class AudioService {
 
   // Play sound for a move based on its characteristics.
   //
-  // Priority: game end > check > capture > castle > normal move.
+  // Priority: game end > capture > castle > normal move.
   Future<void> playMoveSound({
     bool isCheckmate = false,
     bool isGameEnd = false,
-    bool isCheck = false,
     bool isCapture = false,
     bool isCastling = false,
   }) async {
     if (isCheckmate || isGameEnd) {
       await playGameEnd();
-    } else if (isCheck) {
-      await playCheck();
     } else if (isCapture) {
       await playCapture();
     } else if (isCastling) {

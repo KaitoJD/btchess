@@ -58,7 +58,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       audioService.playMoveSound(
         isCheckmate: lastMove.isCheckmate,
         isGameEnd: next.isEnded,
-        isCheck: lastMove.isCheck,
         isCapture: lastMove.isCapture,
         isCastling: lastMove.isCastling,
       );
