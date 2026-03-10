@@ -12,19 +12,31 @@ class MessageFixtures {
     messageId: 1,
     protocolVersion: 0x01,
     role: 0x02, // CLIENT
+    hostColor: 0x00, // unspecified (client doesn't set this)
   );
 
   static const handshakeHost = HandshakeMessage(
     messageId: 1,
     protocolVersion: 0x01,
     role: 0x01, // HOST
+    hostColor: 0x01, // white
   );
 
-  /// HANDSHAKE client: [0x00, 0x00, 0x01, 0x01, 0x02]
-  static final handshakeClientBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x02]);
+  static const handshakeHostBlack = HandshakeMessage(
+    messageId: 1,
+    protocolVersion: 0x01,
+    role: 0x01, // HOST
+    hostColor: 0x02, // black
+  );
 
-  /// HANDSHAKE host: [0x00, 0x00, 0x01, 0x01, 0x01]
-  static final handshakeHostBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x01]);
+  /// HANDSHAKE client: [0x00, 0x00, 0x01, 0x01, 0x02, 0x00]
+  static final handshakeClientBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x02, 0x00]);
+
+  /// HANDSHAKE host (white): [0x00, 0x00, 0x01, 0x01, 0x01, 0x01]
+  static final handshakeHostBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x01, 0x01]);
+
+  /// HANDSHAKE host (black): [0x00, 0x00, 0x01, 0x01, 0x01, 0x02]
+  static final handshakeHostBlackBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x01, 0x02]);
 
   // --- Move ---
 

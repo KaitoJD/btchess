@@ -26,6 +26,7 @@ void main() {
         expect(handshake.messageId, 1);
         expect(handshake.protocolVersion, 0x01);
         expect(handshake.role, 0x02);
+        expect(handshake.hostColor, 0x00);
         expect(handshake.isClient, isTrue);
       });
 
@@ -35,6 +36,29 @@ void main() {
         expect(decoded.messageId, MessageFixtures.handshakeHost.messageId);
         expect(decoded.protocolVersion, MessageFixtures.handshakeHost.protocolVersion);
         expect(decoded.role, MessageFixtures.handshakeHost.role);
+        expect(decoded.hostColor, MessageFixtures.handshakeHost.hostColor);
+      });
+
+      test('encodes host handshake with black color', () {
+        final bytes = codec.encode(MessageFixtures.handshakeHostBlack);
+        expect(bytes, MessageFixtures.handshakeHostBlackBytes);
+      });
+
+      test('decodes host handshake with black color', () {
+        final msg = codec.decode(MessageFixtures.handshakeHostBlackBytes);
+        expect(msg, isA<HandshakeMessage>());
+        final handshake = msg as HandshakeMessage;
+        expect(handshake.messageId, 1);
+        expect(handshake.role, 0x01);
+        expect(handshake.hostColor, 0x02);
+        expect(handshake.isHost, isTrue);
+      });
+
+      test('round-trips host handshake with black color', () {
+        final encoded = codec.encode(MessageFixtures.handshakeHostBlack);
+        final decoded = codec.decode(encoded) as HandshakeMessage;
+        expect(decoded.hostColor, 0x02);
+        expect(decoded.role, 0x01);
       });
     });
 
