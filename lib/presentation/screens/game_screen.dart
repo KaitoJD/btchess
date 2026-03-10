@@ -360,7 +360,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _handleSquareSelected(Square square, dynamic gameState, dynamic gameController) {
     final piece = gameController.getPieceAt(square);
-    if (piece != null && piece.color == gameState.currentTurn) {
+    final interactiveColor = _getInteractiveColor(gameState);
+    if (piece != null && piece.color == gameState.currentTurn &&
+        (interactiveColor == null || piece.color == interactiveColor)) {
       setState(() {
         _selectedSquare = square;
         _legalMoves = gameController.getLegalMoves(square);

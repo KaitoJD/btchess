@@ -140,6 +140,8 @@ class _BoardWidgetState extends State<BoardWidget> {
   }
 
   void _handleSquareTap(Square square) {
+    if (!widget.interactive) return;
+
     widget.onSquareSelected?.call(square);
 
     if (widget.selectedSquare != null && widget.legalMoves.contains(square) && widget.selectedSquare != square) {

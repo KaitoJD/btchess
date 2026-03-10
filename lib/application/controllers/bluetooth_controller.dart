@@ -275,6 +275,11 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
     if (state.isHost) {
       // Host is authoritative – apply locally, then notify client
+      if (!_gameController.isLocalPlayerTurn()) {
+        state = state.copyWith(lastError: 'Not your turn');
+        return;
+      }
+
       final success = _gameController.makeMove(
         from: move.from,
         to: move.to,
