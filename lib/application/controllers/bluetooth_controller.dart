@@ -202,6 +202,11 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // ConnectionManager handles handshake internally and transitions to connected
     } catch (e) {
+      // Clean up transport/connection on failure
+      try {
+        await _connectionManager.disconnect();
+      } catch (_) {}
+
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
         lastError: 'Failed to join game: $e',
@@ -211,11 +216,23 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   }
 
   // Called when a client connects to this host's peripheral
-  void _onHostClientConnected(String deviceId) {
+  Future<void> _onHostClientConnected(String deviceId) async {
     if (!mounted) return;
 
-    final transport = BleHostTransport(_bluetoothService.peripheralManager);
-    _connectionManager.setupConnection(transport);
+    state = state.copyWith(
+      connectionStatus: BleConnectionStatus.connecting,
+      clearError: true,
+    );
+
+    try {
+      final transport = BleHostTransport(_bluetoothService.peripheralManager);
+      await _connectionManager.setupConnection(transport);
+    } catch (e) {
+      state = state.copyWith(
+        connectionStatus: BleConnectionStatus.error,
+        lastError: 'Client connection failed: $e',
+      );
+    }
   }
 
   // Called when the host accepts a client connection
@@ -376,6 +393,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
     state = state.copyWith(
       connectionStatus: newStatus,
+      lastError: connState == cm.ConnectionState.error
+          ? _connectionManager.lastError
+          : null,
     );
 
     if (connState == cm.ConnectionState.disconnected) {

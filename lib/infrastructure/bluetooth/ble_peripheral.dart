@@ -167,6 +167,12 @@ class BlePeripheralManager {
     int offset,
     Uint8List? value,
   ) {
+    Logger.debug(
+      'Write request: device=$deviceId, char=$characteristicId, '
+      'offset=$offset, bytes=${value?.length ?? 0}',
+      tag: 'BlePeripheralManager',
+    );
+
     try {
       final data = value ?? Uint8List(0);
       if (data.isEmpty) {
@@ -185,7 +191,10 @@ class BlePeripheralManager {
 
       return WriteRequestResult(status: 0); // GATT_SUCCESS
     } catch (e) {
-      Logger.error('Failed to handle write request: $e', tag: 'BlePeripheralManager');
+      Logger.error(
+        'Failed to handle write request on char=$characteristicId: $e',
+        tag: 'BlePeripheralManager',
+      );
       return WriteRequestResult(status: 0x0D); // error
     }
   }
@@ -243,6 +252,7 @@ class BlePeripheralManager {
   }
 
   void handleClientConnected(String deviceId) {
+    if (_connectedClientId == deviceId) return;
     _connectedClientId = deviceId;
     _clientConnectedController.add(deviceId);
     stopAdvertising();

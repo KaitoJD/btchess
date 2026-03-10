@@ -25,6 +25,9 @@ class ConnectionManager {
   // Current connection state
   ConnectionState _state = ConnectionState.disconnected;
 
+  // Last error message for diagnostics
+  String? _lastError;
+
   // Chunk handler for large messages
   final ChunkHandler _chunkHandler = ChunkHandler();
 
@@ -73,6 +76,9 @@ class ConnectionManager {
   // The connected device name
   String? get connectedDeviceName => _connection?.deviceName;
 
+  // Last error message (readable by controllers for UI surfacing)
+  String? get lastError => _lastError;
+
   // Sets up connection with an existing BleTransport (client or host)
   Future<void> setupConnection(BleTransport connection) async {
     _connection = connection;
@@ -89,6 +95,7 @@ class ConnectionManager {
       _updateState(ConnectionState.connected);
       _startPingTimer();
     } catch (e) {
+      _lastError = e.toString();
       _updateState(ConnectionState.error);
       rethrow;
     }

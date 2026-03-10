@@ -57,18 +57,34 @@ class BleConnection implements BleTransport {
 
   Future<void> initialize() async {
     try {
-      // Discover services
-      final services = await device.discoverServices();
+      // Clear Android GATT cache to force fresh service discovery.
+      // Without this, Android may return a stale cached service list from
+      // a previous connection that didn't have the chess service registered.
+      Logger.debug('Clearing GATT cache...', tag: 'BleConnection');
+      try {
+        await device.clearGattCache();
+        await Future.delayed(const Duration(milliseconds: 300));
+      } catch (e) {
+        Logger.debug('clearGattCache not supported or failed: $e', tag: 'BleConnection');
+      }
 
-      // Find our chess service
+      // Discover services
+      Logger.debug('Discovering services...', tag: 'BleConnection');
+      final services = await device.discoverServices();
+      Logger.debug('Found ${services.length} services', tag: 'BleConnection');
+
+      // Find our chess service (use str128 for full 128-bit UUID comparison
+      // since Guid.toString() returns shortened form for Bluetooth Base UUIDs)
       _service = services.firstWhere(
-        (s) => s.uuid.toString().toLowerCase() == BleConstants.serviceUuid.toLowerCase(),
+        (s) => s.uuid.str128.toLowerCase() == BleConstants.serviceUuid.toLowerCase(),
         orElse: () => throw const BleConnectionException('Chess service not found on device'),
       );
+      Logger.debug('Chess service found with ${_service!.characteristics.length} characteristics', tag: 'BleConnection');
 
       // Find characteristic
       for (final char in _service!.characteristics) {
-        final uuid = char.uuid.toString().toLowerCase();
+        final uuid = char.uuid.str128.toLowerCase();
+        Logger.debug('  Characteristic: $uuid, properties: ${char.properties}', tag: 'BleConnection');
 
         if (uuid == BleConstants.moveCharacteristicUuid.toLowerCase()) {
           _moveCharacteristic = char;
@@ -80,14 +96,23 @@ class BleConnection implements BleTransport {
       }
 
       if (_moveCharacteristic == null || _stateNotifyCharacteristic == null || _controlCharacteristic == null) {
+        Logger.error(
+          'Missing characteristics - move: ${_moveCharacteristic != null}, '
+          'stateNotify: ${_stateNotifyCharacteristic != null}, '
+          'control: ${_controlCharacteristic != null}',
+          tag: 'BleConnection',
+        );
         throw const BleConnectionException('Required characteristics not found');
       }
 
       // Subscribe to notifications
+      Logger.debug('Setting up notifications...', tag: 'BleConnection');
       await _setupNotifications();
+      Logger.debug('Notifications set up successfully', tag: 'BleConnection');
 
       _isConnected = true;
     } catch (e) {
+      Logger.error('initialize() failed: $e', tag: 'BleConnection');
       throw BleConnectionException('Failed to initialize connection: $e', originalError: e);
     }
   }

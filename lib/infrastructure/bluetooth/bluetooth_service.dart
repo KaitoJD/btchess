@@ -137,10 +137,12 @@ class BluetoothService {
   Future<BleConnection> connect(BleDeviceInfo deviceInfo, {bool asHost = false}) async {
     await stopScanning();
 
+    bool bleConnected = false;
     try {
       await deviceInfo.device.connect(
         timeout: const Duration(milliseconds: TimingConstants.connectionTimeoutMs),
       );
+      bleConnected = true;
 
       await deviceInfo.device.requestMtu(BleConstants.maxMtu);
 
@@ -153,6 +155,12 @@ class BluetoothService {
 
       return connection;
     } catch (e) {
+      // Tear down the BLE link so the remote side detects disconnect promptly
+      if (bleConnected) {
+        try {
+          await deviceInfo.device.disconnect();
+        } catch (_) {}
+      }
       throw BleConnectionException('Failed to connect to device: $e', originalError: e);
     }
   }
