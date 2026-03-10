@@ -40,6 +40,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   final cm.ConnectionManager _connectionManager;
   final GameController _gameController;
 
+  // Host color code for BLE protocol: 0x01 = white, 0x02 = black
+  int _hostColorCode = 0x00;
+
   StreamSubscription<cm.ConnectionState>? _connectionStateSubscription;
   StreamSubscription<BleMessage>? _messageSubscription;
   StreamSubscription<List<BleDeviceInfo>>? _deviceScanSubscription;
@@ -138,6 +141,14 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     state = state.copyWith(scannedDevices: devices);
   }
 
+  // Sets the host color code for BLE handshake
+  //
+  // [color] is the host's chosen piece color.
+  // Must be called before [createLobby].
+  void setHostColor(PieceColor color) {
+    _hostColorCode = color == PieceColor.black ? 0x02 : 0x01;
+  }
+
   // Creates a BLE lobby by starting to advertise as a host
   //
   // Note: Actual advertising requires the peripheral implementation from Sprint 3.1
@@ -159,6 +170,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         isHost: true,
         clearError: true,
       );
+
+      // Set host color on ConnectionManager so it's included in handshake
+      _connectionManager.setHostColor(_hostColorCode);
 
       // Listen for client connections from the peripheral manager
       _clientConnectedSubscription?.cancel();
@@ -201,7 +215,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       final connection = await _bluetoothService.connect(device);
       await _connectionManager.setupConnection(connection);
 
-      // ConnectionManager handles handshake internally and transitions to connected
+      // Read host color from handshake and propagate to state
+      final hostColorCode = _connectionManager.receivedHostColor;
+      final hostColor = hostColorCode == 0x02 ? PieceColor.black : PieceColor.white;
+      state = state.copyWith(hostColor: hostColor);
     } catch (e) {
       // Clean up transport/connection on failure
       try {

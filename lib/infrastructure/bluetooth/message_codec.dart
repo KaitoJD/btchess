@@ -33,6 +33,7 @@ class MessageCodec {
             .addUint16(m.messageId)
             .addByte(m.protocolVersion)
             .addByte(m.role)
+            .addByte(m.hostColor)
             .build();
   }
 
@@ -153,12 +154,13 @@ class MessageCodec {
   }
 
   HandshakeMessage _decodeHandshake(ByteBufferReader reader) {
-    _ensureRemaining(reader, 4); // messageId(2) + version(1) + role(1)
+    _ensureRemaining(reader, 5); // messageId(2) + version(1) + role(1) + hostColor(1)
 
     return HandshakeMessage(
       messageId: reader.readUint16(),
       protocolVersion: reader.readByte(),
       role: reader.readByte(),
+      hostColor: reader.readByte(),
     );
   }
 

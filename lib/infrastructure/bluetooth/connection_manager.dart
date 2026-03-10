@@ -79,6 +79,21 @@ class ConnectionManager {
   // Last error message (readable by controllers for UI surfacing)
   String? get lastError => _lastError;
 
+  // Host color received during handshake (client only)
+  int _receivedHostColor = 0x00;
+
+  /// The host's chosen color code received during handshake.
+  /// 0x00 = unspecified, 0x01 = white, 0x02 = black.
+  int get receivedHostColor => _receivedHostColor;
+
+  // Host color to include in handshake response (host only)
+  int _hostColorCode = 0x00;
+
+  /// Sets the host color code to send during handshake.
+  void setHostColor(int colorCode) {
+    _hostColorCode = colorCode;
+  }
+
   // Sets up connection with an existing BleTransport (client or host)
   Future<void> setupConnection(BleTransport connection) async {
     _connection = connection;
@@ -120,6 +135,7 @@ class ConnectionManager {
         messageId: messageId,
         protocolVersion: BleConstants.protocolVersion,
         role: BleConstants.roleHost,
+        hostColor: _hostColorCode,
       );
       await _connection!.sendControl(response);
     } else {
@@ -142,6 +158,9 @@ class ConnectionManager {
           errorCode: BleErrorCode.versionMismatch.value,
         );
       }
+
+      // Store the host's color choice for the client to read
+      _receivedHostColor = response.hostColor;
     }
   }
 

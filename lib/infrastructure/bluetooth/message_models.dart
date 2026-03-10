@@ -16,10 +16,14 @@ class HandshakeMessage extends BleMessage {
     required super.messageId,
     required this.protocolVersion,
     required this.role,
+    this.hostColor = 0x00,
   });
 
   final int protocolVersion;
   final int role;
+
+  /// Host's chosen color: 0x00 = unspecified, 0x01 = white, 0x02 = black.
+  final int hostColor;
   
   bool get isHost => role == 0x01;
   bool get isClient => role == 0x02;
@@ -28,7 +32,7 @@ class HandshakeMessage extends BleMessage {
   MessageType get type => MessageType.handshake;
 
   @override
-  String toString() => 'Handshake(id: $messageId, version: $protocolVersion, role: ${isHost ? "HOST" : "CLIENT"})';
+  String toString() => 'Handshake(id: $messageId, version: $protocolVersion, role: ${isHost ? "HOST" : "CLIENT"}, hostColor: 0x${hostColor.toRadixString(16)})';
 }
 
 class MoveMessage extends BleMessage {

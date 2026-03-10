@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/models/piece.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../../infrastructure/bluetooth/connection_manager.dart' as cm;
 
@@ -20,6 +21,7 @@ class BluetoothState extends Equatable {
     this.scannedDevices = const [],
     this.connectedDevice,
     this.isHost = false,
+    this.hostColor,
     this.lastError,
     this.pendingMoveId,
   });
@@ -43,6 +45,9 @@ class BluetoothState extends Equatable {
 
   // Whether you're the host in the connection
   final bool isHost;
+
+  // Host's chosen color (received during handshake on client side, set locally on host side)
+  final PieceColor? hostColor;
 
   // Last error message
   final String? lastError;
@@ -71,6 +76,7 @@ class BluetoothState extends Equatable {
     List<BleDeviceInfo>? scannedDevices,
     BleDeviceInfo? connectedDevice,
     bool? isHost,
+    PieceColor? hostColor,
     String? lastError,
     int? pendingMoveId,
     bool clearConnectedDevice = false,
@@ -84,6 +90,7 @@ class BluetoothState extends Equatable {
       scannedDevices: scannedDevices ?? this.scannedDevices,
       connectedDevice: clearConnectedDevice ? null : (connectedDevice ?? this.connectedDevice),
       isHost: isHost ?? this.isHost,
+      hostColor: hostColor ?? this.hostColor,
       lastError: clearError ? null : (lastError ?? this.lastError),
       pendingMoveId: clearPendingMove ? null : (pendingMoveId ?? this.pendingMoveId),
     );
@@ -97,6 +104,7 @@ class BluetoothState extends Equatable {
     scannedDevices,
     connectedDevice,
     isHost,
+    hostColor,
     lastError,
     pendingMoveId,
   ];

@@ -53,6 +53,10 @@ class LobbyController extends StateNotifier<LobbyState> {
     );
 
     try {
+      // Inform BluetoothController of the host's color choice so it's
+      // included in the BLE handshake response to the client.
+      _bluetoothController.setHostColor(hostColor);
+
       await _bluetoothController.createLobby(gameName);
 
       state = state.copyWith(
@@ -199,7 +203,15 @@ class LobbyController extends StateNotifier<LobbyState> {
         if (state.status == LobbyStatus.joining ||
             state.status == LobbyStatus.waitingForOpponent ||
             state.status == LobbyStatus.creating) {
-          state = state.copyWith(status: LobbyStatus.ready);
+          // Client: pick up the host's color from the BLE handshake
+          if (!state.isHost && bleState.hostColor != null) {
+            state = state.copyWith(
+              status: LobbyStatus.ready,
+              hostColor: bleState.hostColor,
+            );
+          } else {
+            state = state.copyWith(status: LobbyStatus.ready);
+          }
         }
 
       case BleConnectionStatus.disconnected:
