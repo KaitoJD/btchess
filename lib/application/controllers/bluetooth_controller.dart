@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/error_codes.dart';
+import '../../core/utils/logger.dart';
 import '../../domain/enums/game_end_reason.dart';
 import '../../domain/enums/game_status.dart';
 import '../../domain/enums/promotion_piece.dart';
@@ -267,41 +268,74 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
   // Sends a move over BLE
   //
-  // Sets [pendingMoveId] so the UI can show a spinner while waiting for ACK
-  // On ACK OK the game state is updated; on ACK ERROR the error is surfaced
+  // Host: applies the move locally (authoritative) and notifies the client.
+  // Client: sends MOVE to the host, waits for ACK, then applies on success.
   Future<void> sendMove(Move move) async {
     if (!state.isConnected) return;
 
-    final msgId = _connectionManager.getNextPublicMessageId();
-    final promoCode = move.promotion?.code ?? 0;
+    if (state.isHost) {
+      // Host is authoritative – apply locally, then notify client
+      final success = _gameController.makeMove(
+        from: move.from,
+        to: move.to,
+        promotion: move.promotion,
+      );
 
-    final moveMsg = MoveMessage(
-      messageId: msgId,
-      from: move.from.index,
-      to: move.to.index,
-      promotion: promoCode,
-    );
+      if (!success) {
+        state = state.copyWith(lastError: 'Invalid move');
+        return;
+      }
 
-    state = state.copyWith(pendingMoveId: msgId);
+      // Notify client of the move (fire-and-forget)
+      try {
+        final msgId = _connectionManager.getNextPublicMessageId();
+        final moveMsg = MoveMessage(
+          messageId: msgId,
+          from: move.from.index,
+          to: move.to.index,
+          promotion: move.promotion?.code ?? 0,
+        );
+        await _connectionManager.sendMoveNotification(moveMsg);
+      } catch (e) {
+        // Notification failure is non-fatal; client can resync
+        Logger.error('Failed to notify client of move: $e',
+            tag: 'BluetoothController');
+      }
 
-    try {
-      final ack = await _connectionManager.sendMove(moveMsg);
+      _checkAndSendGameEnd();
+    } else {
+      // Client sends MOVE and waits for host ACK
+      final msgId = _connectionManager.getNextPublicMessageId();
+      final promoCode = move.promotion?.code ?? 0;
 
-      if (ack.isSuccess) {
-        // Client applies the move locally only after the host confirms
-        _gameController.applyRemoteMove(move);
-        state = state.copyWith(clearPendingMove: true, clearError: true);
-      } else {
+      final moveMsg = MoveMessage(
+        messageId: msgId,
+        from: move.from.index,
+        to: move.to.index,
+        promotion: promoCode,
+      );
+
+      state = state.copyWith(pendingMoveId: msgId);
+
+      try {
+        final ack = await _connectionManager.sendMove(moveMsg);
+
+        if (ack.isSuccess) {
+          // Client applies the move locally only after the host confirms
+          _gameController.applyRemoteMove(move);
+          state = state.copyWith(clearPendingMove: true, clearError: true);
+        } else {
+          state = state.copyWith(
+            clearPendingMove: true,
+            lastError: _errorDescription(ack.error),
+          );
+        }
+      } catch (e) {
         state = state.copyWith(
           clearPendingMove: true,
-          lastError: _errorDescription(ack.error),
+          lastError: 'Move failed: $e',
         );
       }
-    } catch (e) {
-      state = state.copyWith(
-        clearPendingMove: true,
-        lastError: 'Move failed: $e',
-      );
     }
   }
 
@@ -440,37 +474,48 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   }
 
   void _handleIncomingMove(MoveMessage moveMsg) {
-    if (!state.isHost) return;
+    if (state.isHost) {
+      // Host receives a MOVE from the client → validate, apply, ACK
+      final gameState = _gameController.state;
+      if (gameState == null || gameState.isEnded) {
+        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.gameEnded);
+        return;
+      }
 
-    final gameState = _gameController.state;
-    if (gameState == null || gameState.isEnded) {
-      _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.gameEnded);
-      return;
-    }
+      // Check it's the remote player's turn
+      final remoteTurn = _remotePlayerColor();
+      if (gameState.currentTurn != remoteTurn) {
+        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.notYourTurn);
+        return;
+      }
 
-    // Check it's the remote player's turn
-    final remoteTurn = _remotePlayerColor();
-    if (gameState.currentTurn != remoteTurn) {
-      _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.notYourTurn);
-      return;
-    }
+      final from = Square.fromIndex(moveMsg.from);
+      final to = Square.fromIndex(moveMsg.to);
+      final promotion = moveMsg.hasPromotion
+          ? PromotionPiece.fromCode(moveMsg.promotion)
+          : null;
 
-    final from = Square.fromIndex(moveMsg.from);
-    final to = Square.fromIndex(moveMsg.to);
-    final promotion = moveMsg.hasPromotion
-        ? PromotionPiece.fromCode(moveMsg.promotion)
-        : null;
+      final move = Move(from: from, to: to, promotion: promotion);
+      final success = _gameController.applyRemoteMove(move);
 
-    final move = Move(from: from, to: to, promotion: promotion);
-    final success = _gameController.applyRemoteMove(move);
+      if (success) {
+        _connectionManager.sendAck(moveMsg.messageId);
 
-    if (success) {
-      _connectionManager.sendAck(moveMsg.messageId);
-
-      // Check for game end after applying the move
-      _checkAndSendGameEnd();
+        // Check for game end after applying the move
+        _checkAndSendGameEnd();
+      } else {
+        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.invalidMove);
+      }
     } else {
-      _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.invalidMove);
+      // Client receives a MOVE notification from the host → apply directly
+      final from = Square.fromIndex(moveMsg.from);
+      final to = Square.fromIndex(moveMsg.to);
+      final promotion = moveMsg.hasPromotion
+          ? PromotionPiece.fromCode(moveMsg.promotion)
+          : null;
+
+      final move = Move(from: from, to: to, promotion: promotion);
+      _gameController.applyRemoteMove(move);
     }
   }
 

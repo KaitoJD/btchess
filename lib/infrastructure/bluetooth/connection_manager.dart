@@ -272,6 +272,14 @@ class ConnectionManager {
     );
   }
 
+  // Sends a move notification to the client (for host, fire-and-forget, no ACK)
+  Future<void> sendMoveNotification(MoveMessage move) async {
+    if (!isConnected) {
+      throw const BleDisconnectedException('Not connected');
+    }
+    await _connection!.sendStateNotification(move);
+  }
+
   // Send an ACK (for host)
   Future<void> sendAck(int messageId, {BleErrorCode error = BleErrorCode.success}) async {
     final ack = AckMessage(
