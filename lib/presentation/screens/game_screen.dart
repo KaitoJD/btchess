@@ -43,6 +43,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _initializeBoardOrientation();
       _listenForGameEnd();
       _listenForAudio();
+      _listenForDrawResponse();
+    });
+  }
+
+  void _listenForDrawResponse() {
+    ref.listenManual<GameState?>(gameControllerProvider, (previous, next) {
+      if (previous == null || next == null) return;
+      // Draw offer was cleared (declined) while game is still in progress
+      if (previous.drawOffered && !next.drawOffered && next.isInProgress) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Draw offer was declined'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     });
   }
 
@@ -252,6 +270,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 isGameInProgress: isInProgress,
                 canUndo: ref.watch(canUndoProvider),
                 isDrawOffered: gameState.drawOffered,
+                isDrawOfferedByLocalPlayer: _isDrawOfferedByLocalPlayer(gameState),
                 isLocalPlayerTurn: gameController.isLocalPlayerTurn(),
                 isBleGame: isBleGame,
                 isWaitingForAck: hasPendingMove,
@@ -315,6 +334,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (gameState.whitePlayer.isLocal) return PieceColor.white;
     if (gameState.blackPlayer.isLocal) return PieceColor.black;
     return null;
+  }
+
+  bool _isDrawOfferedByLocalPlayer(GameState gameState) {
+    if (!gameState.drawOffered || gameState.drawOfferedBy == null) return false;
+    if (gameState.mode == GameMode.hotseat) return false;
+    final localColor = gameState.whitePlayer.isLocal
+        ? PieceColor.white
+        : PieceColor.black;
+    return gameState.drawOfferedBy == localColor;
   }
 
   List<Piece> _getCapturedPieces(List<dynamic> moves, PieceColor capturedByColor) {

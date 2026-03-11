@@ -7,6 +7,7 @@ class GameActionBar extends StatelessWidget {
     this.isGameInProgress = true,
     this.canUndo = false,
     this.isDrawOffered = false,
+    this.isDrawOfferedByLocalPlayer = false,
     this.isLocalPlayerTurn = true,
     this.isBleGame = false,
     this.isWaitingForAck = false,
@@ -21,6 +22,7 @@ class GameActionBar extends StatelessWidget {
   final bool isGameInProgress;
   final bool canUndo;
   final bool isDrawOffered;
+  final bool isDrawOfferedByLocalPlayer;
   final bool isLocalPlayerTurn;
   final bool isBleGame;
   final bool isWaitingForAck;
@@ -34,11 +36,44 @@ class GameActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDrawOffered && isLocalPlayerTurn) {
-        return _buildDrawOfferBar(context);
+    if (isDrawOffered && isDrawOfferedByLocalPlayer) {
+      return _buildDrawSentBar(context);
+    }
+    if (isDrawOffered && !isDrawOfferedByLocalPlayer) {
+      return _buildDrawOfferBar(context);
     }
 
     return _buildActionBar(context);
+  }
+
+  Widget _buildDrawSentBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: colorScheme.tertiaryContainer,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: colorScheme.onTertiaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Draw offer sent — waiting for response',
+            style: TextStyle(
+              color: colorScheme.onTertiaryContainer,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDrawOfferBar(BuildContext context) {
