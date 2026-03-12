@@ -24,6 +24,7 @@ class MessageCodec {
       final ResignMessage m => _encodeResign(m),
       final PingMessage m => _encodePing(m),
       final PongMessage m => _encodePong(m),
+      final GameStartMessage m => _encodeGameStart(m),
     };
   }
 
@@ -120,6 +121,13 @@ class MessageCodec {
             .build();
   }
 
+  Uint8List _encodeGameStart(GameStartMessage m) {
+    return ByteBufferBuilder()
+            .addByte(MessageType.gameStart.value)
+            .addUint16(m.messageId)
+            .build();
+  }
+
 
   // - Decoding
 
@@ -150,6 +158,7 @@ class MessageCodec {
       MessageType.resign => _decodeResign(reader),
       MessageType.ping => _decodePing(reader),
       MessageType.pong => _decodePong(reader),
+      MessageType.gameStart => _decodeGameStart(reader),
     };
   }
 
@@ -254,6 +263,12 @@ class MessageCodec {
       messageId: reader.readUint16(),
       timestamp: reader.readUint32(),
     );
+  }
+
+  GameStartMessage _decodeGameStart(ByteBufferReader reader) {
+    _ensureRemaining(reader, 2); // messageId(2)
+
+    return GameStartMessage(messageId: reader.readUint16());
   }
 
   void _ensureRemaining(ByteBufferReader reader, int count) {
