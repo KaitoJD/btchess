@@ -197,3 +197,13 @@ class PongMessage extends BleMessage {
   @override
   String toString() => 'Pong(id: $messageId, timestamp: $timestamp)';
 }
+
+class GameStartMessage extends BleMessage {
+  const GameStartMessage({required super.messageId});
+
+  @override
+  MessageType get type => MessageType.gameStart;
+
+  @override
+  String toString() => 'GameStart(id: $messageId)';
+}
