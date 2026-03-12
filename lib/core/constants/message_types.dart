@@ -12,7 +12,8 @@ enum MessageType {
   drawResponse(0x08),
   resign(0x09),
   ping(0x0A),
-  pong(0x0B);
+  pong(0x0B),
+  gameStart(0x0C);
 
   const MessageType(this.value);
 
