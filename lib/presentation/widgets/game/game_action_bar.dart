@@ -102,64 +102,77 @@ class GameActionBar extends StatelessWidget {
   }
 
   Widget _buildActionBar(BuildContext context) {
+    final buttons = <Widget>[];
+
+    // Flip is always shown
+    buttons.add(_ActionButton(
+      icon: Icons.swap_vert,
+      label: 'Flip',
+      onPressed: onFlipBoard,
+    ));
+
+    if (isGameInProgress) {
+      // Undo only in local (hotseat) mode
+      if (canUndo) {
+        buttons.add(_ActionButton(
+          icon: Icons.undo,
+          label: 'Undo',
+          onPressed: onUndo,
+        ));
+      }
+
+      // Draw only when it's the local player's turn
+      if (isLocalPlayerTurn) {
+        buttons.add(_ActionButton(
+          icon: Icons.handshake_outlined,
+          label: 'Draw',
+          onPressed: isWaitingForAck ? null : onOfferDraw,
+        ));
+      }
+
+      // Resign always available during game
+      buttons.add(_ActionButton(
+        icon: Icons.flag_outlined,
+        label: 'Resign',
+        onPressed: isWaitingForAck ? null : onResign,
+        isDestructive: true,
+      ));
+    } else {
+      // Game ended — show New Game
+      buttons.add(_ActionButton(
+        icon: Icons.add,
+        label: 'New Game',
+        onPressed: onNewGame,
+      ));
+    }
+
+    // Local mode (4 buttons): spread evenly across full width
+    // BLE / fewer buttons: center with equal gaps between them
+    final useSpaceEvenly = canUndo && buttons.length >= 4;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _ActionButton(
-            icon: Icons.swap_vert,
-            label: 'Flip',
-            onPressed: onFlipBoard,
-          ),
-          Visibility(
-            visible: canUndo,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: _ActionButton(
-              icon: Icons.undo,
-              label: 'Undo',
-              onPressed: onUndo,
+      child: useSpaceEvenly
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: buttons,
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _intersperse(buttons, const SizedBox(width: 32)),
             ),
-          ),
-          Visibility(
-            visible: isGameInProgress && isLocalPlayerTurn,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: _ActionButton(
-              icon: Icons.handshake_outlined,
-              label: 'Draw',
-              onPressed: isWaitingForAck ? null : onOfferDraw,
-            ),
-          ),
-          Visibility(
-            visible: isGameInProgress,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: _ActionButton(
-              icon: Icons.flag_outlined,
-              label: 'Resign',
-              onPressed: isWaitingForAck ? null : onResign,
-              isDestructive: true,
-            ),
-          ),
-          Visibility(
-            visible: !isGameInProgress,
-            maintainSize: true,
-            maintainAnimation: true,
-            maintainState: true,
-            child: _ActionButton(
-              icon: Icons.add,
-              label: 'New Game',
-              onPressed: onNewGame,
-            ),
-          ),
-        ],
-      ),
     );
+  }
+
+  // Inserts [separator] between each element of [items].
+  List<Widget> _intersperse(List<Widget> items, Widget separator) {
+    if (items.length <= 1) return items;
+    return [
+      for (int i = 0; i < items.length; i++) ...[
+        if (i > 0) separator,
+        items[i],
+      ],
+    ];
   }
 }
 
