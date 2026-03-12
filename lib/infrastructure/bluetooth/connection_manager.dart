@@ -321,7 +321,9 @@ class ConnectionManager {
     await _connection!.sendStateNotification(move);
   }
 
-  // Send an ACK (for host)
+  // Send an ACK
+  //
+  // Host sends via STATE_NOTIFY characteristic; client sends via CONTROL.
   Future<void> sendAck(int messageId, {BleErrorCode error = BleErrorCode.success}) async {
     final ack = AckMessage(
       messageId: messageId,
@@ -329,15 +331,21 @@ class ConnectionManager {
       errorCode: error.value,
     );
 
-    _dedupCache[messageId] = ack;
-    _trimDedupCache();
+    if (isHost) {
+      _dedupCache[messageId] = ack;
+      _trimDedupCache();
+    }
 
     Logger.debug(
       'Sending ACK: msgId=$messageId, error=0x${error.value.toRadixString(16)}',
       tag: 'ConnectionManager',
     );
 
-    await _connection!.sendStateNotification(ack);
+    if (isHost) {
+      await _connection!.sendStateNotification(ack);
+    } else {
+      await _connection!.sendControl(ack);
+    }
   }
 
   // Evicts oldest entries when the dedup cache exceeds the size limit
@@ -396,6 +404,16 @@ class ConnectionManager {
   Future<void> sendResign() async {
     final resign = ResignMessage(messageId: _getNextMessageId());
     await _connection!.sendControl(resign);
+  }
+
+  // Sends a game start signal and waits for ACK (for host)
+  Future<AckMessage> sendGameStart() async {
+    if (!isConnected) {
+      throw const BleDisconnectedException('Not connected');
+    }
+
+    final msg = GameStartMessage(messageId: _getNextMessageId());
+    return _sendWithRetry(msg);
   }
 
   // Sends a game end notification (for host)
