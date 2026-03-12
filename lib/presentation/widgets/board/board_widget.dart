@@ -24,6 +24,7 @@ class BoardWidget extends StatefulWidget {
     this.interactiveColor,
     this.theme = BoardThemesColors.classic,
     this.pieceTheme = PieceTheme.standard,
+    this.rotateBlackPieces = false,
     this.onMove,
     this.onSquareSelected,
     this.size,
@@ -39,6 +40,7 @@ class BoardWidget extends StatefulWidget {
   final PieceColor? interactiveColor;
   final BoardThemesColors theme;
   final PieceTheme pieceTheme;
+  final bool rotateBlackPieces;
   final OnMoveCallBack? onMove;
   final OnSquareSelectedCallBack? onSquareSelected;
   final double? size;
@@ -132,6 +134,7 @@ class _BoardWidgetState extends State<BoardWidget> {
       showFileCoordinate: !widget.showCoordinates && showFileCoord,
       showRankCoordinate: !widget.showCoordinates && showRankCoord,
       isFlipped: widget.isFlipped,
+      rotateBlackPieces: widget.rotateBlackPieces,
       onTap: () => _handleSquareTap(square),
       onPieceDropped: (data) => _handlePieceDrop(data, square),
       onDragStarted: () => _handleDragStart(square),

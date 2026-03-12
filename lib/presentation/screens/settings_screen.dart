@@ -41,7 +41,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           SwitchListTile(
             title: const Text('Auto Flip Board'),
-            subtitle: const Text('Flip board when playing as black'),
+            subtitle: const Text('Flip board after each turn in local games'),
             value: settings.autoFlipBoard,
             onChanged: (value) => controller.setAutoFlipBoard(value),
           ),

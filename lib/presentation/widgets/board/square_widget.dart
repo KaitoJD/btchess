@@ -28,6 +28,7 @@ class SquareWidget extends StatelessWidget {
     this.showFileCoordinate = false,
     this.showRankCoordinate = false,
     this.isFlipped = false,
+    this.rotateBlackPieces = false,
     this.onTap,
     this.onDragStarted,
     this.onDragEnd,
@@ -46,6 +47,7 @@ class SquareWidget extends StatelessWidget {
   final bool showFileCoordinate;
   final bool showRankCoordinate;
   final bool isFlipped;
+  final bool rotateBlackPieces;
   final VoidCallback? onTap;
   final VoidCallback? onDragStarted;
   final VoidCallback? onDragEnd;
@@ -145,18 +147,21 @@ class SquareWidget extends StatelessWidget {
   Widget _buildPiece() {
     if (piece == null) return const SizedBox.shrink();
 
+    final shouldRotate = rotateBlackPieces && piece!.color == PieceColor.black;
+
     if (canDrag) {
       return DraggablePieceWidget(
         piece: piece!,
         size: size,
         pieceTheme: pieceTheme,
+        rotated: shouldRotate,
         dragData: SquareDragData(square: square, piece: piece!),
         onDragStarted: onDragStarted,
         onDragEnd: onDragEnd,
       );
     }
 
-    return PieceWidget(piece: piece!, size: size, pieceTheme: pieceTheme);
+    return PieceWidget(piece: piece!, size: size, pieceTheme: pieceTheme, rotated: shouldRotate);
   }
 
   Widget _buildCoordinates() {

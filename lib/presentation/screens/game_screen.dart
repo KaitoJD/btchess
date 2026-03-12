@@ -125,13 +125,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final gameState = ref.read(gameControllerProvider);
     if (gameState == null) return;
 
-    final settings = ref.read(settingsControllerProvider);
-    if (settings.autoFlipBoard) {
-      final isBlackPlayer = gameState.blackPlayer.isLocal;
-      if (isBlackPlayer) {
+    if (gameState.mode.isBle) {
+      // BLE mode: always flip the board when playing as black
+      if (gameState.blackPlayer.isLocal) {
         setState(() => _isFlipped = true);
       }
+    } else if (gameState.mode.isHotseat) {
+      final settings = ref.read(settingsControllerProvider);
+      if (settings.autoFlipBoard) {
+        // Start flipped if it's black's turn, and listen for turn changes
+        setState(() => _isFlipped = gameState.isBlackTurn);
+        _listenForAutoFlip();
+      }
     }
+  }
+
+  void _listenForAutoFlip() {
+    ref.listenManual<GameState?>(gameControllerProvider, (previous, next) {
+      if (next == null || previous == null) return;
+      if (!next.mode.isHotseat) return;
+      final settings = ref.read(settingsControllerProvider);
+      if (!settings.autoFlipBoard) return;
+      if (previous.currentTurn != next.currentTurn) {
+        setState(() => _isFlipped = next.isBlackTurn);
+      }
+    });
   }
 
   @override
@@ -230,6 +248,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           interactiveColor: _getInteractiveColor(gameState),
                           theme: BoardThemesColors.fromTheme(settings.boardTheme),
                           pieceTheme: settings.pieceTheme,
+                          rotateBlackPieces: gameState.mode.isHotseat && !settings.autoFlipBoard,
                           onSquareSelected: (square) => _handleSquareSelected(square, gameState, gameController),
                           onMove: (from, to) => _handleMove(from, to, gameState, gameController),
                         ),
