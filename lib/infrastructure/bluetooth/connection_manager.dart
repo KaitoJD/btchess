@@ -94,8 +94,14 @@ class ConnectionManager {
     _hostColorCode = colorCode;
   }
 
+  // Maximum number of entries in the dedup cache before eviction
+  static const int _maxDedupCacheSize = 64;
+
   // Sets up connection with an existing BleTransport (client or host)
   Future<void> setupConnection(BleTransport connection) async {
+    // Cancel any existing subscription to prevent duplicate listeners on reconnect
+    _messageSubscription?.cancel();
+
     _connection = connection;
     _updateState(ConnectionState.handshaking);
 
@@ -187,6 +193,22 @@ class ConnectionManager {
   }
 
   void _handleMessage(BleMessage message) {
+    // Dedup check: if we already processed this message ID and have a cached
+    // ACK, resend the cached ACK instead of forwarding to game logic.
+    // This prevents duplicate move processing from Android BLE duplicate
+    // write-request callbacks.
+    if (isHost && message is! AckMessage && message is! PongMessage && message is! PingMessage) {
+      final cachedAck = _dedupCache[message.messageId];
+      if (cachedAck != null) {
+        Logger.debug(
+          'Dedup hit: msgId=${message.messageId}, resending cached ACK (error=0x${cachedAck.errorCode.toRadixString(16)})',
+          tag: 'ConnectionManager',
+        );
+        _connection?.sendStateNotification(cachedAck);
+        return;
+      }
+    }
+
     switch (message) {
       case final AckMessage ack:
         _handleAck(ack);
@@ -308,7 +330,24 @@ class ConnectionManager {
     );
 
     _dedupCache[messageId] = ack;
+    _trimDedupCache();
+
+    Logger.debug(
+      'Sending ACK: msgId=$messageId, error=0x${error.value.toRadixString(16)}',
+      tag: 'ConnectionManager',
+    );
+
     await _connection!.sendStateNotification(ack);
+  }
+
+  // Evicts oldest entries when the dedup cache exceeds the size limit
+  void _trimDedupCache() {
+    if (_dedupCache.length <= _maxDedupCacheSize) return;
+    final excess = _dedupCache.length - _maxDedupCacheSize;
+    final keysToRemove = _dedupCache.keys.take(excess).toList();
+    for (final key in keysToRemove) {
+      _dedupCache.remove(key);
+    }
   }
 
   // Sends a sync request (for client)

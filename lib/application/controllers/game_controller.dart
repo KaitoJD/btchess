@@ -43,21 +43,26 @@ class GameController extends StateNotifier<GameState?> {
     Player white = whitePlayer ?? Player.white();
     Player black = blackPlayer ?? Player.black();
 
-    if (mode == GameMode.bleHost) {
-      if (localPlayerColor == PieceColor.black) {
-        white = Player.remote(id: 'remote_white', name: 'Opponent', color: PieceColor.white);
-        black = Player.local(name: 'You', color: PieceColor.black, isHost: true);
-      } else {
-        white = Player.local(name: 'You', color: PieceColor.white, isHost: true);
-        black = Player.remote(id: 'remote_black', name: 'Opponent', color: PieceColor.black);
-      }
-    } else if (mode == GameMode.bleClient) {
-      if (localPlayerColor == PieceColor.white) {
-        white = Player.local(name: 'You', color: PieceColor.white);
-        black = Player.remote(id: 'remote_black', name: 'Host', color: PieceColor.black);
-      } else {
-        white = Player.remote(id: 'remote_white', name: 'Host', color: PieceColor.white);
-        black = Player.local(name: 'You', color: PieceColor.black);
+    // For BLE modes, if no players were passed in, create default BLE players
+    // based on localPlayerColor. When called from LobbyController.startGame(),
+    // whitePlayer and blackPlayer are already correctly constructed.
+    if (whitePlayer == null && blackPlayer == null && mode.isBle) {
+      if (mode == GameMode.bleHost) {
+        if (localPlayerColor == PieceColor.black) {
+          white = Player.remote(id: 'remote_white', name: 'Opponent', color: PieceColor.white);
+          black = Player.local(name: 'You', color: PieceColor.black, isHost: true);
+        } else {
+          white = Player.local(name: 'You', color: PieceColor.white, isHost: true);
+          black = Player.remote(id: 'remote_black', name: 'Opponent', color: PieceColor.black);
+        }
+      } else if (mode == GameMode.bleClient) {
+        if (localPlayerColor == PieceColor.white) {
+          white = Player.local(name: 'You', color: PieceColor.white);
+          black = Player.remote(id: 'remote_black', name: 'Host', color: PieceColor.black);
+        } else {
+          white = Player.remote(id: 'remote_white', name: 'Host', color: PieceColor.white);
+          black = Player.local(name: 'You', color: PieceColor.black);
+        }
       }
     }
 

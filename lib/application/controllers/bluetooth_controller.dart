@@ -337,7 +337,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         promotion: promoCode,
       );
 
-      state = state.copyWith(pendingMoveId: msgId);
+      state = state.copyWith(pendingMoveId: msgId, clearError: true);
 
       try {
         final ack = await _connectionManager.sendMove(moveMsg);
@@ -495,19 +495,25 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     }
   }
 
-  void _handleIncomingMove(MoveMessage moveMsg) {
+  Future<void> _handleIncomingMove(MoveMessage moveMsg) async {
     if (state.isHost) {
       // Host receives a MOVE from the client → validate, apply, ACK
       final gameState = _gameController.state;
       if (gameState == null || gameState.isEnded) {
-        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.gameEnded);
+        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.gameEnded);
         return;
       }
 
       // Check it's the remote player's turn
       final remoteTurn = _remotePlayerColor();
+      Logger.debug(
+        'Incoming move: msgId=${moveMsg.messageId}, from=${moveMsg.from}, to=${moveMsg.to}, '
+        'currentTurn=${gameState.currentTurn.name}, remoteTurn=${remoteTurn.name}',
+        tag: 'BluetoothController',
+      );
+
       if (gameState.currentTurn != remoteTurn) {
-        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.notYourTurn);
+        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.notYourTurn);
         return;
       }
 
@@ -521,12 +527,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       final success = _gameController.applyRemoteMove(move);
 
       if (success) {
-        _connectionManager.sendAck(moveMsg.messageId);
+        await _connectionManager.sendAck(moveMsg.messageId);
 
         // Check for game end after applying the move
         _checkAndSendGameEnd();
       } else {
-        _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.invalidMove);
+        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.invalidMove);
       }
     } else {
       // Client receives a MOVE notification from the host → apply directly
