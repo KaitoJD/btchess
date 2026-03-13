@@ -218,6 +218,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             )
           else if (lobbyState.status == LobbyStatus.ready)
             _buildReadyView(context, lobbyState)
+          else if (lobbyState.status == LobbyStatus.starting)
+            _buildStartingView(context)
           else
             const AdvertisingIndicator(),
           const Spacer(),
@@ -443,12 +445,45 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             ),
           ),
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: _startGame,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start Game'),
+        if (lobbyState.isHost)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _startGame,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start Game'),
+            ),
+          )
+        else ...
+          [
+            const SizedBox(height: 8),
+            const CircularProgressIndicator.adaptive(),
+            const SizedBox(height: 16),
+            Text(
+              'Waiting for host to start the game...',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+      ],
+    );
+  }
+
+  Widget _buildStartingView(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator.adaptive(),
+        const SizedBox(height: 16),
+        Text(
+          'Starting game...',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
       ],
