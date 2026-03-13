@@ -99,14 +99,28 @@ class LobbyController extends StateNotifier<LobbyState> {
     }
   }
 
-  // Transitions from the lobby to an active game
+  // Transitions from the lobby to an active game (host only)
   //
-  // Should be called when both players are connected and ready
-  void startGame() {
+  // Sends GAME_START to the client via BLE, then both sides enter the game.
+  Future<void> startGame() async {
     if (state.status != LobbyStatus.ready) return;
+    if (!state.isHost) return;
 
-    state = state.copyWith(status: LobbyStatus.starting);
+    state = state.copyWith(status: LobbyStatus.starting, clearError: true);
 
+    try {
+      await _bluetoothController.sendGameStart();
+      _transitionToGame();
+    } catch (e) {
+      state = state.copyWith(
+        status: LobbyStatus.ready,
+        lastError: 'Failed to start game: $e',
+      );
+    }
+  }
+
+  // Creates players and initializes the game via GameController
+  void _transitionToGame() {
     final mode = state.isHost ? GameMode.bleHost : GameMode.bleClient;
     final localColor = state.localColor;
 
@@ -212,6 +226,13 @@ class LobbyController extends StateNotifier<LobbyState> {
           } else {
             state = state.copyWith(status: LobbyStatus.ready);
           }
+        }
+
+        // Client: auto-start when host sends GAME_START signal
+        if (!state.isHost &&
+            bleState.gameStartReceived &&
+            state.status == LobbyStatus.ready) {
+          _transitionToGame();
         }
 
       case BleConnectionStatus.disconnected:
