@@ -24,6 +24,7 @@ class BluetoothState extends Equatable {
     this.hostColor,
     this.lastError,
     this.pendingMoveId,
+    this.gameStartReceived = false,
   });
 
   factory BluetoothState.initial() => const BluetoothState();
@@ -55,6 +56,9 @@ class BluetoothState extends Equatable {
   // Message ID of pending move awaiting ACK
   final int? pendingMoveId;
 
+  // Whether the host has sent a GAME_START signal (client only)
+  final bool gameStartReceived;
+
   // Whether currently connected
   bool get isConnected => connectionStatus == BleConnectionStatus.connected;
 
@@ -79,6 +83,7 @@ class BluetoothState extends Equatable {
     PieceColor? hostColor,
     String? lastError,
     int? pendingMoveId,
+    bool? gameStartReceived,
     bool clearConnectedDevice = false,
     bool clearError = false,
     bool clearPendingMove = false,
@@ -93,6 +98,7 @@ class BluetoothState extends Equatable {
       hostColor: hostColor ?? this.hostColor,
       lastError: clearError ? null : (lastError ?? this.lastError),
       pendingMoveId: clearPendingMove ? null : (pendingMoveId ?? this.pendingMoveId),
+      gameStartReceived: gameStartReceived ?? this.gameStartReceived,
     );
   }
 
@@ -107,6 +113,7 @@ class BluetoothState extends Equatable {
     hostColor,
     lastError,
     pendingMoveId,
+    gameStartReceived,
   ];
 
   @override
