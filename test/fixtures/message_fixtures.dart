@@ -12,7 +12,6 @@ class MessageFixtures {
     messageId: 1,
     protocolVersion: 0x01,
     role: 0x02, // CLIENT
-    hostColor: 0x00, // unspecified (client doesn't set this)
   );
 
   static const handshakeHost = HandshakeMessage(
@@ -45,7 +44,6 @@ class MessageFixtures {
     messageId: 1,
     from: 12,  // e2
     to: 28,    // e4
-    promotion: 0,
   );
 
   /// MOVE e2→e4 bytes: [0x01, 0x00, 0x01, 0x0C, 0x1C, 0x00]
@@ -67,7 +65,6 @@ class MessageFixtures {
   static const ackOk = AckMessage(
     messageId: 1,
     status: 0x00,
-    errorCode: 0x00,
   );
 
   /// ACK OK bytes: [0x02, 0x00, 0x01, 0x00, 0x00]
@@ -133,6 +130,13 @@ class MessageFixtures {
   /// Timestamp 1700000000 = 0x6553F100 in big-endian
   static final pingBytes = Uint8List.fromList([0x0A, 0x00, 0x01, 0x65, 0x53, 0xF1, 0x00]);
   static final pongBytes = Uint8List.fromList([0x0B, 0x00, 0x01, 0x65, 0x53, 0xF1, 0x00]);
+
+  // --- Game Start ---
+
+  static const gameStart = GameStartMessage(messageId: 1);
+
+  /// GAME_START bytes: [0x0C, 0x00, 0x01]
+  static final gameStartBytes = Uint8List.fromList([0x0C, 0x00, 0x01]);
 
   // --- Malformed / Edge cases ---
 
