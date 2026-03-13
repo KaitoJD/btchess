@@ -430,6 +430,16 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     }
   }
 
+  // Sends a game start signal to the client (host only, with ACK+retry)
+  Future<void> sendGameStart() async {
+    if (!state.isConnected || !state.isHost) return;
+
+    final ack = await _connectionManager.sendGameStart();
+    if (!ack.isSuccess) {
+      throw Exception('Game start rejected by client');
+    }
+  }
+
   // Requests a full state sync from the host
   Future<void> requestSync() async {
     if (!state.isConnected || state.isHost) return;
@@ -487,12 +497,28 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         _handleIncomingSyncRequest(sync);
       case final SyncResponseMessage sync:
         _handleIncomingSyncResponse(sync);
+      case final GameStartMessage gameStart:
+        _handleIncomingGameStart(gameStart);
       case final HandshakeMessage _:
         // Already handled by ConnectionManager
         break;
       default:
         break;
     }
+  }
+
+  void _handleIncomingGameStart(GameStartMessage message) {
+    // Only the client should process GAME_START
+    if (state.isHost) return;
+
+    // Send ACK back to host (best-effort)
+    try {
+      _connectionManager.sendAck(message.messageId);
+    } catch (_) {
+      // ACK failure is non-fatal; host will retry GAME_START if needed
+    }
+
+    state = state.copyWith(gameStartReceived: true);
   }
 
   Future<void> _handleIncomingMove(MoveMessage moveMsg) async {
