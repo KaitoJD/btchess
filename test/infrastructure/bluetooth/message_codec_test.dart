@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:btchess/infrastructure/bluetooth/message_codec.dart';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
@@ -241,6 +240,25 @@ void main() {
       });
     });
 
+    group('GameStart', () {
+      test('encodes game start to correct bytes', () {
+        final bytes = codec.encode(MessageFixtures.gameStart);
+        expect(bytes, MessageFixtures.gameStartBytes);
+      });
+
+      test('decodes game start from bytes', () {
+        final msg = codec.decode(MessageFixtures.gameStartBytes);
+        expect(msg, isA<GameStartMessage>());
+        expect((msg as GameStartMessage).messageId, 1);
+      });
+
+      test('round-trips game start', () {
+        final encoded = codec.encode(MessageFixtures.gameStart);
+        final decoded = codec.decode(encoded) as GameStartMessage;
+        expect(decoded.messageId, MessageFixtures.gameStart.messageId);
+      });
+    });
+
     group('Error handling', () {
       test('throws on empty bytes', () {
         expect(
@@ -281,6 +299,7 @@ void main() {
         MessageFixtures.resign,
         MessageFixtures.ping,
         MessageFixtures.pong,
+        MessageFixtures.gameStart,
       ];
 
       for (final msg in allMessages) {
