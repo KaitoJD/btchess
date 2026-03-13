@@ -145,6 +145,34 @@ void main() {
         expect(controller.state.isScanning, isFalse);
       });
     });
+
+    group('game start', () {
+      test('sendGameStart does nothing if not connected', () async {
+        expect(controller.state.isConnected, isFalse);
+        await controller.sendGameStart();
+        verifyNever(() => mockConnectionManager.sendGameStart());
+      });
+
+      test('incoming GAME_START on client sets gameStartReceived', () async {
+        // Simulate client side (isHost is false by default)
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        // Stub sendAck to succeed
+        when(() => mockConnectionManager.sendAck(any()))
+            .thenAnswer((_) async {});
+
+        // Simulate receiving a GAME_START message
+        messageController.add(const GameStartMessage(messageId: 42));
+        await Future.delayed(Duration.zero);
+
+        expect(controller.state.gameStartReceived, isTrue);
+      });
+
+      test('gameStartReceived defaults to false', () {
+        expect(controller.state.gameStartReceived, isFalse);
+      });
+    });
   });
 }
 
