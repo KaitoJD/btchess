@@ -40,6 +40,10 @@ class ConnectionManager {
   // Message ID dedup cache (for host)
   final Map<int, AckMessage> _dedupCache = {};
 
+  // Host MOVE message IDs currently being processed by game logic.
+  // This closes a race where duplicate MOVE writes arrive before ACK is sent.
+  final Set<int> _inFlightHostMoveIds = <int>{};
+
   // Current message ID counter
   int _nextMessageId = 0;
 
@@ -193,20 +197,30 @@ class ConnectionManager {
   }
 
   void _handleMessage(BleMessage message) {
-    // Dedup check: if we already processed this message ID and have a cached
-    // ACK, resend the cached ACK instead of forwarding to game logic.
-    // This prevents duplicate move processing from Android BLE duplicate
-    // write-request callbacks.
-    if (isHost && message is! AckMessage && message is! PongMessage && message is! PingMessage) {
-      final cachedAck = _dedupCache[message.messageId];
+    if (isHost && message is MoveMessage) {
+      // 1) If we already ACKed this MOVE, replay the ACK
+      // 2) If the same MOVE is already in-flight, drop this duplicate copy
+      // 3) Otherwise mark it in-flight and forward once
+      final msgId = message.messageId;
+      final cachedAck = _dedupCache[msgId];
       if (cachedAck != null) {
         Logger.debug(
-          'Dedup hit: msgId=${message.messageId}, resending cached ACK (error=0x${cachedAck.errorCode.toRadixString(16)})',
+          'Dedup hit: msgId=$msgId, resending cached ACK (error=0x${cachedAck.errorCode.toRadixString(16)})',
           tag: 'ConnectionManager',
         );
         _connection?.sendStateNotification(cachedAck);
         return;
       }
+
+      if (_inFlightHostMoveIds.contains(msgId)) {
+        Logger.debug(
+          'Dedup in-flight hit: msgId=$msgId, dropping duplicate MOVE before ACK',
+          tag: 'ConnectionManager',
+        );
+        return;
+      }
+
+      _inFlightHostMoveIds.add(msgId);
     }
 
     switch (message) {
@@ -332,6 +346,7 @@ class ConnectionManager {
     );
 
     if (isHost) {
+      _inFlightHostMoveIds.remove(messageId);
       _dedupCache[messageId] = ack;
       _trimDedupCache();
     }
@@ -484,6 +499,7 @@ class ConnectionManager {
     _updateState(ConnectionState.disconnected);
     _pendingAcks.clear();
     _dedupCache.clear();
+    _inFlightHostMoveIds.clear();
     _chunkHandler.clear();
     _rateLimiter.reset();
   }
