@@ -146,10 +146,6 @@ class _BoardWidgetState extends State<BoardWidget> {
     if (!widget.interactive) return;
 
     widget.onSquareSelected?.call(square);
-
-    if (widget.selectedSquare != null && widget.legalMoves.contains(square) && widget.selectedSquare != square) {
-      widget.onMove?.call(widget.selectedSquare!, square);
-    }
   }
 
   void _handlePieceDrop(SquareDragData data, Square toSquare) {
