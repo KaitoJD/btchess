@@ -233,6 +233,7 @@ class LobbyController extends StateNotifier<LobbyState> {
             bleState.gameStartReceived &&
             state.status == LobbyStatus.ready) {
           _transitionToGame();
+          _bluetoothController.clearGameStartReceived();
         }
 
       case BleConnectionStatus.disconnected:
