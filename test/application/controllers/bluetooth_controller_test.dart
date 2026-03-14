@@ -172,6 +172,21 @@ void main() {
       test('gameStartReceived defaults to false', () {
         expect(controller.state.gameStartReceived, isFalse);
       });
+
+      test('clearGameStartReceived resets one-shot start signal', () async {
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendAck(any()))
+            .thenAnswer((_) async {});
+
+        messageController.add(const GameStartMessage(messageId: 100));
+        await Future.delayed(Duration.zero);
+        expect(controller.state.gameStartReceived, isTrue);
+
+        controller.clearGameStartReceived();
+        expect(controller.state.gameStartReceived, isFalse);
+      });
     });
   });
 }
