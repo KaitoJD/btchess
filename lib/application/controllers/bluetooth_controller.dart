@@ -291,6 +291,23 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     if (!state.isConnected) return;
 
     if (state.isHost) {
+      final gameState = _gameController.state;
+      if (gameState == null) {
+        Logger.warn(
+          'Host attempted move before game initialization: from=${move.from.index}, to=${move.to.index}',
+          tag: 'BluetoothController',
+        );
+        state = state.copyWith(lastError: 'Game not ready yet');
+        return;
+      }
+
+      final localColor = _localPlayerColor();
+      Logger.debug(
+        'Host sendMove: from=${move.from.index}, to=${move.to.index}, '
+        'currentTurn=${gameState.currentTurn.name}, localColor=${localColor.name}',
+        tag: 'BluetoothController',
+      );
+
       // Host is authoritative – apply locally, then notify client
       if (!_gameController.isLocalPlayerTurn()) {
         state = state.copyWith(lastError: 'Not your turn');
@@ -519,6 +536,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     }
 
     state = state.copyWith(gameStartReceived: true);
+  }
+
+  // Clears the one-shot GAME_START signal after the client transitions to game.
+  void clearGameStartReceived() {
+    if (!state.gameStartReceived) return;
+    state = state.copyWith(gameStartReceived: false);
   }
 
   Future<void> _handleIncomingMove(MoveMessage moveMsg) async {
