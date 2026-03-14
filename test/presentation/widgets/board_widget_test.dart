@@ -4,6 +4,7 @@ import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/models/square.dart';
 import 'package:btchess/domain/models/move.dart';
 import 'package:btchess/presentation/widgets/board/board_widget.dart';
+import 'package:btchess/presentation/widgets/board/square_widget.dart';
 
 void main() {
   // Build a standard set of 32 pieces at starting position
@@ -116,6 +117,28 @@ void main() {
     testWidgets('renders non-interactive board', (tester) async {
       await tester.pumpWidget(buildTestBoard(interactive: false));
       expect(find.byType(BoardWidget), findsOneWidget);
+    });
+
+    testWidgets('tapping legal destination does not fire onMove directly', (tester) async {
+      var moveCalls = 0;
+      Square? lastSelection;
+
+      await tester.pumpWidget(
+        buildTestBoard(
+          selectedSquare: Square.fromAlgebraic('e2'),
+          legalMoves: [Square.fromAlgebraic('e4')],
+          onMove: (_, __) => moveCalls++,
+          onSquareSelected: (square) => lastSelection = square,
+        ),
+      );
+
+      // Board squares are rendered in row-major order from top-left.
+      // e4 is row 4, col 4 -> index 36.
+      await tester.tap(find.byType(SquareWidget).at(36));
+      await tester.pump();
+
+      expect(lastSelection, Square.fromAlgebraic('e4'));
+      expect(moveCalls, 0);
     });
   });
 }
