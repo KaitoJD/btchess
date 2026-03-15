@@ -1,7 +1,7 @@
 name: Bug Report
 description: Report a bug in BTChess (game logic, BLE multiplayer, persistence, UI, or build).
 labels: ["bug"]
-title: "[BUG]"
+title: "[BUG] "
 
 body:
   - type: markdown
