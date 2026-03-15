@@ -22,6 +22,15 @@
 - On reconnect, the client sends a SYNC_REQUEST. If the host responds with the full game state, play resumes. If the sync times out (10 seconds), the client prompts to retry or exit.
 - If connections fail repeatedly, restart Bluetooth on both devices.
 
+### Client stays on "Waiting for host to start"
+
+- This is expected until the host taps "Start Game". Only the host can initiate game start.
+- If the host tapped "Start Game" and the client still does not enter the game:
+	- Keep both devices connected and close to each other.
+	- On host, tap "Start Game" again (the host retries start using ACK/retry logic).
+	- If host shows "Failed to start game", check Bluetooth stability and try again.
+- If this repeats, leave and recreate the lobby on both devices.
+
 ### Handshake fails or times out
 
 - The handshake has a 5-second timeout. If the host is busy or the connection is unstable, the handshake may fail.
