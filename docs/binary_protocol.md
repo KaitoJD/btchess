@@ -4,6 +4,8 @@ Binary message format for BLE communication between two BTChess devices. Protoco
 
 The protocol is host-authoritative: the host validates all moves and maintains the canonical game state. Messages are designed to fit within BLE's default MTU (23 bytes ATT, ~20 bytes usable payload). Each message carries a `msg_id` for deduplication and ACK correlation.
 
+Lobby start is host-initiated: host sends `GAME_START` to the client, client ACKs it, then both devices transition into the game screen.
+
 
 ## GATT Service Layout
 
@@ -19,9 +21,9 @@ The protocol is host-authoritative: the host validates all moves and maintains t
 
 | Code | Name | Direction | Size (bytes) |
 |---|---|---|---|
-| `0x00` | HANDSHAKE | Bi-directional | 5 |
+| `0x00` | HANDSHAKE | Bi-directional | 6 |
 | `0x01` | MOVE | Client to Host | 6 |
-| `0x02` | ACK | Host to Client | 5 |
+| `0x02` | ACK | Bi-directional | 5 |
 | `0x03` | SYNC_REQUEST | Client to Host | 3 |
 | `0x04` | SYNC_RESPONSE | Host to Client | 5 + payload |
 | `0x05` | CHUNK | Host to Client | 5 + payload |
@@ -31,6 +33,7 @@ The protocol is host-authoritative: the host validates all moves and maintains t
 | `0x09` | RESIGN | Client to Host | 3 |
 | `0x0A` | PING | Bi-directional | 7 |
 | `0x0B` | PONG | Bi-directional | 7 |
+| `0x0C` | GAME_START | Host to Client | 3 |
 
 
 ## Message Headers
@@ -42,7 +45,7 @@ Chunked header (5 bytes): standard header + `seq` (1, 1-indexed) + `total` (1, c
 
 ## Message Specifications
 
-### HANDSHAKE (0x00) -- 5 bytes
+### HANDSHAKE (0x00) -- 6 bytes
 
 Sent immediately after BLE connection is established.
 
@@ -52,12 +55,13 @@ Sent immediately after BLE connection is established.
 | 1-2 | msg_id | uint16, big-endian |
 | 3 | protocol_version | `0x01` |
 | 4 | role | `0x01` = HOST, `0x02` = CLIENT |
+| 5 | host_color | `0x00` = unspecified, `0x01` = white, `0x02` = black |
 
 Flow:
 
-1. Client sends HANDSHAKE with `role=CLIENT`.
+1. Client sends HANDSHAKE with `role=CLIENT`, `host_color=0x00`.
 2. Host validates protocol version.
-3. If compatible: host replies with HANDSHAKE `role=HOST`.
+3. If compatible: host replies with HANDSHAKE `role=HOST` and its selected `host_color`.
 4. If incompatible: host sends ACK with `error_code=0x10` and disconnects.
 
 ### MOVE (0x01) -- 6 bytes
@@ -77,7 +81,7 @@ Square indexing: `index = rank * 8 + file`, where a1=0, b1=1, ..., h1=7, a2=8, .
 
 ### ACK (0x02) -- 5 bytes
 
-Host acknowledges a received message (typically MOVE).
+Acknowledges a received message that expects reliability (for example: `MOVE`, `GAME_START`).
 
 | Byte | Field | Value |
 |---|---|---|
@@ -85,6 +89,11 @@ Host acknowledges a received message (typically MOVE).
 | 1-2 | msg_id | uint16, references the acknowledged message |
 | 3 | status | `0x00`=OK, `0x01`=ERROR |
 | 4 | error_code | See Error Codes (0 if success) |
+
+Direction notes:
+
+- Host to client: ACK for client requests (for example `MOVE`).
+- Client to host: ACK for host-initiated reliable signals (currently `GAME_START`).
 
 
 ### SYNC_REQUEST (0x03) -- 3 bytes
@@ -171,6 +180,23 @@ Keepalive and latency measurement.
 | 3-6 | timestamp | uint32, big-endian (Unix timestamp or monotonic ms) |
 
 
+### GAME_START (0x0C) -- 3 bytes
+
+Host starts the match after both players are connected in lobby.
+
+| Byte | Field | Value |
+|---|---|---|
+| 0 | msg_type | `0x0C` |
+| 1-2 | msg_id | uint16 |
+
+Flow:
+
+1. Host sends `GAME_START` to client.
+2. Client replies with `ACK` using the same `msg_id`.
+3. Client transitions to game on receive.
+4. Host transitions to game after ACK success.
+
+
 ## Error Codes
 
 | Code | Name | Description |
@@ -217,13 +243,13 @@ Keepalive and latency measurement.
 
 ### Message IDs
 
-`msg_id` is a 16-bit unsigned integer (0-65535) that wraps around. The host maintains a dedupe cache of the last 100 processed msg_ids. On receiving a duplicate, the host re-sends the cached ACK without re-processing.
+`msg_id` is a 16-bit unsigned integer (0-65535) that wraps around. The host maintains a dedupe cache of the last 64 processed msg_ids. On receiving a duplicate, the host re-sends the cached ACK without re-processing.
 
 ### Timeouts
 
 | Parameter | Value | Purpose |
 |---|---|---|
-| T_ack | 3000 ms | Wait for ACK after sending MOVE |
+| T_ack | 3000 ms | Wait for ACK after sending reliable messages (`MOVE`, `GAME_START`) |
 | T_chunk | 10000 ms | Wait for all chunks in a SYNC |
 | T_ping | 15000 ms | Interval between PINGs |
 | T_disconnect | 30000 ms | No PONG received, consider disconnected |
@@ -232,6 +258,7 @@ Keepalive and latency measurement.
 
 - Max retries: 2 (total 3 attempts).
 - Backoff delays: 500 ms, then 1000 ms.
+- Applies to reliable send-with-ACK operations (`MOVE`, `GAME_START`).
 
 ### Rate Limiting
 
@@ -283,12 +310,22 @@ Hex: 02 00 05 01 01
 HANDSHAKE client initiating, msg_id=1:
 
 ```
-Hex: 00 00 01 01 02
+Hex: 00 00 01 01 02 00
 
 00       msg_type = HANDSHAKE
 00 01    msg_id = 1
 01       protocol_version = 1
 02       role = CLIENT
+00       host_color = unspecified
+```
+
+GAME_START, msg_id=12:
+
+```
+Hex: 0C 00 0C
+
+0C       msg_type = GAME_START
+00 0C    msg_id = 12
 ```
 
 GAME_END checkmate, white wins, msg_id=10:
