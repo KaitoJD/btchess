@@ -1,0 +1,183 @@
+name: Bug Report
+description: Report a bug in BTChess (game logic, BLE multiplayer, persistence, UI, or build).
+labels: ["bug"]
+title: "[BUG]"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill in as much detail as possible to help me reproduce and fix the issue quickly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise summary of what the bug is.
+      placeholder: "e.g. The app crashes when accepting a draw offer over BLE."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reliably reproduce the bug.
+      placeholder: |
+        1. Open the app and go to ...
+        2. Select game mode ...
+        3. Perform action ...
+        4. Observe the bug
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+      placeholder: "e.g. The game should register the draw and show the Game Over screen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened instead?
+      placeholder: "e.g. The app froze and had to be force-closed."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game_mode
+    attributes:
+      label: Game Mode
+      description: Which game mode were you using when the bug occurred?
+      options:
+        - Hotseat (two players, one device)
+        - BLE Multiplayer (two devices)
+        - Not applicable (build / setup / UI outside a game)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which feature area does this bug affect?
+      options:
+        - BLE / Connection
+        - Chess Logic (moves, rules, game end detection)
+        - Persistence / Game History
+        - UI / Navigation
+        - Build / Setup
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: app_version
+    attributes:
+      label: App Version
+      description: Found in the Settings screen or the About section.
+      placeholder: "e.g. 1.0.0+4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - iOS
+        - Both Android and iOS
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: OS Version
+      placeholder: "e.g. Android 14 (API 34) / iOS 17.4"
+    validations:
+      required: true
+
+  - type: input
+    id: device_model
+    attributes:
+      label: Device Model
+      description: Optional, but helpful for hardware-specific BLE bugs.
+      placeholder: "e.g. Samsung Galaxy S23 / iPhone 15 Pro"
+    validations:
+      required: false
+
+  - type: textarea
+    id: ble_details
+    attributes:
+      label: BLE Details (if applicable)
+      description: |
+        Fill this in only if the bug is related to BLE Multiplayer. Include:
+        - Your role: **Host** or **Client**
+        - Partner device model and OS
+        - The phase when the bug occurred: `scan` / `connect` / `handshake` / `gameplay` / `sync`
+        - Any error code shown or logged (see reference below)
+
+        **BLE error code reference:**
+        | Code | Meaning |
+        |------|---------|
+        | `0x01` | INVALID_MOVE |
+        | `0x02` | NOT_YOUR_TURN |
+        | `0x03` | GAME_ENDED |
+        | `0x04` | SYNC_REQUIRED |
+        | `0x05` | UNKNOWN_MSG_TYPE |
+        | `0x06` | MALFORMED_MESSAGE |
+        | `0x07` | DUPLICATE_MSG |
+        | `0x08` | RATE_LIMITED |
+        | `0x10` | VERSION_MISMATCH |
+        | `0x11` | SESSION_EXPIRED |
+        | `0xFF` | INTERNAL_ERROR |
+      placeholder: |
+        Role: Host
+        Partner device: Pixel 7, Android 14
+        Phase: handshake
+        Error code: 0x10 (VERSION_MISMATCH)
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      description: Paste any relevant Flutter logs, stack traces, or adb logcat output. This will be rendered as a code block automatically.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / Screen Recording
+      description: Drag and drop images or video files here if they help illustrate the bug.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I can reproduce this bug consistently.
+          required: false
+        - label: >
+            (BLE only) I tested on two physical devices — Android emulators and iOS
+            simulators do not support BLE peripheral mode.
+          required: false
+        - label: >
+            (Build / code-gen issue) I ran
+            `dart run build_runner build --delete-conflicting-outputs`
+            before reporting.
+          required: false
