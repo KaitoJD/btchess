@@ -107,8 +107,12 @@ The user will be prompted to allow Bluetooth access on first launch.
 2. On device A, select Bluetooth mode and create a lobby (host).
 3. On device B, select Bluetooth mode and join (client). The host should appear in the scan list.
 4. Tap the host entry to connect. The handshake completes automatically.
-5. Play a game. Verify moves, resign, and draw flows all work.
-6. To test reconnection: toggle Bluetooth off on the client device, then back on. The client should auto-reconnect and sync state.
+5. Verify lobby ready state behavior:
+	- Host shows "Opponent Connected" and a "Start Game" button.
+	- Client shows "Opponent Connected" and waits for host to start.
+6. Tap "Start Game" on the host device. Both devices should enter the game.
+7. Play a game. Verify moves, resign, and draw flows all work.
+8. To test reconnection: toggle Bluetooth off on the client device, then back on. The client should auto-reconnect and sync state.
 
 ## Code Generation
 
