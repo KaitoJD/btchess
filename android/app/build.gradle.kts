@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.btchess"
+    namespace = "me.kaitojd.btchess"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,12 +20,13 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.btchess"
+        applicationId = "me.kaitojd.btchess"
         // Minimum SDK 21 required for BLE support
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        setProperty("archivesBaseName", "btchess-$versionName-$versionCode")
     }
 
     buildTypes {

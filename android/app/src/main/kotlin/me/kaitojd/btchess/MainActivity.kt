@@ -1,4 +1,4 @@
-package com.btchess
+package me.kaitojd.btchess
 
 import io.flutter.embedding.android.FlutterActivity
 
