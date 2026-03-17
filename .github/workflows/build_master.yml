@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     branches:
-      - master
+      - test-build
 
 jobs:
   test:
@@ -48,6 +48,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+      
+      - name: Generate build files
+        run: dart run build_runner build
 
       - name: Build APK
         run: flutter build apk --release
@@ -73,6 +76,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate build files
+        run: dart run build_runner build
 
       - name: Build iOS xcarchive
         run: flutter build ipa --release --no-codesign
