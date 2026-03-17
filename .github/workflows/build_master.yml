@@ -1,9 +1,11 @@
 name: Build and Release
+permission:
+  contents: read
 
 on:
   push:
     branches:
-      - master
+      - test-build
 
 jobs:
   test:
@@ -11,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -33,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -48,12 +50,15 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+      
+      - name: Generate build files
+        run: dart run build_runner build
 
       - name: Build APK
         run: flutter build apk --release
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -64,7 +69,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -74,6 +79,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate build files
+        run: dart run build_runner build
+
       - name: Build iOS xcarchive
         run: flutter build ipa --release --no-codesign
 
@@ -81,7 +89,7 @@ jobs:
         run: cd build/ios/archive && tar -czf Runner.xcarchive.tar.gz Runner.xcarchive
 
       - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-xcarchive
           path: build/ios/archive/Runner.xcarchive.tar.gz
