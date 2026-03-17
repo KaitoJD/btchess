@@ -5,7 +5,7 @@ permission:
 on:
   push:
     branches:
-      - test-build
+      - master
 
 jobs:
   test:
