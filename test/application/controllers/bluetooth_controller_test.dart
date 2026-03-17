@@ -18,6 +18,9 @@ void main() {
   late BluetoothController controller;
   late StreamController<cm.ConnectionState> connStateController;
   late StreamController<BleMessage> messageController;
+  late bool hasPermission;
+  late bool requestGranted;
+  late bool permanentlyDenied;
 
   setUp(() {
     mockBluetoothService = MockBluetoothService();
@@ -37,10 +40,22 @@ void main() {
     when(() => mockBluetoothService.isBluetoothOn)
         .thenAnswer((_) async => true);
 
+    hasPermission = true;
+    requestGranted = true;
+    permanentlyDenied = false;
+
     controller = BluetoothController(
       bluetoothService: mockBluetoothService,
       connectionManager: mockConnectionManager,
       gameController: gameController,
+      checkPermissions: () async => hasPermission,
+      requestPermissions: () async {
+        if (requestGranted) {
+          hasPermission = true;
+        }
+        return requestGranted;
+      },
+      isPermissionPermanentlyDenied: () async => permanentlyDenied,
     );
   });
 
@@ -68,12 +83,47 @@ void main() {
     });
 
     group('scanning', () {
-      // Note: startScanning/stopScanning require BlePermissions which is
-      // a static class that can't be mocked. These are better tested as
-      // integration tests. Here we test the state management logic.
-
       test('initial scanning state is false', () {
         expect(controller.state.isScanning, isFalse);
+      });
+
+      test('startScanning enters scanning state when permission is granted',
+          () async {
+        when(() => mockBluetoothService.startScanning()).thenAnswer((_) async {});
+
+        await controller.startScanning();
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.scanning);
+        expect(controller.state.isScanning, isTrue);
+        verify(() => mockBluetoothService.startScanning()).called(1);
+      });
+
+      test('startScanning shows settings guidance when permission permanently denied',
+          () async {
+        hasPermission = false;
+        requestGranted = false;
+        permanentlyDenied = true;
+
+        await controller.startScanning();
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.error);
+        expect(
+          controller.state.lastError,
+          'Bluetooth permission is permanently denied. Please enable it in Settings.',
+        );
+      });
+
+      test('startScanning reports bluetooth off when permission request fails and adapter is off',
+          () async {
+        hasPermission = false;
+        requestGranted = false;
+        permanentlyDenied = false;
+        when(() => mockBluetoothService.isBluetoothOn).thenAnswer((_) async => false);
+
+        await controller.startScanning();
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.error);
+        expect(controller.state.lastError, 'Bluetooth is turned off');
       });
     });
 
@@ -131,9 +181,23 @@ void main() {
     });
 
     group('createLobby', () {
-      // createLobby requires BlePermissions (static), tested as integration
       test('initial isHost is false', () {
         expect(controller.state.isHost, isFalse);
+      });
+
+      test('createLobby shows settings guidance when permission permanently denied',
+          () async {
+        hasPermission = false;
+        requestGranted = false;
+        permanentlyDenied = true;
+
+        await controller.createLobby('test-game');
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.error);
+        expect(
+          controller.state.lastError,
+          'Bluetooth permission is permanently denied. Please enable it in Settings.',
+        );
       });
     });
 
