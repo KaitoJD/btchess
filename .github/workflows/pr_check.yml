@@ -1,7 +1,7 @@
 name: PR Checks
-permission:
+permissions:
   contents: read
-  pull_request: write
+  pull_requests: write
 
 on:
   pull_request:

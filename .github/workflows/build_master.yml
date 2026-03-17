@@ -1,5 +1,5 @@
 name: Build and Release
-permission:
+permissions:
   contents: read
 
 on:
