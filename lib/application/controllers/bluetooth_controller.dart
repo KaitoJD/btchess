@@ -192,6 +192,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         connectionStatus: BleConnectionStatus.error,
         lastError: 'Failed to create lobby: $e',
       );
+      rethrow;
     }
   }
 
