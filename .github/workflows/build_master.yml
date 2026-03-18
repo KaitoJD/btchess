@@ -5,7 +5,7 @@ permissions:
 on:
   push:
     branches:
-      - test-build
+      - ios-build-test
 
 jobs:
   test:
