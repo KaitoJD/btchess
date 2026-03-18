@@ -14,5 +14,5 @@ class AppException implements Exception {
   final StackTrace? stackTrace;
 
   @override
-  String toString() => 'AppExeption: $message${code != null ? ' ($code)' : ''}';
+  String toString() => 'AppException: $message${code != null ? ' ($code)' : ''}';
 }
