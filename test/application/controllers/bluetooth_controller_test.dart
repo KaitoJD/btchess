@@ -4,15 +4,18 @@ import 'package:mocktail/mocktail.dart';
 import 'package:btchess/application/controllers/bluetooth_controller.dart';
 import 'package:btchess/application/controllers/game_controller.dart';
 import 'package:btchess/application/states/bluetooth_state.dart';
+import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:btchess/domain/services/chess_service.dart';
 import 'package:btchess/infrastructure/bluetooth/bluetooth_service.dart';
 import 'package:btchess/infrastructure/bluetooth/connection_manager.dart' as cm;
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
+import '../../mocks/mock_ble_peripheral_manager.dart';
 import '../../mocks/mock_bluetooth_service.dart';
 import '../../mocks/mock_connection_manager.dart';
 
 void main() {
   late MockBluetoothService mockBluetoothService;
+  late MockBlePeripheralManager mockPeripheralManager;
   late MockConnectionManager mockConnectionManager;
   late GameController gameController;
   late BluetoothController controller;
@@ -24,6 +27,7 @@ void main() {
 
   setUp(() {
     mockBluetoothService = MockBluetoothService();
+    mockPeripheralManager = MockBlePeripheralManager();
     mockConnectionManager = MockConnectionManager();
     gameController = GameController(chessService: const ChessService());
 
@@ -39,6 +43,10 @@ void main() {
         .thenAnswer((_) => const Stream<List<BleDeviceInfo>>.empty());
     when(() => mockBluetoothService.isBluetoothOn)
         .thenAnswer((_) async => true);
+    when(() => mockBluetoothService.peripheralManager)
+      .thenReturn(mockPeripheralManager);
+    when(() => mockPeripheralManager.clientConnected)
+      .thenAnswer((_) => const Stream<String>.empty());
 
     hasPermission = true;
     requestGranted = true;
@@ -183,6 +191,30 @@ void main() {
     group('createLobby', () {
       test('initial isHost is false', () {
         expect(controller.state.isHost, isFalse);
+      });
+
+      test('createLobby rethrows when advertising setup fails', () async {
+        when(() => mockBluetoothService.startAdvertising(any()))
+            .thenThrow(const BleConnectionException('boom'));
+
+        await expectLater(
+          controller.createLobby('test-game'),
+          throwsA(isA<BleConnectionException>()),
+        );
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.error);
+        expect(controller.state.lastError, contains('Failed to create lobby'));
+      });
+
+      test('createLobby keeps host state when advertising succeeds', () async {
+        when(() => mockBluetoothService.startAdvertising(any()))
+            .thenAnswer((_) async {});
+
+        await controller.createLobby('test-game');
+
+        expect(controller.state.isHost, isTrue);
+        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        verify(() => mockBluetoothService.startAdvertising('test-game')).called(1);
       });
 
       test('createLobby shows settings guidance when permission permanently denied',
