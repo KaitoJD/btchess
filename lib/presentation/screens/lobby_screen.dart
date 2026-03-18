@@ -30,7 +30,6 @@ class LobbyScreen extends ConsumerStatefulWidget {
 class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   final _gameNameController = TextEditingController();
   final _playerNameController = TextEditingController();
-  bool _lobbyCreated = false;
   bool _isHost = false;
   PieceColor? _hostColor;
 
@@ -106,8 +105,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // If lobby is active (created and waiting/ready), show waiting state
-    if (_lobbyCreated || lobbyState.isActive) {
+    // If lobby is active or failed, show lobby status panel.
+    if (lobbyState.isActive || lobbyState.status == LobbyStatus.error) {
       return _buildHostWaitingView(context, lobbyState, bleState);
     }
 
@@ -536,8 +535,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       playerName: playerName,
       hostColor: _hostColor ?? PieceColor.white,
     );
-
-    setState(() => _lobbyCreated = true);
   }
 
   Future<void> _startScan() async {
@@ -571,7 +568,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   Future<void> _leaveLobby() async {
     final lobbyController = ref.read(lobbyControllerProvider.notifier);
     await lobbyController.leaveLobby();
-    setState(() => _lobbyCreated = false);
   }
 
   Future<void> _handleBack(LobbyState lobbyState) async {
