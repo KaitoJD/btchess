@@ -22,7 +22,7 @@ dependencies:
   dartchess: ^0.7.1
 
   # Bluetooth Low Energy
-  flutter_blue_plus: ^1.35.3
+  flutter_blue_plus: ^2.2.1
 
   # BLE Peripheral (GATT server for host mode)
   ble_peripheral: ^2.4.0
