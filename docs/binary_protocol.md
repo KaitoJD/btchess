@@ -1,4 +1,4 @@
-# BTChess Binary Protocol
+# BTChess - Binary Protocol
 
 Binary message format for BLE communication between two BTChess devices. Protocol version: `0x01`.
 
@@ -6,8 +6,37 @@ The protocol is host-authoritative: the host validates all moves and maintains t
 
 Lobby start is host-initiated: host sends `GAME_START` to the client, client ACKs it, then both devices transition into the game screen.
 
+## Table of Contents
 
-## GATT Service Layout
+- [GATT Service Layout](#1-gatt-service-layout)
+- [Message Types](#2-message-types)
+- [Message Headers](#3-message-headers)
+- [Message Specifications](#4-message-specifications)
+    - [HANDSHAKE (0x00)](#41-handshake-0x00---6-bytes)
+    - [MOVE (0x01)](#42-move-0x01---6-bytes)
+    - [ACK (0x02)](#43-ack-0x02---5-bytes)
+    - [SYNC_REQUEST (0x03)](#44-sync_request-0x03---3-bytes)
+    - [SYNC_RESPONSE (0x04) / CHUNK (0x05)](#45-sync_response-0x04--chunk-0x05---5--payload-bytes)
+    - [GAME_END (0x06)](#46-game_end-0x06---5-bytes)
+    - [DRAW_OFFER (0x07)](#47-draw_offer-0x07---3-bytes)
+    - [DRAW_RESPONSE (0x08)](#48-draw_response-0x08---4-bytes)
+    - [RESIGN (0x09)](#49-resign-0x09---3-bytes)
+    - [PING (0x0A) / PONG (0x0B)](#410-ping-0x0a--pong-0x0b---7-bytes)
+    - [GAME_START (0x0C)](#411-game_start-0x0c---3-bytes)
+- [Error Codes](#5-error-codes)
+- [Game End Reasons](#6-game-end-reasons)
+- [Winner Codes](#7-winner-codes)
+- [Reliability](#8-reliability)
+    - [Message IDs](#81-message-ids)
+    - [Timeouts](#82-timeouts)
+    - [Retry Policy](#83-retry-policy)
+    - [Rate Limiting](#84-rate-limiting)
+- [Example Messages](#9-example-messages)
+- [Implementation Notes](#10-implementation-notes)
+- [Security Considerations](#11-security-considerations)
+
+
+## 1. GATT Service Layout
 
 | Component | UUID | Properties |
 |---|---|---|
@@ -17,7 +46,7 @@ Lobby start is host-initiated: host sends `GAME_START` to the client, client ACK
 | CONTROL (bi-directional) | `0000c0de-0003-1000-8000-00805f9b34fb` | Write, Notify |
 
 
-## Message Types
+## 2. Message Types
 
 | Code | Name | Direction | Size (bytes) |
 |---|---|---|---|
@@ -36,16 +65,16 @@ Lobby start is host-initiated: host sends `GAME_START` to the client, client ACK
 | `0x0C` | GAME_START | Host to Client | 3 |
 
 
-## Message Headers
+## 3. Message Headers
 
 Standard header (3 bytes): `msg_type` (1) + `msg_id` (2, big-endian).
 
 Chunked header (5 bytes): standard header + `seq` (1, 1-indexed) + `total` (1, chunk count).
 
 
-## Message Specifications
+## 4. Message Specifications
 
-### HANDSHAKE (0x00) -- 6 bytes
+### 4.1. HANDSHAKE (0x00) - 6 bytes
 
 Sent immediately after BLE connection is established.
 
@@ -64,7 +93,7 @@ Flow:
 3. If compatible: host replies with HANDSHAKE `role=HOST` and its selected `host_color`.
 4. If incompatible: host sends ACK with `error_code=0x10` and disconnects.
 
-### MOVE (0x01) -- 6 bytes
+### 4.2. MOVE (0x01) - 6 bytes
 
 Client sends a chess move to the host for validation.
 
@@ -79,7 +108,7 @@ Client sends a chess move to the host for validation.
 Square indexing: `index = rank * 8 + file`, where a1=0, b1=1, ..., h1=7, a2=8, ..., h8=63. In other words, `file = index % 8` (a=0, h=7) and `rank = index ~/ 8` (1st rank=0, 8th rank=7).
 
 
-### ACK (0x02) -- 5 bytes
+### 4.3. ACK (0x02) - 5 bytes
 
 Acknowledges a received message that expects reliability (for example: `MOVE`, `GAME_START`).
 
@@ -96,7 +125,7 @@ Direction notes:
 - Client to host: ACK for host-initiated reliable signals (currently `GAME_START`).
 
 
-### SYNC_REQUEST (0x03) -- 3 bytes
+### 4.4. SYNC_REQUEST (0x03) - 3 bytes
 
 Client requests the full game state from host. Header only, no payload.
 
@@ -106,7 +135,7 @@ Client requests the full game state from host. Header only, no payload.
 | 1-2 | msg_id | uint16 |
 
 
-### SYNC_RESPONSE (0x04) / CHUNK (0x05) -- 5 + payload bytes
+### 4.5. SYNC_RESPONSE (0x04) / CHUNK (0x05) - 5 + payload bytes
 
 Host sends the full game state (FEN, move history). Uses chunked header.
 
@@ -126,7 +155,7 @@ Chunking rules:
 - Reassembly timeout: 10 seconds. On timeout or missing chunk, discard the buffer and re-send SYNC_REQUEST.
 
 
-### GAME_END (0x06) -- 5 bytes
+### 4.6. GAME_END (0x06) - 5 bytes
 
 Host notifies that the game has ended.
 
@@ -138,7 +167,7 @@ Host notifies that the game has ended.
 | 4 | winner | See Winner Codes |
 
 
-### DRAW_OFFER (0x07) -- 3 bytes
+### 4.7. DRAW_OFFER (0x07) - 3 bytes
 
 A player offers a draw. Header only.
 
@@ -148,7 +177,7 @@ A player offers a draw. Header only.
 | 1-2 | msg_id | uint16 |
 
 
-### DRAW_RESPONSE (0x08) -- 4 bytes
+### 4.8. DRAW_RESPONSE (0x08) - 4 bytes
 
 Response to a draw offer.
 
@@ -159,7 +188,7 @@ Response to a draw offer.
 | 3 | accepted | `0x00`=REJECTED, `0x01`=ACCEPTED |
 
 
-### RESIGN (0x09) -- 3 bytes
+### 4.9. RESIGN (0x09) - 3 bytes
 
 A player resigns. Header only.
 
@@ -169,7 +198,7 @@ A player resigns. Header only.
 | 1-2 | msg_id | uint16 |
 
 
-### PING (0x0A) / PONG (0x0B) -- 7 bytes
+### 4.10. PING (0x0A) / PONG (0x0B) - 7 bytes
 
 Keepalive and latency measurement.
 
@@ -180,7 +209,7 @@ Keepalive and latency measurement.
 | 3-6 | timestamp | uint32, big-endian (Unix timestamp or monotonic ms) |
 
 
-### GAME_START (0x0C) -- 3 bytes
+### 4.11. GAME_START (0x0C) - 3 bytes
 
 Host starts the match after both players are connected in lobby.
 
@@ -197,7 +226,7 @@ Flow:
 4. Host transitions to game after ACK success.
 
 
-## Error Codes
+## 5. Error Codes
 
 | Code | Name | Description |
 |---|---|---|
@@ -215,7 +244,7 @@ Flow:
 | `0xFF` | INTERNAL_ERROR | Unexpected error |
 
 
-## Game End Reasons
+## 6. Game End Reasons
 
 | Code | Name |
 |---|---|
@@ -230,7 +259,7 @@ Flow:
 | `0x09` | DISCONNECT |
 
 
-## Winner Codes
+## 7. Winner Codes
 
 | Code | Name |
 |---|---|
@@ -239,13 +268,13 @@ Flow:
 | `0x02` | BLACK |
 
 
-## Reliability
+## 8. Reliability
 
-### Message IDs
+### 8.1. Message IDs
 
 `msg_id` is a 16-bit unsigned integer (0-65535) that wraps around. The host maintains a dedupe cache of the last 64 processed msg_ids. On receiving a duplicate, the host re-sends the cached ACK without re-processing.
 
-### Timeouts
+### 8.2. Timeouts
 
 | Parameter | Value | Purpose |
 |---|---|---|
@@ -254,13 +283,13 @@ Flow:
 | T_ping | 15000 ms | Interval between PINGs |
 | T_disconnect | 30000 ms | No PONG received, consider disconnected |
 
-### Retry Policy
+### 8.3. Retry Policy
 
 - Max retries: 2 (total 3 attempts).
 - Backoff delays: 500 ms, then 1000 ms.
 - Applies to reliable send-with-ACK operations (`MOVE`, `GAME_START`).
 
-### Rate Limiting
+### 8.4. Rate Limiting
 
 | Message Type | Limit |
 |---|---|
@@ -271,7 +300,7 @@ Flow:
 Violations receive ACK with `status=ERROR`, `error_code=0x08` (RATE_LIMITED).
 
 
-## Example Messages
+## 9. Example Messages
 
 MOVE e2 to e4 (no promotion), msg_id=1:
 
@@ -340,7 +369,7 @@ Hex: 06 00 0A 01 01
 ```
 
 
-## Implementation Notes
+## 10. Implementation Notes
 
 Square conversion helpers in Dart:
 
@@ -368,7 +397,7 @@ int decodeMsgId(int hi, int lo) {
 
 Receivers should validate the `msg_type` byte before parsing the rest of the message. Unknown types should be rejected with error code `0x05` (UNKNOWN_MSG_TYPE). Messages shorter than the expected size for their type should be rejected with `0x06` (MALFORMED_MESSAGE).
 
-## 14. Security Considerations
+## 11. Security Considerations
 
 | Concern          | Mitigation                                   |
 |------------------|----------------------------------------------|

@@ -1,9 +1,22 @@
-# BTChess -- Architecture
+# BTChess - Architecture
 
 BTChess uses a 4-layer architecture. Each layer has strict dependency rules to keep the codebase maintainable.
 
+## Table of Contents
 
-## Layers
+- [Layers](#1-layers)
+- [State Management](#2-state-management)
+- [BLE Multiplayer Data Flow](#3-ble-multiplayer-data-flow)
+    - [Roles](#31-roles)
+    - [Connection Setup](#32-connection-setup)
+    - [Move Flow (Client to Host)](#33-move-flow-client-to-host)
+    - [Draw / Resign / Game End](#34-draw--resign--game-end)
+    - [Reconnection](#35-reconnection)
+    - [Reliability Stack](#36-reliability-stack)
+- [Persistence](#4-persistence)
+- [Screens and Navigation](#5-screens-and-navigation)
+
+## 1. Layers
 
 **core/** -- Shared constants, utilities, error types, extensions. Pure Dart, no dependencies on other layers. Contains BLE protocol constants (UUIDs, message types, error codes, timing), binary helpers, and the Result type.
 
@@ -26,7 +39,7 @@ BTChess uses a 4-layer architecture. Each layer has strict dependency rules to k
 | infrastructure | domain, core, external packages | application, presentation |
 
 
-## State Management
+## 2. State Management
 
 Riverpod providers connect the layers:
 
@@ -40,14 +53,14 @@ Riverpod providers connect the layers:
 GameController is the central game loop. In hotseat mode it drives everything locally. In BLE mode, BluetoothController mediates between GameController and the BLE transport layer.
 
 
-## BLE Multiplayer Data Flow
+## 3. BLE Multiplayer Data Flow
 
-### Roles
+### 3.1. Roles
 
 - **Host** -- Creates the lobby, runs a GATT server (BlePeripheralManager), validates all moves, maintains canonical game state. The host is authoritative.
 - **Client** -- Joins the lobby, connects to the host's GATT server, sends moves for validation, applies state only after receiving an ACK.
 
-### Connection Setup
+### 3.2. Connection Setup
 
 1. Host calls `BluetoothController.createLobby()`.
 2. `BluetoothService.startAdvertising()` starts the GATT server via `BlePeripheralManager` with the Chess Game Service UUID.
@@ -58,7 +71,7 @@ GameController is the central game loop. In hotseat mode it drives everything lo
 7. `ConnectionManager.setupConnection()` performs the HANDSHAKE exchange.
 8. On success, both sides transition to `connected` state and the game begins.
 
-### Move Flow (Client to Host)
+### 3.3. Move Flow (Client to Host)
 
 1. Client taps a move on the board.
 2. `BluetoothController.sendMove(move)` encodes a `MoveMessage` (6 bytes: type + msg_id + from + to + promo).
@@ -69,13 +82,13 @@ GameController is the central game loop. In hotseat mode it drives everything lo
 7. Client's `ConnectionManager` receives the ACK. If OK, `BluetoothController` calls `GameController.applyRemoteMove()`. If ERROR, the client shows the error.
 8. No optimistic UI updates -- the client board stays locked until ACK arrives.
 
-### Draw / Resign / Game End
+### 3.4. Draw / Resign / Game End
 
 - Draw: player sends DRAW_OFFER (3 bytes) via CONTROL. Opponent receives it, shows dialog, sends DRAW_RESPONSE (4 bytes). If accepted, host sends GAME_END with reason DRAW_AGREEMENT.
 - Resign: player sends RESIGN (3 bytes). Host sends GAME_END with reason RESIGN.
 - Checkmate/stalemate: host detects the condition after applying a move, sends GAME_END with the appropriate reason and winner.
 
-### Reconnection
+### 3.5. Reconnection
 
 1. Client detects BLE disconnect, transitions to `reconnecting` state.
 2. Auto-reconnect attempt to the same device.
@@ -83,7 +96,7 @@ GameController is the central game loop. In hotseat mode it drives everything lo
 4. Host responds with SYNC_RESPONSE (chunked if payload exceeds MTU).
 5. Client calls `GameController.syncState()` to restore the board and resumes play.
 
-### Reliability Stack
+### 3.6. Reliability Stack
 
 The infrastructure layer provides several reliability mechanisms:
 
@@ -94,12 +107,12 @@ The infrastructure layer provides several reliability mechanisms:
 - **RateLimiter** -- MOVE 2/s, DRAW_OFFER 1/30 s, SYNC_REQUEST 1/5 s.
 
 
-## Persistence
+## 4. Persistence
 
 Games are saved to Hive after each move. `GameRepository` handles CRUD with auto-cleanup at 100 saved games (oldest completed games removed first). `SavedGame` stores: id, FEN, move history (SAN), timestamps, mode, result, opponent name. Settings are stored in SharedPreferences via `SettingsRepository`.
 
 
-## Screens and Navigation
+## 5. Screens and Navigation
 
 8 routes with guards:
 

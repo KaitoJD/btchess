@@ -1,4 +1,21 @@
-# BTChess -- Troubleshooting
+# BTChess - Troubleshooting
+
+## Table of Contents
+
+- [BLE Issues](#ble-issues)
+	- [Scanning finds no devices](#scanning-finds-no-devices)
+	- [Permission denied](#permission-denied)
+	- [Connection drops or fails](#connection-drops-or-fails)
+	- [Client stays on "Waiting for host to start"](#client-stays-on-waiting-for-host-to-start)
+	- [Handshake fails or times out](#handshake-fails-or-times-out)
+	- [Moves are rejected with NOT_YOUR_TURN](#moves-are-rejected-with-not_your_turn)
+- [Persistence Issues](#persistence-issues)
+	- [Saved games not appearing](#saved-games-not-appearing)
+	- [Settings not persisting](#settings-not-persisting)
+- [Build Issues](#build-issues)
+	- [Hive adapter errors](#hive-adapter-errors)
+	- [Android build failures](#android-build-failures)
+	- [iOS build failures](#ios-build-failures)
 
 ## BLE Issues
 
