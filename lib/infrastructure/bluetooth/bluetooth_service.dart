@@ -140,6 +140,7 @@ class BluetoothService {
     bool bleConnected = false;
     try {
       await deviceInfo.device.connect(
+        license: License.free,
         timeout: const Duration(milliseconds: TimingConstants.connectionTimeoutMs),
       );
       bleConnected = true;
