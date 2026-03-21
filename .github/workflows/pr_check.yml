@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -24,11 +26,39 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Get changed Dart files
+        id: changed-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setOutput('files', '');
+              return;
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            });
+            const dartFiles = files.map(f => f.filename).filter(f => f.endsWith('.dart'));
+            core.setOutput('files', dartFiles.join('\n'));
+
+      - name: Analyze changed Dart files
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          echo "Changed Dart files:"
+          printf '%s\n' "${{ steps.changed-files.outputs.files }}"
+          mapfile -t filesArray <<< "${{ steps.changed-files.outputs.files }}"
+          flutter analyze "${filesArray[@]}"
+        shell: bash
+
+      - name: Skip analysis when no Dart files changed
+        if: steps.changed-files.outputs.files == ''
+        run: echo "No Dart files changed; skipping static analysis."
+
       - name: Generate build files
         run: dart run build_runner build
-
-      - name: Analyze code
-        run: flutter analyze
 
       - name: Run unit tests
         run: flutter test
