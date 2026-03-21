@@ -258,7 +258,7 @@ class ChessService {
       final result = <Square, Piece>{};
 
       for (int i = 0; i < 64; i++) {
-        final dcSquare = i;
+        final dcSquare = dc.Square(i);
         final dcPiece = position.board.pieceAt(dcSquare);
 
         if (dcPiece != null) {
@@ -339,7 +339,7 @@ class ChessService {
   }
 
   dc.Square _toDartchessSquare(Square square) {
-    return square.index;
+    return dc.Square(square.index);
   }
 
   Square _fromDartchessSquare(dc.Square square) {
