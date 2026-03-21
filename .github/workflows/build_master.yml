@@ -3,9 +3,7 @@ permissions:
   contents: read
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 
 jobs:
   test:
