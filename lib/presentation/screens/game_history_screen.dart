@@ -233,15 +233,18 @@ class _GameTile extends StatelessWidget {
     String text;
     Color color;
 
-    if (game.winnerIndex == null) {
-      text = 'Draw';
-      color = theme.colorScheme.secondary;
-    } else if (game.winnerIndex == 0) {
-      text = 'White';
-      color = Colors.grey;
-    } else {
-      text = 'Black';
-      color = Colors.black87;
+    switch (game.winnerIndex) {
+      case 1:
+        text = 'White';
+        color = Colors.grey;
+        break;
+      case 2:
+        text = 'Black';
+        color = Colors.black87;
+        break;
+      default:
+        text = 'Draw';
+        color = theme.colorScheme.secondary;
     }
 
     return Container(
