@@ -1,34 +1,73 @@
-# BTChess
+<div align="center">
 
-A mobile chess app for Android and iOS with local multiplayer via Bluetooth Low Energy.
+<img width="600" src="docs\assets\banner.png">
 
-## Features
+<p>
+    <b>Turn any moment into a chess match. No internet. No accounts. Just you and your opponent.</b>
+</p>
 
-- **Hotseat Mode** – Two players, one device. Take turns on the same screen.
-- **Bluetooth Multiplayer** – Play against a friend on another phone over BLE.
-- **Full Chess Rules** – Legal move validation, check/checkmate, castling, en passant, pawn promotion, and draw conditions.
-- **Offline First** – No internet required. Games are saved locally.
-- **Game History** – Resume in-progress games or review past matches.
+[![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
+[![License](https://img.shields.io/badge/license-CC_BY_NC_SA_4.0-green)](LICENSE)
+[![flutter_blue_plus](https://img.shields.io/pub/v/flutter_blue_plus?label=flutter_blue_plus)](https://pub.dev/packages/flutter_blue_plus)
+[![dartchess](https://img.shields.io/pub/v/dartchess?label=dartchess)](https://pub.dev/packages/dartchess)
 
-## Tech Stack
+</div>
 
-- **Flutter** – Cross-platform UI framework
-- **Riverpod** – State management
-- **dartchess** – Chess rules engine
-- **flutter_blue_plus** – Bluetooth Low Energy communication
-- **Hive** – Local persistence
+## 🚀 Get Started
 
-## Documentation
+- Android: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-alpha/btchess-1.0.0-alpha.apk)
+- iOS: Not available yet
 
-See the [docs/](docs/) folder for detailed documentation:
+## ✨ Features
 
-- [Architecture](docs/architecture.md)
-- [BLE Protocol](docs/binary_protocol.md)
-- [Development Setup](docs/dev_setup.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- Play via Bluetooth (No Internet Needed)
+    - Connect two phones and play anywhere, anytime
+    - No Wi-Fi required - No mobile data needed - Just turn on Bluetooth and start playing
+- Play on the Same Device
+    - One phone, two players – simple and fun
+    - Perfect for hanging out with friends
+- Auto Save Your Games
+    - Resume unfinished games anytime
+    - Review past matches
+    - Analyze your moves and improve
 
-## License
+## 📸 Demo
 
-This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).  
-You are free to share and adapt the material for non-commercial purposes, as long as you give appropriate credit and distribute your contributions under the same license.  
-See the [LICENSE](./LICENSE) file for details.
+<p align="center">
+  <img src="docs/assets/local_game.gif" width="250" alt="Landing Page">
+  <br><em>Local Game (Play on the Same Device)</em>
+</p>
+
+## 🧭 How to Play
+
+- Open the app.
+- Choose "New Game".
+- Choose:
+    - Local Game: If you want to play on the same device with a friend.
+    - Host Bluetooth Game / Join Bluetooth Game: One opens a lobby, and one joins it.
+- Start your match!
+
+<b>_TIP: Make sure you have added the device of the opponent you are about to connect to in the Bluetooth Settings beforehand to ensure an uninterrupted experience._</b>
+
+## 🎯 Who Is This For?
+
+- Students looking for quick fun
+- Chess lovers
+- Friends who want to compete
+- Anyone who wants offline games
+
+## 🤔 Why BTChess?
+
+- No annoying ads
+- Fast and lightweight
+- Works completely offline
+- Simple and easy to use
+
+## 📬 Feedback & Support
+
+Have ideas or found a bug?
+
+- [Open an issue on GitHub](https://github.com/KaitoJD/btchess/issues/new/choose)
+- [Or contact me directly](mailto:contact.nguyensynguyen@gmail.com)
+
+Your feedback helps make BTChess better ^^
