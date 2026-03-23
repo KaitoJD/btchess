@@ -35,6 +35,7 @@ class ConnectionStatusWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildIcon(colorScheme),
             const SizedBox(height: 12),
@@ -44,6 +45,7 @@ class ConnectionStatusWidget extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: _textColor(colorScheme),
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
@@ -103,6 +105,7 @@ class ConnectionStatusWidget extends StatelessWidget {
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ],

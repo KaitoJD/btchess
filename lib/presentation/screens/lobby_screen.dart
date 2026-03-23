@@ -89,11 +89,20 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             onPressed: () => _handleBack(lobbyState),
           ),
         ),
-        body: SafeArea(
-          child: _isHost
-              ? _buildHostView(context, lobbyState, bleState)
-              : _buildClientView(context, lobbyState, bleState),
-        ),
+        body: _isHost
+            ? SafeArea(
+                child: _buildHostView(context, lobbyState, bleState),
+              )
+            // On some client devices, asymmetric horizontal safe-area insets
+            // can make centered status content appear visually shifted.
+            // Keep top/bottom protection while normalizing left/right.
+            : SafeArea(
+                top: true,
+                bottom: true,
+                left: false,
+                right: false,
+                child: _buildClientView(context, lobbyState, bleState),
+              ),
       ),
     );
   }
@@ -283,51 +292,30 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     // If currently connecting or further along, show connection status
     if (bleState.isConnecting ||
         bleState.connectionStatus == BleConnectionStatus.reconnecting) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Spacer(),
-            ConnectionStatusWidget(
-              status: bleState.connectionStatus,
-              onCancel: () => _handleBack(lobbyState),
-            ),
-            const Spacer(),
-          ],
+      return _buildClientCenteredStatusShell(
+        child: ConnectionStatusWidget(
+          status: bleState.connectionStatus,
+          onCancel: () => _handleBack(lobbyState),
         ),
       );
     }
 
     // If connected and ready, show ready view
     if (lobbyState.status == LobbyStatus.ready) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Spacer(),
-            _buildReadyView(context, lobbyState),
-            const Spacer(),
-          ],
-        ),
+      return _buildClientCenteredStatusShell(
+        child: _buildReadyView(context, lobbyState),
       );
     }
 
     // If error, show error with retry
     if (bleState.connectionStatus == BleConnectionStatus.error ||
         lobbyState.status == LobbyStatus.error) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Spacer(),
-            ConnectionStatusWidget(
-              status: BleConnectionStatus.error,
-              errorMessage: bleState.lastError ?? lobbyState.lastError,
-              onRetry: _startScan,
-              onCancel: () => _handleBack(lobbyState),
-            ),
-            const Spacer(),
-          ],
+      return _buildClientCenteredStatusShell(
+        child: ConnectionStatusWidget(
+          status: BleConnectionStatus.error,
+          errorMessage: bleState.lastError ?? lobbyState.lastError,
+          onRetry: _startScan,
+          onCancel: () => _handleBack(lobbyState),
         ),
       );
     }
@@ -417,12 +405,25 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     );
   }
 
+  Widget _buildClientCenteredStatusShell({required Widget child}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: child,
+        ),
+      ),
+    );
+  }
+
   Widget _buildReadyView(BuildContext context, LobbyState lobbyState) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
           Icons.check_circle,
@@ -435,6 +436,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         if (lobbyState.opponentName.isNotEmpty)
@@ -443,6 +445,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             style: theme.textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
+            textAlign: TextAlign.center,
           ),
         const SizedBox(height: 24),
         if (lobbyState.isHost)
