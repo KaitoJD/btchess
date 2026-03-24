@@ -49,6 +49,55 @@ class _FakeHostTransport implements BleTransport {
   }
 }
 
+class _FakeClientTransport implements BleTransport {
+  _FakeClientTransport({required this.respondImmediately});
+
+  final bool respondImmediately;
+  final StreamController<BleMessage> _messages =
+      StreamController<BleMessage>.broadcast();
+
+  @override
+  Stream<BleMessage> get messages => _messages.stream;
+
+  @override
+  bool get isHost => false;
+
+  @override
+  String get deviceName => 'FakeClient';
+
+  void emit(BleMessage message) {
+    _messages.add(message);
+  }
+
+  @override
+  Future<void> sendMove(MoveMessage message) async {}
+
+  @override
+  Future<void> sendControl(BleMessage message) async {
+    if (respondImmediately && message is HandshakeMessage) {
+      // Emulate a host that responds as soon as it receives the client handshake.
+      emit(
+        const HandshakeMessage(
+          messageId: 2,
+          protocolVersion: BleConstants.protocolVersion,
+          role: BleConstants.roleHost,
+          hostColor: 0x01,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> sendStateNotification(BleMessage message) async {}
+
+  @override
+  Future<void> disconnect() async {
+    if (!_messages.isClosed) {
+      await _messages.close();
+    }
+  }
+}
+
 void main() {
   late ConnectionManager manager;
   late _FakeHostTransport transport;
@@ -118,5 +167,17 @@ void main() {
     expect(ackCountAfterReplay, 2);
 
     await sub.cancel();
+  });
+
+  test('client handshake succeeds when host responds immediately', () async {
+    final clientManager = ConnectionManager();
+    final clientTransport = _FakeClientTransport(respondImmediately: true);
+
+    await clientManager.setupConnection(clientTransport);
+
+    expect(clientManager.isConnected, isTrue);
+    expect(clientManager.receivedHostColor, 0x01);
+
+    await clientManager.disconnect();
   });
 }
