@@ -22,6 +22,7 @@ abstract class BleConstants {
 
   static const int advertisingIntervalMs = 100;
   static const int scanTimeoutSeconds = 30;
+  static const int scanFallbackDelaySeconds = 6;
   static const String deviceNamePrefix = 'BTChess';
 
   // Role Codes

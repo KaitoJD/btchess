@@ -7,6 +7,9 @@ abstract class TimingConstants {
   static const int disconnectTimeoutMs = 30000;
   static const int connectionTimeoutMs = 10000;
   static const int handshakeTimeoutMs = 5000;
+  static const int peripheralInitSettleDelayMs = 250;
+  static const int peripheralServiceAddTimeoutMs = 6000;
+  static const int peripheralServiceAddRetryDelayMs = 600;
 
   // Retries
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../core/constants/ble_constants.dart';
 import '../../core/constants/timing_constants.dart';
@@ -33,6 +34,9 @@ class BluetoothService {
 
   // Scan subscription
   StreamSubscription<List<ScanResult>>? _scanSubscription;
+
+  // Optional timer for switching from service-filter scan to broad scan
+  Timer? _scanFallbackTimer;
 
   // Whether currently scanning
   bool _isScanning = false;
@@ -98,6 +102,33 @@ class BluetoothService {
       withServices: [Guid(BleConstants.serviceUuid)],
       timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
     );
+
+    _scheduleScanFallback();
+  }
+
+  void _scheduleScanFallback() {
+    _scanFallbackTimer?.cancel();
+    _scanFallbackTimer = Timer(
+      const Duration(seconds: BleConstants.scanFallbackDelaySeconds),
+      () async {
+        if (!_isScanning || _discoveredDevices.isNotEmpty) {
+          return;
+        }
+
+        try {
+          Logger.debug(
+            'No devices found with service-filtered scan, retrying without service filter',
+            tag: 'BluetoothService',
+          );
+          await FlutterBluePlus.stopScan();
+          await FlutterBluePlus.startScan(
+            timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
+          );
+        } catch (e) {
+          Logger.warn('Failed to switch to scan fallback mode: $e', tag: 'BluetoothService');
+        }
+      },
+    );
   }
 
   void _handleScanResults(List<ScanResult> results) {
@@ -128,6 +159,8 @@ class BluetoothService {
     if (!_isScanning) return;
 
     await FlutterBluePlus.stopScan();
+    _scanFallbackTimer?.cancel();
+    _scanFallbackTimer = null;
     await _scanSubscription?.cancel();
     _scanSubscription = null;
     _isScanning = false;
@@ -145,7 +178,13 @@ class BluetoothService {
       );
       bleConnected = true;
 
-      await deviceInfo.device.requestMtu(BleConstants.maxMtu);
+      if (Platform.isAndroid) {
+        try {
+          await deviceInfo.device.requestMtu(BleConstants.maxMtu);
+        } catch (e) {
+          Logger.warn('Failed to request MTU on Android: $e', tag: 'BluetoothService');
+        }
+      }
 
       final connection = BleConnection(
         device: deviceInfo.device,
@@ -187,6 +226,8 @@ class BluetoothService {
 
   // Disposes resources
   void dispose() {
+    _scanFallbackTimer?.cancel();
+    _scanFallbackTimer = null;
     stopScanning();
     _peripheralManager.dispose();
     _devicesController.close();

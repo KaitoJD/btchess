@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:ble_peripheral/ble_peripheral.dart';
 import '../../core/constants/ble_constants.dart';
+import '../../core/constants/timing_constants.dart';
 import '../../core/errors/ble_exception.dart';
 import '../../core/utils/logger.dart';
 import 'message_codec.dart';
@@ -78,46 +80,82 @@ class BlePeripheralManager {
   }
 
   Future<void> _setupGattServer() async {
-    await BlePeripheral.addService(
-      BleService(
-        uuid: _serviceUuid,
-        primary: true,
-        characteristics: [
-          BleCharacteristic(
-            uuid: _moveCharUuid,
-            properties: [
-              CharacteristicProperties.write.index,
-              CharacteristicProperties.writeWithoutResponse.index,
-            ],
-            permissions: [
-              AttributePermissions.writeable.index,
-            ],
-          ),
-          BleCharacteristic(
-            uuid: _stateNotifyCharUuid,
-            properties: [
-              CharacteristicProperties.notify.index,
-              CharacteristicProperties.read.index,
-            ],
-            permissions: [
-              AttributePermissions.readable.index,
-            ],
-          ),
-          BleCharacteristic(
-            uuid: _controlCharUuid,
-            properties: [
-              CharacteristicProperties.write.index,
-              CharacteristicProperties.writeWithoutResponse.index,
-              CharacteristicProperties.notify.index,
-              CharacteristicProperties.read.index,
-            ],
-            permissions: [
-              AttributePermissions.readable.index,
-              AttributePermissions.writeable.index,
-            ],
-          ),
-        ],
-      ),
+    if (Platform.isIOS) {
+      // iOS peripheral manager can need a short settle period after initialize.
+      await Future.delayed(
+        const Duration(milliseconds: TimingConstants.peripheralInitSettleDelayMs),
+      );
+    }
+
+    var firstError = true;
+    for (;;) {
+      try {
+        await _addService().timeout(
+          const Duration(milliseconds: TimingConstants.peripheralServiceAddTimeoutMs),
+        );
+        return;
+      } catch (e) {
+        if (!Platform.isIOS || !firstError) {
+          rethrow;
+        }
+
+        firstError = false;
+        Logger.warn(
+          'Initial GATT service setup failed on iOS, retrying once: $e',
+          tag: 'BlePeripheralManager',
+        );
+        await Future.delayed(
+          const Duration(milliseconds: TimingConstants.peripheralServiceAddRetryDelayMs),
+        );
+      }
+    }
+  }
+
+  Future<void> _addService() {
+    return BlePeripheral.addService(
+      _buildChessService(),
+    );
+  }
+
+  BleService _buildChessService() {
+    return BleService(
+      uuid: _serviceUuid,
+      primary: true,
+      characteristics: [
+        BleCharacteristic(
+          uuid: _moveCharUuid,
+          properties: [
+            CharacteristicProperties.write.index,
+            CharacteristicProperties.writeWithoutResponse.index,
+          ],
+          permissions: [
+            AttributePermissions.writeable.index,
+          ],
+        ),
+        BleCharacteristic(
+          uuid: _stateNotifyCharUuid,
+          properties: [
+            CharacteristicProperties.notify.index,
+            CharacteristicProperties.read.index,
+          ],
+          permissions: [
+            AttributePermissions.readable.index,
+          ],
+        ),
+        BleCharacteristic(
+          uuid: _controlCharUuid,
+          properties: [
+            CharacteristicProperties.write.index,
+            CharacteristicProperties.writeWithoutResponse.index,
+            CharacteristicProperties.notify.index,
+            CharacteristicProperties.read.index,
+          ],
+          permissions: [
+            AttributePermissions.readable.index,
+            AttributePermissions.writeable.index,
+          ],
+        ),
+      ],
     );
   }
 

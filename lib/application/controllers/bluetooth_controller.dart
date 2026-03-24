@@ -20,6 +20,8 @@ import '../../infrastructure/bluetooth/message_models.dart';
 import '../controllers/game_controller.dart';
 import '../states/bluetooth_state.dart';
 
+typedef PermissionCheckFn = Future<bool> Function();
+
 // The critical orchestrator connecting BluetoothService + ConnectionManager + GameController
 //
 // Handles scanning, connecting, lobby creation/joining, message routing between
@@ -29,9 +31,16 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     required BluetoothService bluetoothService,
     required cm.ConnectionManager connectionManager,
     required GameController gameController,
+    PermissionCheckFn? checkPermissions,
+    PermissionCheckFn? requestPermissions,
+    PermissionCheckFn? isPermissionPermanentlyDenied,
   })  : _bluetoothService = bluetoothService,
         _connectionManager = connectionManager,
         _gameController = gameController,
+        _checkPermissions = checkPermissions ?? BlePermissions.areGranted,
+        _requestPermissions = requestPermissions ?? BlePermissions.request,
+        _isPermissionPermanentlyDenied =
+            isPermissionPermanentlyDenied ?? BlePermissions.isPermanentlyDenied,
         super(BluetoothState.initial()) {
     _init();
   }
@@ -39,6 +48,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   final BluetoothService _bluetoothService;
   final cm.ConnectionManager _connectionManager;
   final GameController _gameController;
+  final PermissionCheckFn _checkPermissions;
+  final PermissionCheckFn _requestPermissions;
+  final PermissionCheckFn _isPermissionPermanentlyDenied;
 
   // Host color code for BLE protocol: 0x01 = white, 0x02 = black
   int _hostColorCode = 0x00;
@@ -79,12 +91,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
   // Checks if all BLE permissions are granted
   Future<bool> checkPermissions() async {
-    return BlePermissions.areGranted();
+    return _checkPermissions();
   }
 
   // Requests the required BLE permissions from the user
   Future<bool> requestPermissions() async {
-    return BlePermissions.request();
+    return _requestPermissions();
   }
 
   // Starts scanning for nearby BTChess host devices
@@ -96,10 +108,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       if (!hasPermission) {
         final granted = await requestPermissions();
         if (!granted) {
-          state = state.copyWith(
-            connectionStatus: BleConnectionStatus.error,
-            lastError: 'Bluetooth permissions not granted',
-          );
+          await _setPermissionDeniedErrorState();
           return;
         }
       }
@@ -158,10 +167,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       if (!hasPermission) {
         final granted = await requestPermissions();
         if (!granted) {
-          state = state.copyWith(
-            connectionStatus: BleConnectionStatus.error,
-            lastError: 'Bluetooth permissions not granted',
-          );
+          await _setPermissionDeniedErrorState();
           return;
         }
       }
@@ -186,6 +192,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         connectionStatus: BleConnectionStatus.error,
         lastError: 'Failed to create lobby: $e',
       );
+      rethrow;
     }
   }
 
@@ -198,6 +205,36 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     } catch (_) {
       // Ignore stop errors
     }
+  }
+
+  Future<void> _setPermissionDeniedErrorState() async {
+    final message = await _resolvePermissionErrorMessage();
+    state = state.copyWith(
+      connectionStatus: BleConnectionStatus.error,
+      lastError: message,
+    );
+  }
+
+  Future<String> _resolvePermissionErrorMessage() async {
+    try {
+      final permanentlyDenied = await _isPermissionPermanentlyDenied();
+      if (permanentlyDenied) {
+        return 'Bluetooth permission is permanently denied. Please enable it in Settings.';
+      }
+    } catch (e) {
+      Logger.warn('Failed to check permanent permission denial state: $e', tag: 'BluetoothController');
+    }
+
+    try {
+      final isOn = await _bluetoothService.isBluetoothOn;
+      if (!isOn) {
+        return 'Bluetooth is turned off';
+      }
+    } catch (_) {
+      // Keep generic message on adapter state check failure.
+    }
+
+    return 'Bluetooth permissions not granted';
   }
 
   // Connects to a discovered host device and begins the handshake
