@@ -156,11 +156,16 @@ class ConnectionManager {
         protocolVersion: BleConstants.protocolVersion,
         role: BleConstants.roleClient,
       );
-      await _connection!.sendControl(handshake);
 
-      final response = await _waitForMessage<HandshakeMessage>(
+      // Subscribe for the handshake response before sending to avoid
+      // dropping an immediate host response on broadcast streams.
+      final responseFuture = _waitForMessage<HandshakeMessage>(
         timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
       );
+
+      await _connection!.sendControl(handshake);
+
+      final response = await responseFuture;
 
       if (response.protocolVersion != BleConstants.protocolVersion) {
         throw BleProtocolException(

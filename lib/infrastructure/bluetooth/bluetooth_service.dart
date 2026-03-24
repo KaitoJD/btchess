@@ -38,6 +38,11 @@ class BluetoothService {
   // Optional timer for switching from service-filter scan to broad scan
   Timer? _scanFallbackTimer;
 
+  // Tracks scan timing and mode for diagnostics.
+  DateTime? _scanStartedAt;
+  bool _isFallbackScanActive = false;
+  bool _hasLoggedFirstDevice = false;
+
   // Whether currently scanning
   bool _isScanning = false;
 
@@ -92,6 +97,14 @@ class BluetoothService {
 
     _isScanning = true;
     _discoveredDevices.clear();
+    _scanStartedAt = DateTime.now();
+    _isFallbackScanActive = false;
+    _hasLoggedFirstDevice = false;
+
+    Logger.debug(
+      'Starting service-filtered scan (fallback in ${BleConstants.scanFallbackDelaySeconds}s)',
+      tag: 'BluetoothService',
+    );
 
     _scanSubscription = FlutterBluePlus.scanResults.listen(
       _handleScanResults,
@@ -116,10 +129,15 @@ class BluetoothService {
         }
 
         try {
+          final elapsed = _scanStartedAt == null
+              ? null
+              : DateTime.now().difference(_scanStartedAt!).inMilliseconds;
           Logger.debug(
-            'No devices found with service-filtered scan, retrying without service filter',
+            'No devices found with service-filtered scan, retrying without service filter '
+            '(elapsed=${elapsed ?? -1}ms)',
             tag: 'BluetoothService',
           );
+          _isFallbackScanActive = true;
           await FlutterBluePlus.stopScan();
           await FlutterBluePlus.startScan(
             timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
@@ -143,6 +161,18 @@ class BluetoothService {
           rssi: result.rssi,
           device: device,
         );
+
+        if (!_hasLoggedFirstDevice) {
+          _hasLoggedFirstDevice = true;
+          final elapsed = _scanStartedAt == null
+              ? null
+              : DateTime.now().difference(_scanStartedAt!).inMilliseconds;
+          Logger.debug(
+            'First BTChess device discovered in ${elapsed ?? -1}ms '
+            '(scanMode=${_isFallbackScanActive ? 'fallback' : 'service-filtered'})',
+            tag: 'BluetoothService',
+          );
+        }
       }
     }
 
@@ -161,6 +191,9 @@ class BluetoothService {
     await FlutterBluePlus.stopScan();
     _scanFallbackTimer?.cancel();
     _scanFallbackTimer = null;
+    _scanStartedAt = null;
+    _isFallbackScanActive = false;
+    _hasLoggedFirstDevice = false;
     await _scanSubscription?.cancel();
     _scanSubscription = null;
     _isScanning = false;
