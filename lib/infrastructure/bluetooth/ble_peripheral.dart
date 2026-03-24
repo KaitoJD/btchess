@@ -42,6 +42,10 @@ class BlePeripheralManager {
   // Whether the GATT server has been initialized
   bool _isInitialized = false;
 
+  // iOS can deliver the first handshake write before the peer has fully
+  // settled notify subscriptions; defer forwarding once per session.
+  bool _didDeferInitialHandshakeForward = false;
+
   bool get isAdvertising => _isAdvertising;
   String? get connectedClientId => _connectedClientId;
   bool get hasConnectedClient => _connectedClientId != null;
@@ -190,8 +194,10 @@ class BlePeripheralManager {
     try {
       await BlePeripheral.stopAdvertising();
       _isAdvertising = false;
+      _didDeferInitialHandshakeForward = false;
     } catch (e) {
       _isAdvertising = false;
+      _didDeferInitialHandshakeForward = false;
     }
   }
 
@@ -225,7 +231,21 @@ class BlePeripheralManager {
         _clientConnectedController.add(deviceId);
       }
 
-      _messageController.add(message);
+      if (Platform.isIOS &&
+          !_didDeferInitialHandshakeForward &&
+          message is HandshakeMessage) {
+        _didDeferInitialHandshakeForward = true;
+        Future.delayed(
+          const Duration(milliseconds: TimingConstants.peripheralHandshakeForwardDelayMs),
+          () {
+            if (!_messageController.isClosed) {
+              _messageController.add(message);
+            }
+          },
+        );
+      } else {
+        _messageController.add(message);
+      }
 
       return WriteRequestResult(status: 0); // GATT_SUCCESS
     } catch (e) {
@@ -299,6 +319,7 @@ class BlePeripheralManager {
   void handleClientDisconnected(String deviceId) {
     if (_connectedClientId == deviceId) {
       _connectedClientId = null;
+      _didDeferInitialHandshakeForward = false;
       _clientDisconnectedController.add(deviceId);
     }
   }
@@ -306,6 +327,7 @@ class BlePeripheralManager {
   Future<void> dispose() async {
     await stopAdvertising();
     _connectedClientId = null;
+    _didDeferInitialHandshakeForward = false;
     _isInitialized = false;
     await _messageController.close();
     await _clientConnectedController.close();
