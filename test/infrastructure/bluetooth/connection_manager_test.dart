@@ -98,6 +98,54 @@ class _FakeClientTransport implements BleTransport {
   }
 }
 
+class _EagerHostHandshakeTransport implements BleTransport {
+  _EagerHostHandshakeTransport() {
+    _messages = StreamController<BleMessage>.broadcast(
+      onListen: () {
+        scheduleMicrotask(() {
+          _messages.add(
+            const HandshakeMessage(
+              messageId: 9,
+              protocolVersion: BleConstants.protocolVersion,
+              role: BleConstants.roleClient,
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  late final StreamController<BleMessage> _messages;
+  final List<BleMessage> sentControl = <BleMessage>[];
+
+  @override
+  Stream<BleMessage> get messages => _messages.stream;
+
+  @override
+  bool get isHost => true;
+
+  @override
+  String get deviceName => 'EagerHostTransport';
+
+  @override
+  Future<void> sendMove(MoveMessage message) async {}
+
+  @override
+  Future<void> sendControl(BleMessage message) async {
+    sentControl.add(message);
+  }
+
+  @override
+  Future<void> sendStateNotification(BleMessage message) async {}
+
+  @override
+  Future<void> disconnect() async {
+    if (!_messages.isClosed) {
+      await _messages.close();
+    }
+  }
+}
+
 void main() {
   late ConnectionManager manager;
   late _FakeHostTransport transport;
@@ -179,5 +227,17 @@ void main() {
     expect(clientManager.receivedHostColor, 0x01);
 
     await clientManager.disconnect();
+  });
+
+  test('host handshake succeeds when client handshake arrives immediately on listen', () async {
+    final hostManager = ConnectionManager();
+    final transport = _EagerHostHandshakeTransport();
+
+    await hostManager.setupConnection(transport);
+
+    expect(hostManager.isConnected, isTrue);
+    expect(transport.sentControl.whereType<HandshakeMessage>().length, 1);
+
+    await hostManager.disconnect();
   });
 }
