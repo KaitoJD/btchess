@@ -67,6 +67,10 @@ dev_dependencies:
   # App Icon Generation
   flutter_launcher_icons: ^0.14.3
 
+dependency_overrides:
+  ble_peripheral:
+    path: plugins/ble_peripheral
+
 # App Icon Configuration
 flutter_launcher_icons:
   android: true
