@@ -122,6 +122,27 @@ class BlePeripheralManager {
   }
 
   BleService _buildChessService() {
+    final controlProperties = Platform.isIOS
+        ? <int>[
+            CharacteristicProperties.write.index,
+            CharacteristicProperties.writeWithoutResponse.index,
+          ]
+        : <int>[
+            CharacteristicProperties.write.index,
+            CharacteristicProperties.writeWithoutResponse.index,
+            CharacteristicProperties.notify.index,
+            CharacteristicProperties.read.index,
+          ];
+
+    final controlPermissions = Platform.isIOS
+        ? <int>[
+            AttributePermissions.writeable.index,
+          ]
+        : <int>[
+            AttributePermissions.readable.index,
+            AttributePermissions.writeable.index,
+          ];
+
     return BleService(
       uuid: _serviceUuid,
       primary: true,
@@ -148,16 +169,8 @@ class BlePeripheralManager {
         ),
         BleCharacteristic(
           uuid: _controlCharUuid,
-          properties: [
-            CharacteristicProperties.write.index,
-            CharacteristicProperties.writeWithoutResponse.index,
-            CharacteristicProperties.notify.index,
-            CharacteristicProperties.read.index,
-          ],
-          permissions: [
-            AttributePermissions.readable.index,
-            AttributePermissions.writeable.index,
-          ],
+          properties: controlProperties,
+          permissions: controlPermissions,
         ),
       ],
     );
@@ -302,11 +315,29 @@ class BlePeripheralManager {
     }
 
     final bytes = _codec.encode(message);
-    await BlePeripheral.updateCharacteristic(
-      characteristicId: _controlCharUuid,
-      value: bytes,
-      deviceId: _connectedClientId,
-    );
+    try {
+      await BlePeripheral.updateCharacteristic(
+        characteristicId: _controlCharUuid,
+        value: bytes,
+        deviceId: _connectedClientId,
+      );
+    } catch (e) {
+      // iOS peripheral implementations can fail to resolve CONTROL
+      // characteristic updates in some sessions. Fallback to STATE_NOTIFY
+      // keeps protocol bytes intact while avoiding connection failure.
+      if (!Platform.isIOS) rethrow;
+
+      Logger.warn(
+        'sendControl failed on iOS, falling back to state notification: $e',
+        tag: 'BlePeripheralManager',
+      );
+
+      await BlePeripheral.updateCharacteristic(
+        characteristicId: _stateNotifyCharUuid,
+        value: bytes,
+        deviceId: _connectedClientId,
+      );
+    }
   }
 
   void handleClientConnected(String deviceId) {

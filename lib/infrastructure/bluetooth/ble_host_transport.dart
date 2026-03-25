@@ -21,7 +21,7 @@ class BleHostTransport implements BleTransport {
 
   @override
   Future<void> sendMove(MoveMessage message) async {
-    await _peripheral.sendControl(message);
+    await _peripheral.sendStateNotification(message);
   }
 
   @override
