@@ -46,6 +46,10 @@ class BlePeripheralManager {
   // settled notify subscriptions; defer forwarding once per session.
   bool _didDeferInitialHandshakeForward = false;
 
+  // Diagnostic counters for runtime triage.
+  int _controlUpdateFailureCount = 0;
+  int _controlToStateFallbackCount = 0;
+
   bool get isAdvertising => _isAdvertising;
   String? get connectedClientId => _connectedClientId;
   bool get hasConnectedClient => _connectedClientId != null;
@@ -97,6 +101,13 @@ class BlePeripheralManager {
         await _addService().timeout(
           const Duration(milliseconds: TimingConstants.peripheralServiceAddTimeoutMs),
         );
+        if (Platform.isIOS) {
+          // Give CoreBluetooth time to materialize all service attributes
+          // before accepting client interactions.
+          await Future.delayed(
+            const Duration(milliseconds: TimingConstants.peripheralServiceReadyDelayMs),
+          );
+        }
         return;
       } catch (e) {
         if (!Platform.isIOS || !firstError) {
@@ -192,6 +203,11 @@ class BlePeripheralManager {
         services: [_serviceUuid],
         localName: advertisingName,
       );
+      Logger.debug(
+        'Advertising started (platform=${Platform.operatingSystem}, service=$_serviceUuid, '
+        'stateChar=$_stateNotifyCharUuid, controlChar=$_controlCharUuid)',
+        tag: 'BlePeripheralManager',
+      );
       _isAdvertising = true;
     } catch (e) {
       throw BleConnectionException(
@@ -208,9 +224,13 @@ class BlePeripheralManager {
       await BlePeripheral.stopAdvertising();
       _isAdvertising = false;
       _didDeferInitialHandshakeForward = false;
+      _controlUpdateFailureCount = 0;
+      _controlToStateFallbackCount = 0;
     } catch (e) {
       _isAdvertising = false;
       _didDeferInitialHandshakeForward = false;
+      _controlUpdateFailureCount = 0;
+      _controlToStateFallbackCount = 0;
     }
   }
 
@@ -300,6 +320,11 @@ class BlePeripheralManager {
     }
 
     final bytes = _codec.encode(message);
+    Logger.debug(
+      'sendStateNotification type=${message.type.value} msgId=${message.messageId} '
+      'bytes=${bytes.length} device=$_connectedClientId',
+      tag: 'BlePeripheralManager',
+    );
     await BlePeripheral.updateCharacteristic(
       characteristicId: _stateNotifyCharUuid,
       value: bytes,
@@ -315,7 +340,29 @@ class BlePeripheralManager {
     }
 
     final bytes = _codec.encode(message);
+    if (Platform.isIOS) {
+      _controlToStateFallbackCount++;
+      Logger.warn(
+        'iOS sendControl rerouted to state notify '
+        '(type=${message.type.value}, msgId=${message.messageId}, bytes=${bytes.length}, '
+        'fallbackCount=$_controlToStateFallbackCount)',
+        tag: 'BlePeripheralManager',
+      );
+
+      await BlePeripheral.updateCharacteristic(
+        characteristicId: _stateNotifyCharUuid,
+        value: bytes,
+        deviceId: _connectedClientId,
+      );
+      return;
+    }
+
     try {
+      Logger.debug(
+        'sendControl type=${message.type.value} msgId=${message.messageId} '
+        'bytes=${bytes.length} device=$_connectedClientId',
+        tag: 'BlePeripheralManager',
+      );
       await BlePeripheral.updateCharacteristic(
         characteristicId: _controlCharUuid,
         value: bytes,
@@ -327,8 +374,11 @@ class BlePeripheralManager {
       // keeps protocol bytes intact while avoiding connection failure.
       if (!Platform.isIOS) rethrow;
 
+      _controlUpdateFailureCount++;
+
       Logger.warn(
-        'sendControl failed on iOS, falling back to state notification: $e',
+        'sendControl failed on iOS, falling back to state notification '
+        '(failureCount=$_controlUpdateFailureCount): $e',
         tag: 'BlePeripheralManager',
       );
 
@@ -359,6 +409,8 @@ class BlePeripheralManager {
     await stopAdvertising();
     _connectedClientId = null;
     _didDeferInitialHandshakeForward = false;
+    _controlUpdateFailureCount = 0;
+    _controlToStateFallbackCount = 0;
     _isInitialized = false;
     await _messageController.close();
     await _clientConnectedController.close();

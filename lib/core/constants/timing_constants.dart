@@ -11,6 +11,7 @@ abstract class TimingConstants {
   static const int peripheralServiceAddTimeoutMs = 6000;
   static const int peripheralServiceAddRetryDelayMs = 600;
   static const int peripheralHandshakeForwardDelayMs = 150;
+  static const int peripheralServiceReadyDelayMs = 400;
 
   // Retries
 

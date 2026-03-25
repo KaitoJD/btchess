@@ -134,6 +134,10 @@ class ConnectionManager {
 
   Future<void> _performHandshake() async {
     if (isHost) {
+      Logger.debug(
+        'Handshake(host) waiting for client handshake (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        tag: 'ConnectionManager',
+      );
       // Host waits for client handshake first, then responds
       final clientHandshake = await _waitForMessage<HandshakeMessage>(
         timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
@@ -153,8 +157,16 @@ class ConnectionManager {
         role: BleConstants.roleHost,
         hostColor: _hostColorCode,
       );
+      Logger.debug(
+        'Handshake(host) sending response msgId=${response.messageId}',
+        tag: 'ConnectionManager',
+      );
       await _connection!.sendControl(response);
     } else {
+      Logger.debug(
+        'Handshake(client) preparing response listener (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        tag: 'ConnectionManager',
+      );
       // Client sends handshake first, then waits for host response
       final messageId = _getNextMessageId();
       final handshake = HandshakeMessage(
@@ -169,6 +181,10 @@ class ConnectionManager {
         timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
       );
 
+      Logger.debug(
+        'Handshake(client) sending request msgId=${handshake.messageId}',
+        tag: 'ConnectionManager',
+      );
       await _connection!.sendControl(handshake);
 
       final response = await responseFuture;
