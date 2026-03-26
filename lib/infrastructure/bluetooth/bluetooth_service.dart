@@ -38,6 +38,11 @@ class BluetoothService {
   // Optional timer for switching from service-filter scan to broad scan
   Timer? _scanFallbackTimer;
 
+  // Tracks scan timing and mode for diagnostics.
+  DateTime? _scanStartedAt;
+  bool _isFallbackScanActive = false;
+  bool _hasLoggedFirstDevice = false;
+
   // Whether currently scanning
   bool _isScanning = false;
 
@@ -92,18 +97,37 @@ class BluetoothService {
 
     _isScanning = true;
     _discoveredDevices.clear();
+    _scanStartedAt = DateTime.now();
+    _isFallbackScanActive = Platform.isIOS;
+    _hasLoggedFirstDevice = false;
 
     _scanSubscription = FlutterBluePlus.scanResults.listen(
       _handleScanResults,
       onError: _handleScanError,
     );
 
-    await FlutterBluePlus.startScan(
-      withServices: [Guid(BleConstants.serviceUuid)],
-      timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
-    );
+    if (Platform.isIOS) {
+      Logger.debug(
+        'Starting compatibility-first broad scan on iOS',
+        tag: 'BluetoothService',
+      );
+      await FlutterBluePlus.startScan(
+        timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
+      );
+      _scanFallbackTimer?.cancel();
+      _scanFallbackTimer = null;
+    } else {
+      Logger.debug(
+        'Starting service-filtered scan (fallback in ${BleConstants.scanFallbackDelaySeconds}s)',
+        tag: 'BluetoothService',
+      );
+      await FlutterBluePlus.startScan(
+        withServices: [Guid(BleConstants.serviceUuid)],
+        timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
+      );
 
-    _scheduleScanFallback();
+      _scheduleScanFallback();
+    }
   }
 
   void _scheduleScanFallback() {
@@ -116,10 +140,15 @@ class BluetoothService {
         }
 
         try {
+          final elapsed = _scanStartedAt == null
+              ? null
+              : DateTime.now().difference(_scanStartedAt!).inMilliseconds;
           Logger.debug(
-            'No devices found with service-filtered scan, retrying without service filter',
+            'No devices found with service-filtered scan, retrying without service filter '
+            '(elapsed=${elapsed ?? -1}ms)',
             tag: 'BluetoothService',
           );
+          _isFallbackScanActive = true;
           await FlutterBluePlus.stopScan();
           await FlutterBluePlus.startScan(
             timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
@@ -134,7 +163,8 @@ class BluetoothService {
   void _handleScanResults(List<ScanResult> results) {
     for (final result in results) {
       final device = result.device;
-      final name = device.platformName;
+      final extracted = _extractDeviceName(result);
+      final name = extracted.name;
 
       if (name.startsWith(BleConstants.deviceNamePrefix)) {
         _discoveredDevices[device.remoteId.str] = BleDeviceInfo(
@@ -143,10 +173,51 @@ class BluetoothService {
           rssi: result.rssi,
           device: device,
         );
+
+        if (!_hasLoggedFirstDevice) {
+          _hasLoggedFirstDevice = true;
+          final elapsed = _scanStartedAt == null
+              ? null
+              : DateTime.now().difference(_scanStartedAt!).inMilliseconds;
+          Logger.debug(
+            'First BTChess device discovered in ${elapsed ?? -1}ms '
+            '(scanMode=${_isFallbackScanActive ? 'fallback' : 'service-filtered'}, '
+            'nameSource=${extracted.source})',
+            tag: 'BluetoothService',
+          );
+        }
       }
     }
 
     _devicesController.add(_discoveredDevices.values.toList());
+  }
+
+  ({String name, String source}) _extractDeviceName(ScanResult result) {
+    String? fromLocalName;
+    String? fromAdvName;
+
+    // Access advertisement fields dynamically so we remain compatible
+    // across minor plugin API differences.
+    final advData = result.advertisementData as dynamic;
+    try {
+      fromLocalName = advData.localName as String?;
+    } catch (_) {}
+    try {
+      fromAdvName = advData.advName as String?;
+    } catch (_) {}
+
+    final localName = (fromLocalName ?? '').trim();
+    if (localName.isNotEmpty) {
+      return (name: localName, source: 'advertisement.localName');
+    }
+
+    final advName = (fromAdvName ?? '').trim();
+    if (advName.isNotEmpty) {
+      return (name: advName, source: 'advertisement.advName');
+    }
+
+    final platformName = result.device.platformName.trim();
+    return (name: platformName, source: 'device.platformName');
   }
 
   void _handleScanError(Object error) {
@@ -161,6 +232,9 @@ class BluetoothService {
     await FlutterBluePlus.stopScan();
     _scanFallbackTimer?.cancel();
     _scanFallbackTimer = null;
+    _scanStartedAt = null;
+    _isFallbackScanActive = false;
+    _hasLoggedFirstDevice = false;
     await _scanSubscription?.cancel();
     _scanSubscription = null;
     _isScanning = false;

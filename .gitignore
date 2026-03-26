@@ -44,6 +44,21 @@ migrate_working_dir/
 **/android/.gradle/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.*
+**/android/key.properties
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+**/google-services.json
+**/GoogleService-Info.plist
 
 # Windows
 **/windows/flutter/ephemeral/
@@ -57,6 +72,13 @@ migrate_working_dir/
 # Generated files (if using build_runner with Hive/Freezed)
 *.g.dart
 *.freezed.dart
+
+# Allow vendored ble_peripheral generated API file(s)
+!plugins/ble_peripheral/lib/src/generated/
+!plugins/ble_peripheral/lib/src/generated/*.g.dart
+
+# Avoid committing lockfiles from vendored library/example
+plugins/ble_peripheral/pubspec.lock
 
 # Symbolication related
 app.*.symbols

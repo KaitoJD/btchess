@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import '../../core/constants/ble_constants.dart';
 import '../../core/constants/error_codes.dart';
 import '../../core/constants/timing_constants.dart';
@@ -56,6 +57,10 @@ class ConnectionManager {
   // Message subscription
   StreamSubscription<BleMessage>? _messageSubscription;
 
+  // Buffers handshake messages that can arrive before _waitForMessage
+  // attaches its own stream listener during the handshaking phase.
+  final Queue<HandshakeMessage> _handshakeBuffer = Queue<HandshakeMessage>();
+
   // Ping timer
   Timer? _pingTimer;
 
@@ -108,6 +113,7 @@ class ConnectionManager {
 
     _connection = connection;
     _updateState(ConnectionState.handshaking);
+    _handshakeBuffer.clear();
 
     _messageSubscription = connection.messages.listen(
       _handleMessage,
@@ -128,6 +134,10 @@ class ConnectionManager {
 
   Future<void> _performHandshake() async {
     if (isHost) {
+      Logger.debug(
+        'Handshake(host) waiting for client handshake (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        tag: 'ConnectionManager',
+      );
       // Host waits for client handshake first, then responds
       final clientHandshake = await _waitForMessage<HandshakeMessage>(
         timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
@@ -147,8 +157,16 @@ class ConnectionManager {
         role: BleConstants.roleHost,
         hostColor: _hostColorCode,
       );
+      Logger.debug(
+        'Handshake(host) sending response msgId=${response.messageId}',
+        tag: 'ConnectionManager',
+      );
       await _connection!.sendControl(response);
     } else {
+      Logger.debug(
+        'Handshake(client) preparing response listener (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        tag: 'ConnectionManager',
+      );
       // Client sends handshake first, then waits for host response
       final messageId = _getNextMessageId();
       final handshake = HandshakeMessage(
@@ -156,11 +174,20 @@ class ConnectionManager {
         protocolVersion: BleConstants.protocolVersion,
         role: BleConstants.roleClient,
       );
-      await _connection!.sendControl(handshake);
 
-      final response = await _waitForMessage<HandshakeMessage>(
+      // Subscribe for the handshake response before sending to avoid
+      // dropping an immediate host response on broadcast streams.
+      final responseFuture = _waitForMessage<HandshakeMessage>(
         timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
       );
+
+      Logger.debug(
+        'Handshake(client) sending request msgId=${handshake.messageId}',
+        tag: 'ConnectionManager',
+      );
+      await _connection!.sendControl(handshake);
+
+      final response = await responseFuture;
 
       if (response.protocolVersion != BleConstants.protocolVersion) {
         throw BleProtocolException(
@@ -175,6 +202,13 @@ class ConnectionManager {
   }
 
   Future<T> _waitForMessage<T extends BleMessage>({required Duration timeout}) async {
+    // Consume buffered handshake messages first to avoid races where
+    // handshakes arrive before this method's listener is attached.
+    if (T == HandshakeMessage && _handshakeBuffer.isNotEmpty) {
+      final buffered = _handshakeBuffer.removeFirst();
+      return buffered as T;
+    }
+
     final completer = Completer<T>();
     StreamSubscription<BleMessage>? subscription;
 
@@ -197,6 +231,10 @@ class ConnectionManager {
   }
 
   void _handleMessage(BleMessage message) {
+    if (_state == ConnectionState.handshaking && message is HandshakeMessage) {
+      _handshakeBuffer.addLast(message);
+    }
+
     if (isHost && message is MoveMessage) {
       // 1) If we already ACKed this MOVE, replay the ACK
       // 2) If the same MOVE is already in-flight, drop this duplicate copy

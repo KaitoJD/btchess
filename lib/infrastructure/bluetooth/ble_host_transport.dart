@@ -1,5 +1,6 @@
 import 'ble_peripheral.dart';
 import 'ble_transport.dart';
+import '../../core/utils/logger.dart';
 import 'message_models.dart';
 
 // Adapter that wraps [BlePeripheralManager] behind the [BleTransport]
@@ -21,16 +22,28 @@ class BleHostTransport implements BleTransport {
 
   @override
   Future<void> sendMove(MoveMessage message) async {
-    await _peripheral.sendControl(message);
+    Logger.debug(
+      'HostTransport sendMove msgId=${message.messageId} routed=stateNotify',
+      tag: 'BleHostTransport',
+    );
+    await _peripheral.sendStateNotification(message);
   }
 
   @override
   Future<void> sendControl(BleMessage message) async {
-    await _peripheral.sendControl(message);
+    Logger.debug(
+      'HostTransport sendControl type=${message.type.value} msgId=${message.messageId} routed=stateNotify',
+      tag: 'BleHostTransport',
+    );
+    await _peripheral.sendStateNotification(message);
   }
 
   @override
   Future<void> sendStateNotification(BleMessage message) async {
+    Logger.debug(
+      'HostTransport sendStateNotification type=${message.type.value} msgId=${message.messageId}',
+      tag: 'BleHostTransport',
+    );
     await _peripheral.sendStateNotification(message);
   }
 
