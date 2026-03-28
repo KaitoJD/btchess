@@ -18,6 +18,7 @@
 
 ## 2. Prepare the IPA file
 
+> [!tip]
 > If you have GitHub CLI installed and signed in, run the script `latest-ipa-getter.bat` (you can find the script in the [`scripts`](/scripts/) folder) where you want to create `btchess.ipa`. If the script finishes and you see `btchess.ipa`, continue to [Step 3: Setup Sideloadly](#3-setup-sideloadly).
 
 If you want to try other builds of the app, follow the steps below.
@@ -30,6 +31,7 @@ If you want to try other builds of the app, follow the steps below.
 
 ### 2.2. Create the IPA
 
+> [!tip]
 > Run the script `ipa-packager.bat` (you can find the script in the [`scripts`](/scripts/) folder) __after placing that script in the same folder as the `ios-xcarchive.zip` you downloaded.__ If the script runs successfully and produces `btchess.ipa`, proceed to [Step 3: Setup Sideloadly](#3-setup-sideloadly).
 
 If the script fails or you don't get an `btchess.ipa`, create the IPA manually:
@@ -46,6 +48,7 @@ If the script fails or you don't get an `btchess.ipa`, create the IPA manually:
 
 - [Download the Sideloadly version suitable for your Windows machine.](https://sideloadly.io/#download)
 
+> [!important]
 > _Note: According to Sideloadly, you should install the desktop (non-Microsoft-Store) versions of iTunes and iCloud. If you have the Microsoft Store versions installed, uninstall them first. Then install the appropriate iTunes and iCloud installers linked below._
 > - [iTunes x64](https://www.apple.com/itunes/download/win64) - [iTunes x32](https://www.apple.com/itunes/download/win32)
 > - [iCloud](https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe)
