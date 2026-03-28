@@ -3,21 +3,23 @@ title Fetch and package the latest BTChess IPA
 set ROOT_DIR=%~dp0
 
 echo ===================================================
-echo                BTCHESS IPA GETTER
+echo        BTCHESS IPA PACKAGER (AUTO-DOWNLOAD)
 echo ===================================================
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ErrorActionPreference = 'Stop'; " ^
+  "$workflowFile = 'build_master.yml'; " ^
   "try { " ^
-  "  Write-Host '1. Detecting default branch and latest run ID...' -ForegroundColor Cyan; " ^
+  "  Write-Host '1. Detecting default branch and latest SUCCESSFUL run ID...' -ForegroundColor Cyan; " ^
   "  if (!(Get-Command gh -ErrorAction SilentlyContinue)) { throw 'GitHub CLI (gh) is not installed or not added to PATH. Please install it first.' } " ^
   "  $defaultBranch = gh repo view KaitoJD/btchess --json defaultBranchRef --jq '.defaultBranchRef.name'; " ^
   "  if ([string]::IsNullOrWhiteSpace($defaultBranch)) { throw 'Failed to get default branch. Make sure you are logged in (run: gh auth login).' } " ^
   "  Write-Host ('   -> Default branch: ' + $defaultBranch) -ForegroundColor DarkGray; " ^
-  "  $runId = gh run list --repo KaitoJD/btchess --branch $defaultBranch --limit 1 --json databaseId --jq '.[0].databaseId'; " ^
-  "  if ([string]::IsNullOrWhiteSpace($runId)) { throw ('No workflow runs found on branch: ' + $defaultBranch) } " ^
-  "  Write-Host ('   -> Latest Run ID: ' + $runId) -ForegroundColor DarkGray; " ^
+  "  Write-Host ('   -> Target workflow: ' + $workflowFile) -ForegroundColor DarkGray; " ^
+  "  $runId = gh run list --repo KaitoJD/btchess --branch $defaultBranch --workflow $workflowFile --status success --limit 1 --json databaseId --jq '.[0].databaseId'; " ^
+  "  if ([string]::IsNullOrWhiteSpace($runId)) { throw ('No successful workflow runs found for ' + $workflowFile + ' on branch: ' + $defaultBranch) } " ^
+  "  Write-Host ('   -> Latest Successful Run ID: ' + $runId) -ForegroundColor DarkGray; " ^
   "  Write-Host '2. Downloading artifact from GitHub Actions...' -ForegroundColor Cyan; " ^
   "  gh run download $runId --name ios-xcarchive --repo KaitoJD/btchess --dir . ; " ^
   "  if ($LASTEXITCODE -ne 0) { throw 'Failed to download artifact.' } " ^
