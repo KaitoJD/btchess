@@ -2,7 +2,7 @@ name: btchess
 description: "A mobile chess app for Android and iOS with local multiplayer via Bluetooth Low Energy."
 publish_to: 'none'
 
-version: 1.0.0-alpha
+version: 1.0.0-alpha.1
 
 environment:
   sdk: ^3.10.4
