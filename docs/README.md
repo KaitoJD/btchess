@@ -24,15 +24,18 @@ A mobile chess app for Android and iOS with local multiplayer via Bluetooth Low 
 
 See the [docs/](docs/) folder for detailed documentation:
 
-
 - [Development Setup](docs/dev_setup.md)
-- [_(Optional) iOS Setup/Install (without macOS machine)_](/docs/ios_setup.md)
+- [_(Optional) iOS Setup_](/docs/ios_setup.md)
 - [Architecture](docs/architecture.md)
 - [BLE Protocol](docs/binary_protocol.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
+## Contributing
+
+Thank you for your interest in contributing to this project! See [CONTRIBUTING](/CONTRIBUTING.md) to understand a basic workflow to help you submit changes (pull requests) smoothly.
+
 ## License
 
-This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).  
-You are free to share and adapt the material for non-commercial purposes, as long as you give appropriate credit and distribute your contributions under the same license.  
+This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).
+
 See the [LICENSE](./LICENSE) file for details.
