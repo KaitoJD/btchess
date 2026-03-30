@@ -7,16 +7,16 @@
 </p>
 
 [![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
-[![License](https://img.shields.io/badge/license-CC_BY_NC_SA_4.0-green)](LICENSE)
-[![flutter_blue_plus](https://img.shields.io/pub/v/flutter_blue_plus?label=flutter_blue_plus)](https://pub.dev/packages/flutter_blue_plus)
-[![dartchess](https://img.shields.io/pub/v/dartchess?label=dartchess)](https://pub.dev/packages/dartchess)
+![Version](https://img.shields.io/badge/version-1.0.0_alpha.1-blue)
+![Android size](https://img.shields.io/badge/On_Android-51MB-3DDC84)
+![iOS size](https://img.shields.io/badge/On_iOS-27MB-7D7D7D)
 
 </div>
 
 ## 🚀 Get Started
 
-- Android: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-alpha/btchess-1.0.0-alpha.apk)
-- iOS: Not available yet
+- __Android__: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-alpha.1/btchess_1.0.0-alpha.1.apk)
+- __iOS__: You can check the installation guide [here](/docs/ios_install.md)
 
 ## ✨ Features
 
@@ -47,7 +47,9 @@
     - Host Bluetooth Game / Join Bluetooth Game: One opens a lobby, and one joins it.
 - Start your match!
 
-<b>_TIP: Make sure you have added the device of the opponent you are about to connect to in the Bluetooth Settings beforehand to ensure an uninterrupted experience._</b>
+> [!tip]
+>
+> __Make sure you have added the device of the opponent you are about to connect to in the Bluetooth Settings beforehand to ensure an uninterrupted experience.__
 
 ## 🎯 Who Is This For?
 
@@ -65,9 +67,14 @@
 
 ## 📬 Feedback & Support
 
-Have ideas or found a bug?
+It would be great if you would like to contribute to this project. We can work together through:
 
-- [Open an issue on GitHub](https://github.com/KaitoJD/btchess/issues/new/choose)
-- [Or contact me directly](mailto:contact.nguyensynguyen@gmail.com)
+- [GitHub Issues](https://github.com/KaitoJD/btchess/issues): Where you report bugs when using the app, as well as where we will discuss an exciting idea you propose.
+- [GitHub Discussions](https://github.com/KaitoJD/btchess/discussions): A place to exchange additional information about the app.
+
+Additionally, you can also contact me directly via:
+
+- Discord: **@_notnguyen**
+- Email: **contact.nguyensynguyen@gmail.com**
 
 Your feedback helps make BTChess better ^^
