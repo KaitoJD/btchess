@@ -469,6 +469,21 @@ class ConnectionManager {
     return _sendWithRetry(msg);
   }
 
+  // Sends a rematch request
+  Future<void> sendRematchRequest() async {
+    final request = RematchRequestMessage(messageId: _getNextMessageId());
+    await _connection!.sendControl(request);
+  }
+
+  // Sends a rematch response
+  Future<void> sendRematchResponse(bool accepted) async {
+    final response = RematchResponseMessage(
+      messageId: _getNextMessageId(),
+      accepted: accepted,
+    );
+    await _connection!.sendControl(response);
+  }
+
   // Sends a game end notification (for host)
   Future<void> sendGameEnd(int reason, int winner) async {
     final gameEnd = GameEndMessage(
