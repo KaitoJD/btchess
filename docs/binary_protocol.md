@@ -23,6 +23,8 @@ Lobby start is host-initiated: host sends `GAME_START` to the client, client ACK
     - [RESIGN (0x09)](#49-resign-0x09---3-bytes)
     - [PING (0x0A) / PONG (0x0B)](#410-ping-0x0a--pong-0x0b---7-bytes)
     - [GAME_START (0x0C)](#411-game_start-0x0c---3-bytes)
+    - [REMATCH_REQUEST (0x0D)](#412-rematch_request-0x0d---3-bytes)
+    - [REMATCH_RESPONSE (0x0E)](#413-rematch_response-0x0e---4-bytes)
 - [Error Codes](#5-error-codes)
 - [Game End Reasons](#6-game-end-reasons)
 - [Winner Codes](#7-winner-codes)
@@ -63,6 +65,8 @@ Lobby start is host-initiated: host sends `GAME_START` to the client, client ACK
 | `0x0A` | PING | Bi-directional | 7 |
 | `0x0B` | PONG | Bi-directional | 7 |
 | `0x0C` | GAME_START | Host to Client | 3 |
+| `0x0D` | REMATCH_REQUEST | Bi-directional | 3 |
+| `0x0E` | REMATCH_RESPONSE | Bi-directional | 4 |
 
 
 ## 3. Message Headers
@@ -224,6 +228,27 @@ Flow:
 2. Client replies with `ACK` using the same `msg_id`.
 3. Client transitions to game on receive.
 4. Host transitions to game after ACK success.
+
+
+### 4.12. REMATCH_REQUEST (0x0D) - 3 bytes
+
+A player asks to start a rematch after game end. Header only.
+
+| Byte | Field | Value |
+|---|---|---|
+| 0 | msg_type | `0x0D` |
+| 1-2 | msg_id | uint16 |
+
+
+### 4.13. REMATCH_RESPONSE (0x0E) - 4 bytes
+
+Response to a rematch request.
+
+| Byte | Field | Value |
+|---|---|---|
+| 0 | msg_type | `0x0E` |
+| 1-2 | msg_id | uint16 |
+| 3 | accepted | `0x00`=REJECTED, `0x01`=ACCEPTED |
 
 
 ## 5. Error Codes
