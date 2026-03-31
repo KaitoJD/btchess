@@ -309,14 +309,18 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   }
 
   // Fully disconnects from the remote device and resets BLE state
-  Future<void> disconnect() async {
+  Future<void> disconnect({bool preserveRematchDeclined = false}) async {
+    final keepRematchDeclined = preserveRematchDeclined && state.rematchDeclined;
+
     try {
       await stopAdvertising();
       await _connectionManager.disconnect();
     } catch (_) {
       // Ignore disconnect errors
     } finally {
-      state = BluetoothState.initial();
+      state = BluetoothState.initial().copyWith(
+        rematchDeclined: keepRematchDeclined,
+      );
     }
   }
 
@@ -494,6 +498,63 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     }
   }
 
+  // Sends a rematch request to the opponent.
+  Future<void> sendRematchRequest() async {
+    if (!state.isConnected || state.rematchRequestedByLocal) return;
+
+    state = state.copyWith(
+      rematchRequestedByLocal: true,
+      rematchDeclined: false,
+      clearError: true,
+    );
+
+    try {
+      await _connectionManager.sendRematchRequest();
+    } catch (e) {
+      state = state.copyWith(
+        rematchRequestedByLocal: false,
+        lastError: 'Rematch request failed: $e',
+      );
+    }
+  }
+
+  // Responds to an incoming rematch request.
+  Future<void> sendRematchResponse({required bool accepted}) async {
+    if (accepted) {
+      if (state.isConnected) {
+        try {
+          await _connectionManager.sendRematchResponse(true);
+        } catch (e) {
+          state = state.copyWith(lastError: 'Rematch response failed: $e');
+        }
+      }
+
+      _startRematch();
+      return;
+    }
+
+    if (!state.isConnected) {
+      state = state.copyWith(
+        incomingRematchRequest: false,
+        rematchRequestedByLocal: false,
+        rematchDeclined: true,
+      );
+      return;
+    }
+
+    try {
+      await _connectionManager.sendRematchResponse(false);
+      state = state.copyWith(
+        incomingRematchRequest: false,
+        rematchRequestedByLocal: false,
+        rematchDeclined: true,
+      );
+      await disconnect(preserveRematchDeclined: true);
+    } catch (e) {
+      state = state.copyWith(lastError: 'Rematch response failed: $e');
+    }
+  }
+
   // Requests a full state sync from the host
   Future<void> requestSync() async {
     if (!state.isConnected || state.isHost) return;
@@ -522,6 +583,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       state = state.copyWith(
         clearPendingMove: true,
         clearConnectedDevice: true,
+        clearRematchState: !state.rematchDeclined,
       );
     }
 
@@ -553,6 +615,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         _handleIncomingSyncResponse(sync);
       case final GameStartMessage gameStart:
         _handleIncomingGameStart(gameStart);
+      case final RematchRequestMessage request:
+        unawaited(_handleIncomingRematchRequest(request));
+      case final RematchResponseMessage response:
+        unawaited(_handleIncomingRematchResponse(response));
       case final HandshakeMessage _:
         // Already handled by ConnectionManager
         break;
@@ -579,6 +645,17 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   void clearGameStartReceived() {
     if (!state.gameStartReceived) return;
     state = state.copyWith(gameStartReceived: false);
+  }
+
+  // Clears rematch UI flags after leaving a completed rematch flow.
+  void clearRematchUiState() {
+    if (!state.rematchRequestedByLocal &&
+        !state.incomingRematchRequest &&
+        !state.rematchDeclined) {
+      return;
+    }
+
+    state = state.copyWith(clearRematchState: true);
   }
 
   Future<void> _handleIncomingMove(MoveMessage moveMsg) async {
@@ -652,6 +729,42 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     } else {
       _gameController.rejectDraw();
     }
+  }
+
+  Future<void> _handleIncomingRematchRequest(RematchRequestMessage _) async {
+    // Simultaneous rematch requests should immediately start on both devices.
+    if (state.rematchRequestedByLocal) {
+      try {
+        await _connectionManager.sendRematchResponse(true);
+      } catch (e) {
+        state = state.copyWith(lastError: 'Rematch response failed: $e');
+      }
+
+      _startRematch();
+      return;
+    }
+
+    state = state.copyWith(
+      incomingRematchRequest: true,
+      rematchDeclined: false,
+    );
+  }
+
+  Future<void> _handleIncomingRematchResponse(RematchResponseMessage response) async {
+    if (!state.rematchRequestedByLocal) return;
+
+    if (response.accepted) {
+      _startRematch();
+      return;
+    }
+
+    state = state.copyWith(
+      rematchRequestedByLocal: false,
+      incomingRematchRequest: false,
+      rematchDeclined: true,
+    );
+
+    await disconnect(preserveRematchDeclined: true);
   }
 
   void _handleIncomingResign(BleMessage message) {
@@ -771,6 +884,15 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     _connectionManager.sendGameEnd(
       result.reason.code,
       result.winner.code,
+    );
+  }
+
+  void _startRematch() {
+    _gameController.resetGame(swapPlayerColors: true);
+    state = state.copyWith(
+      clearRematchState: true,
+      rematchStartSignal: state.rematchStartSignal + 1,
+      clearError: true,
     );
   }
 
