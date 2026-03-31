@@ -90,10 +90,24 @@ class GameController extends StateNotifier<GameState?> {
     _autoSave();
   }
 
-  void resetGame() {
+  void resetGame({bool swapPlayerColors = false}) {
     if (state == null) return;
 
-    state = GameState.newGame(id: state!.id, mode: state!.mode, whitePlayer: state!.whitePlayer, blackPlayer: state!.blackPlayer);
+    final current = state!;
+
+    final whitePlayer = swapPlayerColors
+        ? current.blackPlayer.copyWith(color: PieceColor.white)
+        : current.whitePlayer;
+    final blackPlayer = swapPlayerColors
+        ? current.whitePlayer.copyWith(color: PieceColor.black)
+        : current.blackPlayer;
+
+    state = GameState.newGame(
+      id: current.id,
+      mode: current.mode,
+      whitePlayer: whitePlayer,
+      blackPlayer: blackPlayer,
+    );
 
     _autoSave();
   }
