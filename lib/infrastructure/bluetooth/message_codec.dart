@@ -25,6 +25,8 @@ class MessageCodec {
       final PingMessage m => _encodePing(m),
       final PongMessage m => _encodePong(m),
       final GameStartMessage m => _encodeGameStart(m),
+      final RematchRequestMessage m => _encodeRematchRequest(m),
+      final RematchResponseMessage m => _encodeRematchResponse(m),
     };
   }
 
@@ -128,6 +130,21 @@ class MessageCodec {
             .build();
   }
 
+  Uint8List _encodeRematchRequest(RematchRequestMessage m) {
+    return ByteBufferBuilder()
+            .addByte(MessageType.rematchRequest.value)
+            .addUint16(m.messageId)
+            .build();
+  }
+
+  Uint8List _encodeRematchResponse(RematchResponseMessage m) {
+    return ByteBufferBuilder()
+            .addByte(MessageType.rematchResponse.value)
+            .addUint16(m.messageId)
+            .addByte(m.accepted ? 0x01 : 0x00)
+            .build();
+  }
+
 
   // - Decoding
 
@@ -159,6 +176,8 @@ class MessageCodec {
       MessageType.ping => _decodePing(reader),
       MessageType.pong => _decodePong(reader),
       MessageType.gameStart => _decodeGameStart(reader),
+      MessageType.rematchRequest => _decodeRematchRequest(reader),
+      MessageType.rematchResponse => _decodeRematchResponse(reader),
     };
   }
 
@@ -269,6 +288,21 @@ class MessageCodec {
     _ensureRemaining(reader, 2); // messageId(2)
 
     return GameStartMessage(messageId: reader.readUint16());
+  }
+
+  RematchRequestMessage _decodeRematchRequest(ByteBufferReader reader) {
+    _ensureRemaining(reader, 2); // messageId(2)
+
+    return RematchRequestMessage(messageId: reader.readUint16());
+  }
+
+  RematchResponseMessage _decodeRematchResponse(ByteBufferReader reader) {
+    _ensureRemaining(reader, 3); // messageId(2) + accepted(1)
+
+    return RematchResponseMessage(
+      messageId: reader.readUint16(),
+      accepted: reader.readByte() == 0x01,
+    );
   }
 
   void _ensureRemaining(ByteBufferReader reader, int count) {

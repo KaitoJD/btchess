@@ -207,3 +207,28 @@ class GameStartMessage extends BleMessage {
   @override
   String toString() => 'GameStart(id: $messageId)';
 }
+
+class RematchRequestMessage extends BleMessage {
+  const RematchRequestMessage({required super.messageId});
+
+  @override
+  MessageType get type => MessageType.rematchRequest;
+
+  @override
+  String toString() => 'RematchRequest(id: $messageId)';
+}
+
+class RematchResponseMessage extends BleMessage {
+  const RematchResponseMessage({
+    required super.messageId,
+    required this.accepted,
+  });
+
+  final bool accepted;
+
+  @override
+  MessageType get type => MessageType.rematchResponse;
+
+  @override
+  String toString() => 'RematchResponse(id: $messageId, accepted: $accepted)';
+}
