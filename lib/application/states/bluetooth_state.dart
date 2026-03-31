@@ -25,6 +25,10 @@ class BluetoothState extends Equatable {
     this.lastError,
     this.pendingMoveId,
     this.gameStartReceived = false,
+    this.rematchRequestedByLocal = false,
+    this.incomingRematchRequest = false,
+    this.rematchStartSignal = 0,
+    this.rematchDeclined = false,
   });
 
   factory BluetoothState.initial() => const BluetoothState();
@@ -59,6 +63,18 @@ class BluetoothState extends Equatable {
   // Whether the host has sent a GAME_START signal (client only)
   final bool gameStartReceived;
 
+  // Whether the local user has already requested a rematch.
+  final bool rematchRequestedByLocal;
+
+  // Whether there is a pending rematch request from the opponent.
+  final bool incomingRematchRequest;
+
+  // Incremented each time both sides should transition into a rematch.
+  final int rematchStartSignal;
+
+  // True when rematch was declined and game-over should hide rematch actions.
+  final bool rematchDeclined;
+
   // Whether currently connected
   bool get isConnected => connectionStatus == BleConnectionStatus.connected;
 
@@ -84,9 +100,14 @@ class BluetoothState extends Equatable {
     String? lastError,
     int? pendingMoveId,
     bool? gameStartReceived,
+    bool? rematchRequestedByLocal,
+    bool? incomingRematchRequest,
+    int? rematchStartSignal,
+    bool? rematchDeclined,
     bool clearConnectedDevice = false,
     bool clearError = false,
     bool clearPendingMove = false,
+    bool clearRematchState = false,
   }) {
     return BluetoothState(
       connectionStatus: connectionStatus ?? this.connectionStatus,
@@ -99,6 +120,16 @@ class BluetoothState extends Equatable {
       lastError: clearError ? null : (lastError ?? this.lastError),
       pendingMoveId: clearPendingMove ? null : (pendingMoveId ?? this.pendingMoveId),
       gameStartReceived: gameStartReceived ?? this.gameStartReceived,
+        rematchRequestedByLocal: clearRematchState
+          ? false
+          : (rematchRequestedByLocal ?? this.rematchRequestedByLocal),
+        incomingRematchRequest: clearRematchState
+          ? false
+          : (incomingRematchRequest ?? this.incomingRematchRequest),
+          rematchStartSignal: rematchStartSignal ?? this.rematchStartSignal,
+        rematchDeclined: clearRematchState
+          ? false
+          : (rematchDeclined ?? this.rematchDeclined),
     );
   }
 
@@ -114,6 +145,10 @@ class BluetoothState extends Equatable {
     lastError,
     pendingMoveId,
     gameStartReceived,
+    rematchRequestedByLocal,
+    incomingRematchRequest,
+    rematchStartSignal,
+    rematchDeclined,
   ];
 
   @override
