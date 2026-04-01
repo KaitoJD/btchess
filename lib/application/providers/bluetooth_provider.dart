@@ -96,6 +96,26 @@ final hasPendingMoveProvider = Provider<bool>((ref) {
   return ref.watch(bluetoothControllerProvider).hasPendingMove;
 });
 
+// Whether local player has already requested a rematch.
+final rematchRequestedByLocalProvider = Provider<bool>((ref) {
+  return ref.watch(bluetoothControllerProvider).rematchRequestedByLocal;
+});
+
+// Whether an incoming rematch request is waiting for user decision.
+final incomingRematchRequestProvider = Provider<bool>((ref) {
+  return ref.watch(bluetoothControllerProvider).incomingRematchRequest;
+});
+
+// Increments when both players should enter rematch.
+final rematchStartSignalProvider = Provider<int>((ref) {
+  return ref.watch(bluetoothControllerProvider).rematchStartSignal;
+});
+
+// Whether rematch was declined and rematch actions should be hidden on game over.
+final rematchDeclinedProvider = Provider<bool>((ref) {
+  return ref.watch(bluetoothControllerProvider).rematchDeclined;
+});
+
 // Whether BLE is available and turned on
 final isBluetoothOnProvider = Provider<bool>((ref) {
   return ref.watch(bluetoothControllerProvider).isBluetoothOn;
