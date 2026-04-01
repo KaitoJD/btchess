@@ -259,6 +259,41 @@ void main() {
       });
     });
 
+    group('Rematch', () {
+      test('encodes rematch request to correct bytes', () {
+        final bytes = codec.encode(MessageFixtures.rematchRequest);
+        expect(bytes, MessageFixtures.rematchRequestBytes);
+      });
+
+      test('decodes rematch request from bytes', () {
+        final msg = codec.decode(MessageFixtures.rematchRequestBytes);
+        expect(msg, isA<RematchRequestMessage>());
+        expect((msg as RematchRequestMessage).messageId, 11);
+      });
+
+      test('encodes accepted rematch response', () {
+        final bytes = codec.encode(MessageFixtures.rematchResponseAccepted);
+        expect(bytes, MessageFixtures.rematchResponseAcceptedBytes);
+      });
+
+      test('encodes rejected rematch response', () {
+        final bytes = codec.encode(MessageFixtures.rematchResponseRejected);
+        expect(bytes, MessageFixtures.rematchResponseRejectedBytes);
+      });
+
+      test('decodes accepted rematch response', () {
+        final msg = codec.decode(MessageFixtures.rematchResponseAcceptedBytes)
+            as RematchResponseMessage;
+        expect(msg.accepted, isTrue);
+      });
+
+      test('decodes rejected rematch response', () {
+        final msg = codec.decode(MessageFixtures.rematchResponseRejectedBytes)
+            as RematchResponseMessage;
+        expect(msg.accepted, isFalse);
+      });
+    });
+
     group('Error handling', () {
       test('throws on empty bytes', () {
         expect(
@@ -300,6 +335,9 @@ void main() {
         MessageFixtures.ping,
         MessageFixtures.pong,
         MessageFixtures.gameStart,
+        MessageFixtures.rematchRequest,
+        MessageFixtures.rematchResponseAccepted,
+        MessageFixtures.rematchResponseRejected,
       ];
 
       for (final msg in allMessages) {
