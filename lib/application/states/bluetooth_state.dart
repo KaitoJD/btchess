@@ -120,16 +120,13 @@ class BluetoothState extends Equatable {
       lastError: clearError ? null : (lastError ?? this.lastError),
       pendingMoveId: clearPendingMove ? null : (pendingMoveId ?? this.pendingMoveId),
       gameStartReceived: gameStartReceived ?? this.gameStartReceived,
-        rematchRequestedByLocal: clearRematchState
-          ? false
-          : (rematchRequestedByLocal ?? this.rematchRequestedByLocal),
-        incomingRematchRequest: clearRematchState
-          ? false
-          : (incomingRematchRequest ?? this.incomingRematchRequest),
+          rematchRequestedByLocal:
+            !clearRematchState && (rematchRequestedByLocal ?? this.rematchRequestedByLocal),
+          incomingRematchRequest:
+            !clearRematchState && (incomingRematchRequest ?? this.incomingRematchRequest),
           rematchStartSignal: rematchStartSignal ?? this.rematchStartSignal,
-        rematchDeclined: clearRematchState
-          ? false
-          : (rematchDeclined ?? this.rematchDeclined),
+          rematchDeclined:
+            !clearRematchState && (rematchDeclined ?? this.rematchDeclined),
     );
   }
 

@@ -8,7 +8,7 @@ import 'package:btchess/presentation/widgets/board/square_widget.dart';
 
 void main() {
   // Build a standard set of 32 pieces at starting position
-  Map<int, Piece> _startingPieces() {
+  Map<int, Piece> startingPieces() {
     final pieces = <int, Piece>{};
     // White pieces
     pieces[0] = const Piece(type: PieceType.rook, color: PieceColor.white);
@@ -54,7 +54,7 @@ void main() {
             width: 420,
             height: 420,
             child: BoardWidget(
-              pieces: pieces ?? _startingPieces(),
+              pieces: pieces ?? startingPieces(),
               selectedSquare: selectedSquare,
               legalMoves: legalMoves ?? [],
               lastMove: lastMove,
@@ -127,7 +127,7 @@ void main() {
         buildTestBoard(
           selectedSquare: Square.fromAlgebraic('e2'),
           legalMoves: [Square.fromAlgebraic('e4')],
-          onMove: (_, __) => moveCalls++,
+          onMove: (_, _) => moveCalls++,
           onSquareSelected: (square) => lastSelection = square,
         ),
       );

@@ -8,10 +8,10 @@ enum PieceType {
   knight('n', 'Knight'),
   pawn('p', 'Pawn');
 
+  const PieceType(this.letter, this.displayName);
+
   final String letter;
   final String displayName;
-
-  const PieceType(this.letter, this.displayName);
 
   static PieceType? fromLetter(String letter) {
     final lower = letter.toLowerCase();

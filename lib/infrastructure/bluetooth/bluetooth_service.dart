@@ -51,7 +51,7 @@ class BluetoothService {
 
   // Whether BLE is supported on this device
   Future<bool> get isSupported async{
-    return await FlutterBluePlus.isSupported;
+    return FlutterBluePlus.isSupported;
   }
 
   // Whether Bluetooth is currently on
@@ -295,7 +295,7 @@ class BluetoothService {
 
   // Gets currently connected devices
   Future<List<BluetoothDevice>> getConnectedDevices() async {
-    return await FlutterBluePlus.connectedDevices;
+    return FlutterBluePlus.connectedDevices;
   }
 
   // Disposes resources

@@ -35,7 +35,6 @@ class ConnectionStatusWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildIcon(colorScheme),
             const SizedBox(height: 12),

@@ -9,9 +9,9 @@ class BlePermissions {
     if (kIsWeb) return false;
 
     if (Platform.isAndroid) {
-      return await _checkAndroidPermissions();
+      return _checkAndroidPermissions();
     } else if (Platform.isIOS) {
-      return await _checkIosPermissions();
+      return _checkIosPermissions();
     }
 
     return false;
@@ -21,9 +21,9 @@ class BlePermissions {
     if (kIsWeb) return false;
 
     if (Platform.isAndroid) {
-      return await _requestAndroidPermission();
+      return _requestAndroidPermission();
     } else if (Platform.isIOS) {
-      return await _requestIosPermissions();
+      return _requestIosPermissions();
     }
 
     return false;

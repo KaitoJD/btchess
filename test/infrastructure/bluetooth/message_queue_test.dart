@@ -33,7 +33,7 @@ void main() {
         const normalMsg = DrawOfferMessage(messageId: 1);
         const highMsg = PingMessage(messageId: 2, timestamp: 0);
 
-        queue.enqueue(normalMsg, priority: MessagePriority.normal);
+        queue.enqueue(normalMsg);
         queue.enqueue(highMsg, priority: MessagePriority.high);
 
         final first = queue.dequeue();
@@ -48,7 +48,7 @@ void main() {
         const normalMsg = ResignMessage(messageId: 2);
 
         queue.enqueue(lowMsg, priority: MessagePriority.low);
-        queue.enqueue(normalMsg, priority: MessagePriority.normal);
+        queue.enqueue(normalMsg);
 
         final first = queue.dequeue();
         expect(first!.priority, MessagePriority.normal);

@@ -445,7 +445,7 @@ class ConnectionManager {
   }
 
   // Sends a draw response
-  Future<void> sendDrawResponse(bool accepted) async {
+  Future<void> sendDrawResponse({required bool accepted}) async {
     final response = DrawResponseMessage(
       messageId: _getNextMessageId(),
       accepted: accepted,
@@ -476,7 +476,7 @@ class ConnectionManager {
   }
 
   // Sends a rematch response
-  Future<void> sendRematchResponse(bool accepted) async {
+  Future<void> sendRematchResponse({required bool accepted}) async {
     final response = RematchResponseMessage(
       messageId: _getNextMessageId(),
       accepted: accepted,

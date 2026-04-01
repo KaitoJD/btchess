@@ -96,8 +96,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             // can make centered status content appear visually shifted.
             // Keep top/bottom protection while normalizing left/right.
             : SafeArea(
-                top: true,
-                bottom: true,
                 left: false,
                 right: false,
                 child: _buildClientView(context, lobbyState, bleState),
@@ -422,7 +420,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
           Icons.check_circle,
