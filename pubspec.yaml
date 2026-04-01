@@ -32,7 +32,7 @@ dependencies:
   hive_flutter: ^1.1.0
 
   # Settings Storage
-  shared_preferences: ^2.3.5
+  shared_preferences: ^2.5.5
 
   # Utilities
   uuid: ^4.5.3
