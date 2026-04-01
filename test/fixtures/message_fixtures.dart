@@ -138,6 +138,23 @@ class MessageFixtures {
   /// GAME_START bytes: [0x0C, 0x00, 0x01]
   static final gameStartBytes = Uint8List.fromList([0x0C, 0x00, 0x01]);
 
+  // --- Rematch ---
+
+  static const rematchRequest = RematchRequestMessage(messageId: 11);
+  static final rematchRequestBytes = Uint8List.fromList([0x0D, 0x00, 0x0B]);
+
+  static const rematchResponseAccepted = RematchResponseMessage(
+    messageId: 11,
+    accepted: true,
+  );
+  static final rematchResponseAcceptedBytes = Uint8List.fromList([0x0E, 0x00, 0x0B, 0x01]);
+
+  static const rematchResponseRejected = RematchResponseMessage(
+    messageId: 11,
+    accepted: false,
+  );
+  static final rematchResponseRejectedBytes = Uint8List.fromList([0x0E, 0x00, 0x0B, 0x00]);
+
   // --- Malformed / Edge cases ---
 
   /// Empty data
