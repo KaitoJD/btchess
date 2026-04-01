@@ -238,6 +238,23 @@ void main() {
         expect(controller.state!.fen, FenFixtures.startingPosition);
         expect(controller.state!.moves, isEmpty);
       });
+
+      test('swaps white and black players for BLE rematch', () {
+        controller.newGame(
+          mode: GameMode.bleHost,
+          localPlayerColor: PieceColor.black,
+        );
+
+        final beforeWhiteIsLocal = controller.state!.whitePlayer.isLocal;
+        final beforeBlackIsLocal = controller.state!.blackPlayer.isLocal;
+
+        controller.resetGame(swapPlayerColors: true);
+
+        expect(controller.state!.whitePlayer.isLocal, beforeBlackIsLocal);
+        expect(controller.state!.blackPlayer.isLocal, beforeWhiteIsLocal);
+        expect(controller.state!.whitePlayer.color, PieceColor.white);
+        expect(controller.state!.blackPlayer.color, PieceColor.black);
+      });
     });
 
     group('endSession', () {
