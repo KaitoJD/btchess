@@ -5,6 +5,8 @@ import 'package:btchess/application/controllers/bluetooth_controller.dart';
 import 'package:btchess/application/controllers/game_controller.dart';
 import 'package:btchess/application/states/bluetooth_state.dart';
 import 'package:btchess/core/errors/ble_exception.dart';
+import 'package:btchess/domain/models/game_mode.dart';
+import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/services/chess_service.dart';
 import 'package:btchess/infrastructure/bluetooth/bluetooth_service.dart';
 import 'package:btchess/infrastructure/bluetooth/connection_manager.dart' as cm;
@@ -282,6 +284,123 @@ void main() {
 
         controller.clearGameStartReceived();
         expect(controller.state.gameStartReceived, isFalse);
+      });
+    });
+
+    group('rematch flow', () {
+      test('sendRematchRequest marks local request pending', () async {
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchRequest())
+            .thenAnswer((_) async {});
+
+        await controller.sendRematchRequest();
+
+        expect(controller.state.rematchRequestedByLocal, isTrue);
+        verify(() => mockConnectionManager.sendRematchRequest()).called(1);
+      });
+
+      test('incoming rematch request sets incoming flag', () async {
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        messageController.add(const RematchRequestMessage(messageId: 20));
+        await Future.delayed(Duration.zero);
+
+        expect(controller.state.incomingRematchRequest, isTrue);
+      });
+
+      test('simultaneous rematch requests auto-start rematch', () async {
+        gameController.newGame(
+          mode: GameMode.bleClient,
+          localPlayerColor: PieceColor.white,
+        );
+
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchRequest())
+            .thenAnswer((_) async {});
+        when(() => mockConnectionManager.sendRematchResponse(true))
+            .thenAnswer((_) async {});
+
+        await controller.sendRematchRequest();
+        messageController.add(const RematchRequestMessage(messageId: 21));
+        await Future.delayed(const Duration(milliseconds: 10));
+
+        verify(() => mockConnectionManager.sendRematchResponse(true)).called(1);
+        expect(controller.state.rematchStartSignal, 1);
+      });
+
+      test('accepting rematch starts rematch signal for responder', () async {
+        gameController.newGame(
+          mode: GameMode.bleHost,
+          localPlayerColor: PieceColor.white,
+        );
+
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchResponse(true))
+            .thenAnswer((_) async {});
+
+        await controller.sendRematchResponse(accepted: true);
+
+        verify(() => mockConnectionManager.sendRematchResponse(true)).called(1);
+        expect(controller.state.rematchStartSignal, 1);
+      });
+
+      test('accepting rematch still starts rematch when response send fails', () async {
+        gameController.newGame(
+          mode: GameMode.bleHost,
+          localPlayerColor: PieceColor.white,
+        );
+
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchResponse(true))
+            .thenThrow(Exception('send failed'));
+
+        await controller.sendRematchResponse(accepted: true);
+
+        expect(controller.state.rematchStartSignal, 1);
+      });
+
+      test('declined rematch disconnects and keeps declined marker', () async {
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchRequest())
+            .thenAnswer((_) async {});
+        when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
+        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+
+        await controller.sendRematchRequest();
+        final beforeSignal = controller.state.rematchStartSignal;
+        messageController.add(const RematchResponseMessage(messageId: 22, accepted: false));
+        await Future.delayed(Duration.zero);
+
+        expect(controller.state.rematchDeclined, isTrue);
+        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(controller.state.rematchStartSignal, beforeSignal);
+      });
+
+      test('declining incoming rematch does not emit start signal', () async {
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        when(() => mockConnectionManager.sendRematchResponse(false))
+            .thenAnswer((_) async {});
+        when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
+        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+
+        final beforeSignal = controller.state.rematchStartSignal;
+        await controller.sendRematchResponse(accepted: false);
+
+        expect(controller.state.rematchDeclined, isTrue);
+        expect(controller.state.rematchStartSignal, beforeSignal);
       });
     });
   });
