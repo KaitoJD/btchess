@@ -28,7 +28,6 @@ void main() {
           promotion: PromotionPiece.queen,
           san: 'e8=Q',
           movedPiece: const Piece(type: PieceType.pawn, color: PieceColor.white),
-          isCastling: false,
           isCheck: true,
         );
         expect(move.isPromotion, isTrue);

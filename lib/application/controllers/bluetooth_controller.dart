@@ -444,7 +444,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     if (!state.isConnected) return;
 
     try {
-      await _connectionManager.sendDrawResponse(accepted);
+      await _connectionManager.sendDrawResponse(accepted: accepted);
 
       if (accepted) {
         _gameController.acceptDraw();
@@ -523,7 +523,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     if (accepted) {
       if (state.isConnected) {
         try {
-          await _connectionManager.sendRematchResponse(true);
+          await _connectionManager.sendRematchResponse(accepted: true);
         } catch (e) {
           state = state.copyWith(lastError: 'Rematch response failed: $e');
         }
@@ -543,7 +543,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     }
 
     try {
-      await _connectionManager.sendRematchResponse(false);
+      await _connectionManager.sendRematchResponse(accepted: false);
       state = state.copyWith(
         incomingRematchRequest: false,
         rematchRequestedByLocal: false,
@@ -735,7 +735,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     // Simultaneous rematch requests should immediately start on both devices.
     if (state.rematchRequestedByLocal) {
       try {
-        await _connectionManager.sendRematchResponse(true);
+        await _connectionManager.sendRematchResponse(accepted: true);
       } catch (e) {
         state = state.copyWith(lastError: 'Rematch response failed: $e');
       }

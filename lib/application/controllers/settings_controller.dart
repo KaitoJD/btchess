@@ -41,39 +41,39 @@ class SettingsController extends StateNotifier<SettingsState> {
     final newValue = !state.soundEnabled;
     state = state.copyWith(soundEnabled: newValue);
 
-    await _repository.setSoundEnabled(newValue);
+    await _repository.setSoundEnabled(value: newValue);
   }
 
-  Future<void> setSoundEnabled(bool value) async {
+  Future<void> setSoundEnabled({required bool value}) async {
     state = state.copyWith(soundEnabled: value);
 
-    await _repository.setSoundEnabled(value);
+    await _repository.setSoundEnabled(value: value);
   }
 
   Future<void> toggleShowLegalMoves() async {
     final newValue = !state.showLegalMoves;
     state = state.copyWith(showLegalMoves: newValue);
 
-    await _repository.setShowLegalMoves(newValue);
+    await _repository.setShowLegalMoves(value: newValue);
   }
 
-  Future<void> setShowLegalMoves(bool value) async {
+  Future<void> setShowLegalMoves({required bool value}) async {
     state = state.copyWith(showLegalMoves: value);
 
-    await _repository.setShowLegalMoves(value);
+    await _repository.setShowLegalMoves(value: value);
   }
 
   Future<void> toggleShowCoordinates() async {
     final newValue = !state.showCoordinates;
     state = state.copyWith(showCoordinates: newValue);
 
-    await _repository.setShowCoordinates(newValue);
+    await _repository.setShowCoordinates(value: newValue);
   }
 
-  Future<void> setShowCoordinates(bool value) async {
+  Future<void> setShowCoordinates({required bool value}) async {
     state = state.copyWith(showCoordinates: value);
 
-    await _repository.setShowCoordinates(value);
+    await _repository.setShowCoordinates(value: value);
   }
 
   Future<void> setBoardTheme(BoardTheme theme) async {
@@ -92,13 +92,13 @@ class SettingsController extends StateNotifier<SettingsState> {
     final newValue = !state.debugMode;
     state = state.copyWith(debugMode: newValue);
 
-    await _repository.setDebugMode(newValue);
+    await _repository.setDebugMode(value: newValue);
   }
 
-  Future<void> setDebugMode(bool value) async {
+  Future<void> setDebugMode({required bool value}) async {
     state = state.copyWith(debugMode: value);
 
-    await _repository.setDebugMode(value);
+    await _repository.setDebugMode(value: value);
   }
 
   Future<void> setPlayerName(String name) async {
@@ -113,13 +113,13 @@ class SettingsController extends StateNotifier<SettingsState> {
     final newValue = !state.autoFlipBoard;
     state = state.copyWith(autoFlipBoard: newValue);
 
-    await _repository.setAutoFlipBoard(newValue);
+    await _repository.setAutoFlipBoard(value: newValue);
   }
 
-  Future<void> setAutoFlipBoard(bool value) async {
+  Future<void> setAutoFlipBoard({required bool value}) async {
     state = state.copyWith(autoFlipBoard: value);
 
-    await _repository.setAutoFlipBoard(value);
+    await _repository.setAutoFlipBoard(value: value);
   }
 
   Future<void> resetToDefaults() async {

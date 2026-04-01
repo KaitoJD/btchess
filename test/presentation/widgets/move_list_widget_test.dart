@@ -64,7 +64,6 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(
         moves: moves,
-        showMoveNumbers: true,
       ));
 
       expect(find.text('1.'), findsOneWidget);

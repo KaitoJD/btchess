@@ -322,14 +322,14 @@ void main() {
 
         when(() => mockConnectionManager.sendRematchRequest())
             .thenAnswer((_) async {});
-        when(() => mockConnectionManager.sendRematchResponse(true))
+        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
             .thenAnswer((_) async {});
 
         await controller.sendRematchRequest();
         messageController.add(const RematchRequestMessage(messageId: 21));
         await Future.delayed(const Duration(milliseconds: 10));
 
-        verify(() => mockConnectionManager.sendRematchResponse(true)).called(1);
+        verify(() => mockConnectionManager.sendRematchResponse(accepted: true)).called(1);
         expect(controller.state.rematchStartSignal, 1);
       });
 
@@ -342,12 +342,12 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(true))
+        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
             .thenAnswer((_) async {});
 
         await controller.sendRematchResponse(accepted: true);
 
-        verify(() => mockConnectionManager.sendRematchResponse(true)).called(1);
+        verify(() => mockConnectionManager.sendRematchResponse(accepted: true)).called(1);
         expect(controller.state.rematchStartSignal, 1);
       });
 
@@ -360,7 +360,7 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(true))
+        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
             .thenThrow(Exception('send failed'));
 
         await controller.sendRematchResponse(accepted: true);
@@ -391,7 +391,7 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(false))
+        when(() => mockConnectionManager.sendRematchResponse(accepted: false))
             .thenAnswer((_) async {});
         when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
         when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});

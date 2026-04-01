@@ -171,7 +171,7 @@ void main() {
 
     group('equality', () {
       test('same state is equal', () {
-        final now = DateTime(2026, 1, 1);
+        final now = DateTime(2026);
         final s1 = GameState(
           id: 't',
           fen: FenFixtures.startingPosition,

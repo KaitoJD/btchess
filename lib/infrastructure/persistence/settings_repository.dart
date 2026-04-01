@@ -75,7 +75,7 @@ class SettingsRepository {
     return prefs.getBool(SettingsKeys.soundEnabled) ?? true;
   }
 
-  Future<void> setSoundEnabled(bool value) async {
+  Future<void> setSoundEnabled({required bool value}) async {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.soundEnabled, value);
@@ -87,7 +87,7 @@ class SettingsRepository {
     return prefs.getBool(SettingsKeys.showLegalMoves) ?? true;
   }
 
-  Future<void> setShowLegalMoves(bool value) async {
+  Future<void> setShowLegalMoves({required bool value}) async {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.showLegalMoves, value);
@@ -99,7 +99,7 @@ class SettingsRepository {
     return prefs.getBool(SettingsKeys.showCoordinates) ?? true;
   }
 
-  Future<void> setShowCoordinates(bool value) async {
+  Future<void> setShowCoordinates({required bool value}) async {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.showCoordinates, value);
@@ -137,7 +137,7 @@ class SettingsRepository {
     return prefs.getBool(SettingsKeys.debugMode) ?? false;
   }
 
-  Future<void> setDebugMode(bool value) async {
+  Future<void> setDebugMode({required bool value}) async {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.debugMode, value);
@@ -161,7 +161,7 @@ class SettingsRepository {
     return prefs.getBool(SettingsKeys.autoFlipBoard) ?? false;
   }
 
-  Future<void> setAutoFlipBoard(bool value) async {
+  Future<void> setAutoFlipBoard({required bool value}) async {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.autoFlipBoard, value);

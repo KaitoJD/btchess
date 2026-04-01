@@ -111,7 +111,7 @@ class BoardController extends StateNotifier<BoardState> {
     state = state.copyWith(isFlipped: !state.isFlipped);
   }
 
-  void setFlipped(bool flipped) {
+  void setFlipped({required bool flipped}) {
     state = state.copyWith(isFlipped: flipped);
   }
 

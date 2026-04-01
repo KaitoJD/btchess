@@ -158,7 +158,7 @@ void main() {
       });
 
       test('format generates bracket notation', () {
-        final headers = PgnHeaders(white: 'Alice', black: 'Bob');
+        const headers = PgnHeaders(white: 'Alice', black: 'Bob');
         final formatted = headers.format();
         expect(formatted, contains('[White "Alice"]'));
         expect(formatted, contains('[Black "Bob"]'));

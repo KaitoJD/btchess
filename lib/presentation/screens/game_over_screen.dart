@@ -276,12 +276,10 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
     ColorScheme colorScheme,
   ) {
     final isBleGame = args.mode.isBle;
-    final rematchRequestedByLocal = isBleGame
-        ? ref.watch(rematchRequestedByLocalProvider)
-        : false;
-    final rematchDeclined = isBleGame
-        ? ref.watch(rematchDeclinedProvider)
-        : false;
+    final rematchRequestedByLocal =
+      isBleGame && ref.watch(rematchRequestedByLocalProvider);
+    final rematchDeclined =
+      isBleGame && ref.watch(rematchDeclinedProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
