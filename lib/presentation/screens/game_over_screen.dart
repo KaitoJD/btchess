@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/providers/bluetooth_provider.dart';
 import '../../application/providers/game_provider.dart';
 import '../../domain/enums/game_end_reason.dart';
 import '../../domain/enums/winner.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/game_result.dart';
 import '../routes/app_router.dart';
+import '../widgets/dialogs/draw_offer_dialog.dart';
 
 // Arguments passed to the [GameOverScreen] via route navigation.
 class GameOverScreenArgs {
@@ -26,11 +28,57 @@ class GameOverScreenArgs {
   final String? blackPlayerName;
 }
 
-class GameOverScreen extends ConsumerWidget {
+class GameOverScreen extends ConsumerStatefulWidget {
   const GameOverScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GameOverScreen> createState() => _GameOverScreenState();
+}
+
+class _GameOverScreenState extends ConsumerState<GameOverScreen> {
+  bool _isShowingRematchDialog = false;
+  late final int _rematchSignalBaseline;
+
+  @override
+  void initState() {
+    super.initState();
+    _rematchSignalBaseline = ref.read(rematchStartSignalProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _listenForRematchStart();
+      _listenForIncomingRematchRequest();
+    });
+  }
+
+  void _listenForRematchStart() {
+    ref.listenManual<int>(rematchStartSignalProvider, (previous, next) {
+      // Ignore initial snapshot and any stale value that existed before
+      // this screen started listening.
+      if (previous == null) return;
+      if (next <= _rematchSignalBaseline) return;
+      if (previous == next) return;
+      if (!mounted) return;
+      AppRouter.navigateAndReplace(context, AppRoutes.game);
+    });
+  }
+
+  void _listenForIncomingRematchRequest() {
+    ref.listenManual<bool>(incomingRematchRequestProvider, (previous, next) async {
+      if (!next || _isShowingRematchDialog || !mounted) return;
+
+      _isShowingRematchDialog = true;
+      final accepted = await showRematchOfferedDialog(context);
+      _isShowingRematchDialog = false;
+
+      if (!mounted) return;
+      await ref
+          .read(bluetoothControllerProvider.notifier)
+          .sendRematchResponse(accepted: accepted);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final args = ModalRoute.of(context)!.settings.arguments as GameOverScreenArgs;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -227,27 +275,53 @@ class GameOverScreen extends ConsumerWidget {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
+    final isBleGame = args.mode.isBle;
+    final rematchRequestedByLocal = isBleGame
+        ? ref.watch(rematchRequestedByLocalProvider)
+        : false;
+    final rematchDeclined = isBleGame
+        ? ref.watch(rematchDeclinedProvider)
+        : false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton.icon(
-          onPressed: () => _handleRematch(context, ref),
-          icon: const Icon(Icons.replay),
-          label: const Text('Rematch'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        if (!rematchDeclined)
+          FilledButton.icon(
+            onPressed: rematchRequestedByLocal
+                ? null
+                : () => _handleRematch(context, ref, args.mode),
+            icon: rematchRequestedByLocal
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.replay),
+            label: Text(
+              rematchRequestedByLocal
+                  ? 'Waiting for opponent...'
+                  : 'Rematch',
+            ),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
+        if (!rematchDeclined) const SizedBox(height: 10),
+        (rematchDeclined ? FilledButton.icon : OutlinedButton.icon)(
           onPressed: () => _handleNewGame(context, ref),
           icon: const Icon(Icons.add),
           label: const Text('New Game'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
+          style: rematchDeclined
+              ? FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                )
+              : OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
         ),
         const SizedBox(height: 10),
         if (args.pgn != null && args.pgn!.isNotEmpty)
@@ -273,12 +347,18 @@ class GameOverScreen extends ConsumerWidget {
     );
   }
 
-  void _handleRematch(BuildContext context, WidgetRef ref) {
+  void _handleRematch(BuildContext context, WidgetRef ref, GameMode mode) {
+    if (mode.isBle) {
+      ref.read(bluetoothControllerProvider.notifier).sendRematchRequest();
+      return;
+    }
+
     ref.read(gameControllerProvider.notifier).resetGame();
     AppRouter.navigateAndReplace(context, AppRoutes.game);
   }
 
   void _handleNewGame(BuildContext context, WidgetRef ref) {
+    ref.read(bluetoothControllerProvider.notifier).clearRematchUiState();
     ref.read(gameControllerProvider.notifier).endSession();
     AppRouter.navigateAndReplace(context, AppRoutes.modeSelection);
   }
@@ -288,6 +368,7 @@ class GameOverScreen extends ConsumerWidget {
   }
 
   void _handleHome(BuildContext context, WidgetRef ref) {
+    ref.read(bluetoothControllerProvider.notifier).clearRematchUiState();
     ref.read(gameControllerProvider.notifier).endSession();
     AppRouter.navigateAndClear(context, AppRoutes.home);
   }
