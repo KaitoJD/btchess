@@ -120,20 +120,66 @@ class BleConnection implements BleTransport {
   Future<void> _setupNotifications() async {
     // Enable notifications on state characteristic
     if (_stateNotifyCharacteristic != null) {
-      await _stateNotifyCharacteristic!.setNotifyValue(true);
-      _stateSubscription = _stateNotifyCharacteristic!.onValueReceived.listen(
-        _handleIncomingData,
-        onError: _handleError,
+      _stateSubscription = await _enableNotificationSubscription(
+        characteristic: _stateNotifyCharacteristic!,
+        label: 'STATE_NOTIFY',
+        requiredSubscription: true,
       );
     }
 
     // Enable notifications on control characteristic
     if (_controlCharacteristic != null) {
-      await _controlCharacteristic!.setNotifyValue(true);
-      _controlSubscription = _controlCharacteristic!.onValueReceived.listen(
+      _controlSubscription = await _enableNotificationSubscription(
+        characteristic: _controlCharacteristic!,
+        label: 'CONTROL',
+        requiredSubscription: false,
+      );
+    }
+  }
+
+  Future<StreamSubscription<List<int>>?> _enableNotificationSubscription({
+    required BluetoothCharacteristic characteristic,
+    required String label,
+    required bool requiredSubscription,
+  }) async {
+    final supportsNotify =
+        characteristic.properties.notify || characteristic.properties.indicate;
+    final uuid = characteristic.uuid.str128;
+
+    Logger.debug(
+      'Notification capability [$label] uuid=$uuid '
+      'notify=${characteristic.properties.notify} '
+      'indicate=${characteristic.properties.indicate}',
+      tag: 'BleConnection',
+    );
+
+    if (!supportsNotify) {
+      final message =
+          'Skipping notification subscription for $label ($uuid): '
+          'NOTIFY/INDICATE not supported by discovered characteristic properties';
+      if (requiredSubscription) {
+        throw BleConnectionException(message);
+      }
+
+      Logger.warn(message, tag: 'BleConnection');
+      return null;
+    }
+
+    try {
+      await characteristic.setNotifyValue(true);
+      return characteristic.onValueReceived.listen(
         _handleIncomingData,
         onError: _handleError,
       );
+    } catch (e) {
+      final message =
+          'Failed to enable notifications for $label ($uuid): $e';
+      if (requiredSubscription) {
+        throw BleConnectionException(message, originalError: e);
+      }
+
+      Logger.warn(message, tag: 'BleConnection');
+      return null;
     }
   }
 
