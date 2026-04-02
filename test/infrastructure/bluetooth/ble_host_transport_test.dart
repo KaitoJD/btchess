@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:btchess/infrastructure/bluetooth/ble_host_transport.dart';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,10 +11,27 @@ import '../../mocks/mock_ble_peripheral_manager.dart';
 void main() {
   late MockBlePeripheralManager peripheral;
   late BleHostTransport transport;
+  late StreamController<BleMessage> messageController;
+  late StreamController<String> clientDisconnectedController;
 
   setUp(() {
     peripheral = MockBlePeripheralManager();
+
+    messageController = StreamController<BleMessage>.broadcast();
+    clientDisconnectedController = StreamController<String>.broadcast();
+
+    when(() => peripheral.messages).thenAnswer((_) => messageController.stream);
+    when(() => peripheral.clientDisconnected)
+        .thenAnswer((_) => clientDisconnectedController.stream);
+    when(() => peripheral.stopAdvertising()).thenAnswer((_) async {});
+
     transport = BleHostTransport(peripheral);
+  });
+
+  tearDown(() async {
+    await transport.disconnect();
+    await messageController.close();
+    await clientDisconnectedController.close();
   });
 
   test('sendControl routes through state notification on host transport', () async {
@@ -56,5 +76,27 @@ void main() {
     await transport.sendStateNotification(message);
 
     verify(() => peripheral.sendStateNotification(message)).called(1);
+  });
+
+  test('forwards incoming peripheral messages', () async {
+    const message = GameStartMessage(messageId: 77);
+
+    final future = expectLater(
+      transport.messages,
+      emits(message),
+    );
+
+    messageController.add(message);
+    await future;
+  });
+
+  test('emits BleDisconnectedException when peripheral reports client disconnect', () async {
+    final future = expectLater(
+      transport.messages,
+      emitsError(isA<BleDisconnectedException>()),
+    );
+
+    clientDisconnectedController.add('client-1');
+    await future;
   });
 }
