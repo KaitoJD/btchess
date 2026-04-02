@@ -57,6 +57,9 @@ class ConnectionManager {
   // Message subscription
   StreamSubscription<BleMessage>? _messageSubscription;
 
+  // Completes when the underlying transport stream closes or errors.
+  Completer<void>? _connectionClosedCompleter;
+
   // Buffers handshake messages that can arrive before _waitForMessage
   // attaches its own stream listener during the handshaking phase.
   final Queue<HandshakeMessage> _handshakeBuffer = Queue<HandshakeMessage>();
@@ -114,6 +117,7 @@ class ConnectionManager {
     _connection = connection;
     _updateState(ConnectionState.handshaking);
     _handshakeBuffer.clear();
+    _connectionClosedCompleter = Completer<void>();
 
     _messageSubscription = connection.messages.listen(
       _handleMessage,
@@ -220,13 +224,32 @@ class ConnectionManager {
     });
 
     try {
-      return await completer.future.timeout(timeout);
+      final candidateFutures = <Future<T>>[
+        completer.future,
+      ];
+
+      if (_connectionClosedCompleter != null) {
+        candidateFutures.add(
+          _connectionClosedCompleter!.future.then<T>(
+            (_) => throw const BleDisconnectedException(
+              'Connection closed while waiting for message',
+            ),
+          ),
+        );
+      }
+
+      return await Future.any<T>(candidateFutures).timeout(timeout);
     } on TimeoutException {
-      subscription.cancel();
+      Logger.error(
+        'Timed out waiting for ${T.toString()} after ${timeout.inMilliseconds}ms',
+        tag: 'ConnectionManager',
+      );
       throw BleTimeoutException(
         'Timeout waiting for ${T.toString()}',
         timeout: timeout,
       );
+    } finally {
+      await subscription.cancel();
     }
   }
 
@@ -310,10 +333,17 @@ class ConnectionManager {
 
   void _handleError(Object error) {
     Logger.error('Error: $error', tag: 'ConnectionManager');
+    if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
+      _connectionClosedCompleter?.complete();
+    }
+    _lastError = error.toString();
     _updateState(ConnectionState.error);
   }
 
   void _handleDisconnect() {
+    if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
+      _connectionClosedCompleter?.complete();
+    }
     _updateState(ConnectionState.disconnected);
     _stopPingTimer();
   }
