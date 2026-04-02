@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:btchess/core/constants/ble_constants.dart';
 import 'package:btchess/infrastructure/bluetooth/ble_transport.dart';
@@ -237,6 +238,23 @@ void main() {
 
     expect(hostManager.isConnected, isTrue);
     expect(transport.sentControl.whereType<HandshakeMessage>().length, 1);
+
+    await hostManager.disconnect();
+  });
+
+  test('host handshake fails fast when transport disconnects before handshake', () async {
+    final hostManager = ConnectionManager();
+    final disconnectingTransport = _FakeHostTransport();
+
+    final stopwatch = Stopwatch()..start();
+    final setupFuture = hostManager.setupConnection(disconnectingTransport);
+
+    await disconnectingTransport.disconnect();
+
+    await expectLater(setupFuture, throwsA(isA<BleDisconnectedException>()));
+    stopwatch.stop();
+
+    expect(stopwatch.elapsedMilliseconds, lessThan(1000));
 
     await hostManager.disconnect();
   });
