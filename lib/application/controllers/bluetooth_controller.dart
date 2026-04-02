@@ -174,6 +174,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       state = state.copyWith(
         isHost: true,
+        connectionStatus: BleConnectionStatus.connecting,
         clearError: true,
       );
 
@@ -187,7 +188,18 @@ class BluetoothController extends StateNotifier<BluetoothState> {
           .listen(_onHostClientConnected);
 
       await _bluetoothService.startAdvertising(gameName);
+
+      // Advertising is active and waiting for peer connection callbacks.
+      state = state.copyWith(
+        connectionStatus: BleConnectionStatus.disconnected,
+      );
     } catch (e) {
+      await _clientConnectedSubscription?.cancel();
+      _clientConnectedSubscription = null;
+      try {
+        await _bluetoothService.stopAdvertising();
+      } catch (_) {}
+
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
         lastError: 'Failed to create lobby: $e',
