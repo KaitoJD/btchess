@@ -34,8 +34,14 @@
 ## 📸 Demo
 
 <p align="center">
-  <img src="docs/assets/local_game.gif" width="250" alt="Landing Page">
+  <img src="docs/assets/local_game.gif" width="250" alt="Local Game Demo">
   <br><em>Local Game (Play on the Same Device)</em>
+</p>
+<br>
+<p align="center">
+  <img src="docs/assets/bledemo1.gif" height="600" alt="BLE Game Demo">
+  <img src="docs/assets/bledemo2.gif" height="600" alt="BLE Game Demo">
+  <br><em>BLE Multiplayer Game</em>
 </p>
 
 ## 🧭 How to Play
