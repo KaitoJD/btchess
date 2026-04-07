@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/error_codes.dart';
 import '../../core/utils/logger.dart';
+import '../../core/utils/user_error_formatter.dart';
 import '../../domain/enums/game_end_reason.dart';
 import '../../domain/enums/game_status.dart';
 import '../../domain/enums/promotion_piece.dart';
@@ -125,7 +126,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
         isScanning: false,
-        lastError: 'Failed to start scanning: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to start scanning',
+        ),
       );
     }
   }
@@ -202,7 +206,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
-        lastError: 'Failed to create lobby: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to create lobby',
+        ),
       );
       rethrow;
     }
@@ -276,7 +283,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
-        lastError: 'Failed to join game: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to join game',
+        ),
         clearConnectedDevice: true,
       );
     }
@@ -297,7 +307,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     } catch (e) {
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
-        lastError: 'Client connection failed: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Client connection failed',
+        ),
       );
     }
   }
@@ -315,7 +328,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     } catch (e) {
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.error,
-        lastError: 'Failed to accept client connection: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to accept client connection',
+        ),
       );
     }
   }
@@ -425,7 +441,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       } catch (e) {
         state = state.copyWith(
           clearPendingMove: true,
-          lastError: 'Move failed: $e',
+          lastError: UserErrorFormatter.formatError(
+            e,
+            context: 'Move failed',
+          ),
         );
       }
     }
@@ -447,7 +466,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
                 : PieceColor.black),
       );
     } catch (e) {
-      state = state.copyWith(lastError: 'Draw offer failed: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Draw offer failed',
+        ),
+      );
     }
   }
 
@@ -472,7 +496,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         _gameController.rejectDraw();
       }
     } catch (e) {
-      state = state.copyWith(lastError: 'Draw response failed: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Draw response failed',
+        ),
+      );
     }
   }
 
@@ -496,7 +525,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(lastError: 'Resign failed: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Resign failed',
+        ),
+      );
     }
   }
 
@@ -525,7 +559,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     } catch (e) {
       state = state.copyWith(
         rematchRequestedByLocal: false,
-        lastError: 'Rematch request failed: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Rematch request failed',
+        ),
       );
     }
   }
@@ -537,7 +574,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         try {
           await _connectionManager.sendRematchResponse(accepted: true);
         } catch (e) {
-          state = state.copyWith(lastError: 'Rematch response failed: $e');
+          state = state.copyWith(
+            lastError: UserErrorFormatter.formatError(
+              e,
+              context: 'Rematch response failed',
+            ),
+          );
         }
       }
 
@@ -563,7 +605,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       );
       await disconnect(preserveRematchDeclined: true);
     } catch (e) {
-      state = state.copyWith(lastError: 'Rematch response failed: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Rematch response failed',
+        ),
+      );
     }
   }
 
@@ -574,7 +621,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     try {
       await _connectionManager.sendSyncRequest();
     } catch (e) {
-      state = state.copyWith(lastError: 'Sync request failed: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Sync request failed',
+        ),
+      );
     }
   }
 
@@ -749,7 +801,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       try {
         await _connectionManager.sendRematchResponse(accepted: true);
       } catch (e) {
-        state = state.copyWith(lastError: 'Rematch response failed: $e');
+        state = state.copyWith(
+          lastError: UserErrorFormatter.formatError(
+            e,
+            context: 'Rematch response failed',
+          ),
+        );
       }
 
       _startRematch();
@@ -882,7 +939,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       _gameController.syncState(fen: fen, moves: moves, status: status);
     } catch (e) {
-      state = state.copyWith(lastError: 'Failed to process sync: $e');
+      state = state.copyWith(
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to process sync',
+        ),
+      );
     }
   }
 
@@ -937,7 +999,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       case BleErrorCode.sessionExpired:
         return 'Session expired';
       default:
-        return 'An error occurred (0x${error.value.toRadixString(16)})';
+        return UserErrorFormatter.formatMessage(
+          'An error occurred (0x${error.value.toRadixString(16)})',
+        );
     }
   }
 

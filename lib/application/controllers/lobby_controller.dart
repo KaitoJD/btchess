@@ -4,6 +4,7 @@ import '../../domain/models/game_mode.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/player.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
+import '../../core/utils/user_error_formatter.dart';
 import '../controllers/bluetooth_controller.dart';
 import '../controllers/game_controller.dart';
 import '../states/bluetooth_state.dart';
@@ -65,7 +66,10 @@ class LobbyController extends StateNotifier<LobbyState> {
     } catch (e) {
       state = state.copyWith(
         status: LobbyStatus.error,
-        lastError: 'Failed to create lobby: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to create lobby',
+        ),
       );
     }
   }
@@ -94,7 +98,10 @@ class LobbyController extends StateNotifier<LobbyState> {
     } catch (e) {
       state = state.copyWith(
         status: LobbyStatus.error,
-        lastError: 'Failed to join game: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to join game',
+        ),
       );
     }
   }
@@ -114,7 +121,10 @@ class LobbyController extends StateNotifier<LobbyState> {
     } catch (e) {
       state = state.copyWith(
         status: LobbyStatus.ready,
-        lastError: 'Failed to start game: $e',
+        lastError: UserErrorFormatter.formatError(
+          e,
+          context: 'Failed to start game',
+        ),
       );
     }
   }
