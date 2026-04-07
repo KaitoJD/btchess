@@ -5,6 +5,7 @@ import 'package:btchess/application/controllers/bluetooth_controller.dart';
 import 'package:btchess/application/controllers/game_controller.dart';
 import 'package:btchess/application/states/bluetooth_state.dart';
 import 'package:btchess/core/errors/ble_exception.dart';
+import 'package:btchess/core/utils/user_error_formatter.dart';
 import 'package:btchess/domain/models/game_mode.dart';
 import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/services/chess_service.dart';
@@ -28,6 +29,8 @@ void main() {
   late bool permanentlyDenied;
 
   setUp(() {
+    UserErrorFormatter.setDebugMode(enabled: false);
+
     mockBluetoothService = MockBluetoothService();
     mockPeripheralManager = MockBlePeripheralManager();
     mockConnectionManager = MockConnectionManager();
@@ -205,7 +208,7 @@ void main() {
         );
 
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(controller.state.lastError, contains('Failed to create lobby'));
+        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       });
 
       test('createLobby keeps host state when advertising succeeds', () async {
