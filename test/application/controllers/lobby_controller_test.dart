@@ -5,6 +5,7 @@ import 'package:btchess/application/states/bluetooth_state.dart';
 import 'package:btchess/application/states/lobby_state.dart';
 import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/services/chess_service.dart';
+import 'package:btchess/core/utils/user_error_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -22,6 +23,8 @@ void main() {
   late LobbyController controller;
 
   setUp(() {
+    UserErrorFormatter.setDebugMode(enabled: false);
+
     mockBluetoothController = _MockBluetoothController();
     gameController = GameController(chessService: const ChessService());
     bleStateNotifier = _BleStateNotifier();
@@ -72,7 +75,7 @@ void main() {
       );
 
       expect(controller.state.status, LobbyStatus.error);
-      expect(controller.state.lastError, contains('Failed to create lobby'));
+      expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       verify(() => mockBluetoothController.setHostColor(PieceColor.white)).called(1);
       verify(() => mockBluetoothController.createLobby('test-game')).called(1);
     });
