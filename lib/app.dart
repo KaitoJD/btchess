@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/providers/settings_provider.dart';
 import 'core/constants/app_constants.dart';
+import 'core/utils/logger.dart';
+import 'core/utils/user_error_formatter.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/themes/app_theme.dart';
@@ -18,13 +20,22 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      ref.read(settingsControllerProvider.notifier).loadSettings();
+    Future.microtask(() async {
+      await ref.read(settingsControllerProvider.notifier).loadSettings();
+
+      final debugModeEnabled = ref.read(debugModeProvider);
+      UserErrorFormatter.setDebugMode(enabled: debugModeEnabled);
+      Logger.setLevel(debugModeEnabled ? LogLevel.debug : LogLevel.off);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(debugModeProvider, (_, enabled) {
+      UserErrorFormatter.setDebugMode(enabled: enabled);
+      Logger.setLevel(enabled ? LogLevel.debug : LogLevel.off);
+    });
+
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
