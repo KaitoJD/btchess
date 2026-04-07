@@ -5,6 +5,7 @@ import '../../core/constants/error_codes.dart';
 import '../../core/constants/timing_constants.dart';
 import '../../core/errors/ble_exception.dart';
 import '../../core/utils/logger.dart';
+import '../../core/utils/user_error_formatter.dart';
 import 'ble_transport.dart';
 import 'chunk_handler.dart';
 import 'message_models.dart';
@@ -130,7 +131,10 @@ class ConnectionManager {
       _updateState(ConnectionState.connected);
       _startPingTimer();
     } catch (e) {
-      _lastError = e.toString();
+      _lastError = UserErrorFormatter.formatError(
+        e,
+        context: 'Connection setup failed',
+      );
       _updateState(ConnectionState.error);
       rethrow;
     }
@@ -336,7 +340,10 @@ class ConnectionManager {
     if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
       _connectionClosedCompleter?.complete();
     }
-    _lastError = error.toString();
+    _lastError = UserErrorFormatter.formatError(
+      error,
+      context: 'Connection error',
+    );
     _updateState(ConnectionState.error);
   }
 
