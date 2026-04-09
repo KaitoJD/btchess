@@ -230,7 +230,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     final message = await _resolvePermissionErrorMessage();
     state = state.copyWith(
       connectionStatus: BleConnectionStatus.error,
-      lastError: message,
+      lastError: UserErrorFormatter.formatMessage(message),
     );
   }
 
@@ -366,7 +366,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
           'Host attempted move before game initialization: from=${move.from.index}, to=${move.to.index}',
           tag: 'BluetoothController',
         );
-        state = state.copyWith(lastError: 'Game not ready yet');
+        state = state.copyWith(
+          lastError: UserErrorFormatter.formatMessage('Game not ready yet'),
+        );
         return;
       }
 
@@ -379,7 +381,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // Host is authoritative – apply locally, then notify client
       if (!_gameController.isLocalPlayerTurn()) {
-        state = state.copyWith(lastError: 'Not your turn');
+        state = state.copyWith(
+          lastError: UserErrorFormatter.formatMessage('Not your turn'),
+        );
         return;
       }
 
@@ -390,7 +394,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       );
 
       if (!success) {
-        state = state.copyWith(lastError: 'Invalid move');
+        state = state.copyWith(
+          lastError: UserErrorFormatter.formatMessage('Invalid move'),
+        );
         return;
       }
 
@@ -435,7 +441,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         } else {
           state = state.copyWith(
             clearPendingMove: true,
-            lastError: _errorDescription(ack.error),
+            lastError: UserErrorFormatter.formatMessage(
+              _errorDescription(ack.error),
+            ),
           );
         }
       } catch (e) {
