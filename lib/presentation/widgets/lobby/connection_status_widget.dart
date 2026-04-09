@@ -67,17 +67,6 @@ class ConnectionStatusWidget extends StatelessWidget {
             ],
             if (status == BleConnectionStatus.error) ...[
               const SizedBox(height: 12),
-              if (errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    errorMessage!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -181,7 +170,7 @@ class ConnectionStatusWidget extends StatelessWidget {
       case BleConnectionStatus.reconnecting:
         return 'Connection lost. Trying to reconnect...';
       case BleConnectionStatus.error:
-        return errorMessage ?? 'Something went wrong';
+        return errorMessage ?? 'Something went wrong :('; 
       case BleConnectionStatus.scanning:
         return 'Looking for nearby games';
       case BleConnectionStatus.disconnected:
