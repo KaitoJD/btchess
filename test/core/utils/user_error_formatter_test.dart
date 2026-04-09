@@ -18,12 +18,12 @@ void main() {
       expect(message, UserErrorFormatter.genericErrorMessage);
     });
 
-    test('keeps actionable messages when debug is off', () {
+    test('returns generic text for actionable exceptions when debug is off', () {
       final message = UserErrorFormatter.formatError(
         const BlePermissionException('Bluetooth permissions not granted'),
       );
 
-      expect(message, 'Bluetooth permissions not granted');
+      expect(message, UserErrorFormatter.genericErrorMessage);
     });
 
     test('includes technical detail when debug is on', () {
@@ -39,10 +39,10 @@ void main() {
   });
 
   group('UserErrorFormatter.formatMessage', () {
-    test('keeps actionable plain messages when debug is off', () {
+    test('simplifies plain messages when debug is off', () {
       final message = UserErrorFormatter.formatMessage('Not your turn');
 
-      expect(message, 'Not your turn');
+      expect(message, UserErrorFormatter.genericErrorMessage);
     });
 
     test('simplifies non-actionable plain messages when debug is off', () {
