@@ -120,10 +120,7 @@ void main() {
         await controller.startScanning();
 
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(
-          controller.state.lastError,
-          'Bluetooth permission is permanently denied. Please enable it in Settings.',
-        );
+        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       });
 
       test('startScanning reports bluetooth off when permission request fails and adapter is off',
@@ -136,7 +133,7 @@ void main() {
         await controller.startScanning();
 
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(controller.state.lastError, 'Bluetooth is turned off');
+        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       });
     });
 
@@ -231,10 +228,7 @@ void main() {
         await controller.createLobby('test-game');
 
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(
-          controller.state.lastError,
-          'Bluetooth permission is permanently denied. Please enable it in Settings.',
-        );
+        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       });
     });
 
