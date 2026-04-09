@@ -251,7 +251,7 @@ class LobbyController extends StateNotifier<LobbyState> {
         if (state.isActive && state.status != LobbyStatus.inGame) {
           state = state.copyWith(
             status: LobbyStatus.error,
-            lastError: 'Connection lost',
+            lastError: UserErrorFormatter.formatMessage('Connection lost'),
           );
         }
 
@@ -259,7 +259,8 @@ class LobbyController extends StateNotifier<LobbyState> {
         if (state.isActive) {
           state = state.copyWith(
             status: LobbyStatus.error,
-            lastError: bleState.lastError ?? 'Connection error',
+            lastError: bleState.lastError ??
+                UserErrorFormatter.formatMessage('Connection error'),
           );
         }
 
