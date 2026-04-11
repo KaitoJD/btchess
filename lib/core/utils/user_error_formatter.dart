@@ -46,7 +46,7 @@ abstract class UserErrorFormatter {
   static String? fixHintForMessage(String message) {
     final lower = message.toLowerCase();
 
-    if (lower.contains('bluetooth is turned off')) {
+    if (_looksLikeBluetoothOff(lower)) {
       return 'Turn on Bluetooth in Quick Settings or device Settings, then retry.';
     }
     if (lower.contains('permanently denied') ||
@@ -118,7 +118,7 @@ abstract class UserErrorFormatter {
     final normalized = _stripTypePrefix(message).trim();
     final lower = normalized.toLowerCase();
 
-    if (lower.contains('bluetooth is turned off')) {
+    if (_looksLikeBluetoothOff(lower)) {
       return 'Bluetooth is turned off';
     }
     if (lower.contains('permanently denied') ||
@@ -158,6 +158,14 @@ abstract class UserErrorFormatter {
     }
 
     return null;
+  }
+
+  static bool _looksLikeBluetoothOff(String lower) {
+    return lower.contains('bluetooth is turned off') ||
+        lower.contains('bluetooth is not enabled') ||
+        lower.contains('poweredoff') ||
+        lower.contains('powered off') ||
+        (lower.contains('bluetooth') && lower.contains('off'));
   }
 
   static String _stripTypePrefix(String message) {
