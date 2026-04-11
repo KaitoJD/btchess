@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../application/states/bluetooth_state.dart';
+import '../../../core/utils/user_error_formatter.dart';
 
 // Displays the current BLE connection progress with status text,
 // an appropriate icon, and optional error/retry actions.
@@ -67,6 +68,39 @@ class ConnectionStatusWidget extends StatelessWidget {
             ],
             if (status == BleConnectionStatus.error) ...[
               const SizedBox(height: 12),
+              if (_fixHint != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: colorScheme.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 18,
+                        color: colorScheme.error,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _fixHint!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: _textColor(colorScheme),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -181,6 +215,13 @@ class ConnectionStatusWidget extends StatelessWidget {
   bool get _showProgress {
     return status == BleConnectionStatus.connecting ||
         status == BleConnectionStatus.handshaking;
+  }
+
+  String? get _fixHint {
+    if (status != BleConnectionStatus.error || errorMessage == null) {
+      return null;
+    }
+    return UserErrorFormatter.fixHintForMessage(errorMessage!);
   }
 
   Color _backgroundColor(ColorScheme colorScheme) {
