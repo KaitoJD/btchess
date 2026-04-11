@@ -138,6 +138,18 @@ void main() {
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
         expect(controller.state.lastError, 'Bluetooth is turned off');
       });
+
+      test('startScanning reports bluetooth off when permission is granted but adapter is off',
+          () async {
+        hasPermission = true;
+        when(() => mockBluetoothService.isBluetoothOn).thenAnswer((_) async => false);
+
+        await controller.startScanning();
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.error);
+        expect(controller.state.lastError, 'Bluetooth is turned off');
+        verifyNever(() => mockBluetoothService.startScanning());
+      });
     });
 
     group('connection state changes', () {
