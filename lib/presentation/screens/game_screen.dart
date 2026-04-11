@@ -13,6 +13,7 @@ import '../../domain/models/move.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/square.dart';
 import '../../domain/services/pgn_service.dart';
+import '../../core/utils/user_error_formatter.dart';
 import '../routes/app_router.dart';
 import '../themes/board_themes.dart';
 import '../widgets/board/board_widget.dart';
@@ -176,9 +177,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (isBleGame) {
       ref.listen<String?>(bleErrorProvider, (previous, next) {
         if (next != null && next.isNotEmpty && mounted) {
+          final hint = UserErrorFormatter.fixHintForMessage(next);
+          final contentText = hint == null ? next : '$next\n$hint';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(next),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(contentText)),
+                ],
+              ),
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 3),
             ),
