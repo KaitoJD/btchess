@@ -114,6 +114,16 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         }
       }
 
+      final isOn = await _bluetoothService.isBluetoothOn;
+      if (!isOn) {
+        state = state.copyWith(
+          connectionStatus: BleConnectionStatus.error,
+          isScanning: false,
+          lastError: UserErrorFormatter.formatMessage('Bluetooth is turned off'),
+        );
+        return;
+      }
+
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.scanning,
         isScanning: true,
