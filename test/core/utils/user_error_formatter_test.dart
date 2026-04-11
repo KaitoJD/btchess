@@ -50,6 +50,12 @@ void main() {
 
       expect(message, UserErrorFormatter.genericErrorMessage);
     });
+
+    test('maps iOS bluetooth not enabled wording to bluetooth-off message', () {
+      final message = UserErrorFormatter.formatMessage('Bluetooth is not enabled');
+
+      expect(message, 'Bluetooth is turned off');
+    });
   });
 
   group('UserErrorFormatter.fixHintForMessage', () {
