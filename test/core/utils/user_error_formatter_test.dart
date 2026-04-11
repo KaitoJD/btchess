@@ -18,12 +18,12 @@ void main() {
       expect(message, UserErrorFormatter.genericErrorMessage);
     });
 
-    test('returns generic text for actionable exceptions when debug is off', () {
+    test('returns actionable text for user-fixable exceptions when debug is off', () {
       final message = UserErrorFormatter.formatError(
         const BlePermissionException('Bluetooth permissions not granted'),
       );
 
-      expect(message, UserErrorFormatter.genericErrorMessage);
+      expect(message, 'Bluetooth permissions not granted');
     });
 
     test('includes technical detail when debug is on', () {
@@ -39,16 +39,31 @@ void main() {
   });
 
   group('UserErrorFormatter.formatMessage', () {
-    test('simplifies plain messages when debug is off', () {
+    test('keeps user-fixable plain messages when debug is off', () {
       final message = UserErrorFormatter.formatMessage('Not your turn');
 
-      expect(message, UserErrorFormatter.genericErrorMessage);
+      expect(message, 'Not your turn');
     });
 
     test('simplifies non-actionable plain messages when debug is off', () {
       final message = UserErrorFormatter.formatMessage('An error occurred (0xff)');
 
       expect(message, UserErrorFormatter.genericErrorMessage);
+    });
+  });
+
+  group('UserErrorFormatter.fixHintForMessage', () {
+    test('returns guidance hint for bluetooth-off message', () {
+      final hint = UserErrorFormatter.fixHintForMessage('Bluetooth is turned off');
+
+      expect(hint, isNotNull);
+      expect(hint, contains('Turn on Bluetooth'));
+    });
+
+    test('returns null for generic non-actionable message', () {
+      final hint = UserErrorFormatter.fixHintForMessage('Something went wrong :(');
+
+      expect(hint, isNull);
     });
   });
 }
