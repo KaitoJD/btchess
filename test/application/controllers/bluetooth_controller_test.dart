@@ -4,10 +4,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:btchess/application/controllers/bluetooth_controller.dart';
 import 'package:btchess/application/controllers/game_controller.dart';
 import 'package:btchess/application/states/bluetooth_state.dart';
+import 'package:btchess/core/constants/error_codes.dart';
 import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:btchess/core/utils/user_error_formatter.dart';
 import 'package:btchess/domain/models/game_mode.dart';
 import 'package:btchess/domain/models/piece.dart';
+import 'package:btchess/domain/models/square.dart';
 import 'package:btchess/domain/services/chess_service.dart';
 import 'package:btchess/infrastructure/bluetooth/bluetooth_service.dart';
 import 'package:btchess/infrastructure/bluetooth/connection_manager.dart' as cm;
@@ -27,6 +29,10 @@ void main() {
   late bool hasPermission;
   late bool requestGranted;
   late bool permanentlyDenied;
+
+  setUpAll(() {
+    registerFallbackValue(const MoveMessage(messageId: 0, from: 0, to: 0));
+  });
 
   setUp(() {
     UserErrorFormatter.setDebugMode(enabled: false);
@@ -416,6 +422,57 @@ void main() {
 
         expect(controller.state.rematchDeclined, isTrue);
         expect(controller.state.rematchStartSignal, beforeSignal);
+      });
+    });
+
+    group('incoming move validation', () {
+      test('host rejects incoming malformed promotion code with malformed ack', () async {
+        when(() => mockBluetoothService.startAdvertising(any()))
+            .thenAnswer((_) async {});
+        when(() => mockConnectionManager.sendAck(any()))
+          .thenAnswer((_) async {});
+        when(() => mockConnectionManager.sendAck(any(), error: BleErrorCode.malformedMessage))
+            .thenAnswer((_) async {});
+
+        await controller.createLobby('promo-host');
+        gameController.newGame(
+          mode: GameMode.bleHost,
+          localPlayerColor: PieceColor.white,
+        );
+
+        gameController.makeMove(
+          from: Square.fromAlgebraic('e2'),
+          to: Square.fromAlgebraic('e4'),
+        );
+
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        messageController.add(
+          const MoveMessage(messageId: 77, from: 52, to: 60, promotion: 5),
+        );
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockConnectionManager.sendAck(
+              77,
+              error: BleErrorCode.malformedMessage,
+            )).called(1);
+      });
+
+      test('client requests sync on malformed incoming promotion code', () async {
+        when(() => mockConnectionManager.sendSyncRequest())
+            .thenAnswer((_) async {});
+
+        connStateController.add(cm.ConnectionState.connected);
+        await Future.delayed(Duration.zero);
+
+        messageController.add(
+          const MoveMessage(messageId: 88, from: 52, to: 60, promotion: 9),
+        );
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockConnectionManager.sendSyncRequest()).called(1);
+        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
       });
     });
   });
