@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'dart:typed_data';
 import 'package:btchess/infrastructure/bluetooth/message_codec.dart';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 import '../../fixtures/message_fixtures.dart';
@@ -97,6 +98,17 @@ void main() {
         expect(decoded.from, MessageFixtures.moveE2E4.from);
         expect(decoded.to, MessageFixtures.moveE2E4.to);
         expect(decoded.promotion, MessageFixtures.moveE2E4.promotion);
+      });
+
+      test('decodes unknown promotion code without coercion', () {
+        final raw = Uint8List.fromList([0x01, 0x00, 0x09, 0x34, 0x3C, 0x05]);
+        final msg = codec.decode(raw) as MoveMessage;
+
+        expect(msg.messageId, 9);
+        expect(msg.from, 52);
+        expect(msg.to, 60);
+        expect(msg.promotion, 5);
+        expect(msg.hasPromotion, isTrue);
       });
     });
 
