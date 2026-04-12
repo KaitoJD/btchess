@@ -384,7 +384,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       final localColor = _localPlayerColor();
       Logger.debug(
-        'Host sendMove: from=${move.from.index}, to=${move.to.index}, '
+        'Host sendMove: from=${move.from.index}, to=${move.to.index}, promotion=${move.promotion?.code ?? 0}, '
         'currentTurn=${gameState.currentTurn.name}, localColor=${localColor.name}',
         tag: 'BluetoothController',
       );
@@ -752,7 +752,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       // Check it's the remote player's turn
       final remoteTurn = _remotePlayerColor();
       Logger.debug(
-        'Incoming move: msgId=${moveMsg.messageId}, from=${moveMsg.from}, to=${moveMsg.to}, '
+        'Incoming move: msgId=${moveMsg.messageId}, from=${moveMsg.from}, to=${moveMsg.to}, promotion=${moveMsg.promotion}, '
         'currentTurn=${gameState.currentTurn.name}, remoteTurn=${remoteTurn.name}',
         tag: 'BluetoothController',
       );
@@ -767,6 +767,18 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       final promotion = moveMsg.hasPromotion
           ? PromotionPiece.fromCode(moveMsg.promotion)
           : null;
+
+      if (moveMsg.hasPromotion && promotion == null) {
+        Logger.warn(
+          'Rejecting malformed promotion code from client: msgId=${moveMsg.messageId}, promotion=${moveMsg.promotion}',
+          tag: 'BluetoothController',
+        );
+        await _connectionManager.sendAck(
+          moveMsg.messageId,
+          error: BleErrorCode.malformedMessage,
+        );
+        return;
+      }
 
       final move = Move(from: from, to: to, promotion: promotion);
       final success = _gameController.applyRemoteMove(move);
@@ -786,6 +798,18 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       final promotion = moveMsg.hasPromotion
           ? PromotionPiece.fromCode(moveMsg.promotion)
           : null;
+
+      if (moveMsg.hasPromotion && promotion == null) {
+        Logger.warn(
+          'Ignoring malformed promotion code from host: msgId=${moveMsg.messageId}, promotion=${moveMsg.promotion}',
+          tag: 'BluetoothController',
+        );
+        state = state.copyWith(
+          lastError: UserErrorFormatter.formatMessage('Received malformed move from host; requesting sync'),
+        );
+        unawaited(requestSync());
+        return;
+      }
 
       final move = Move(from: from, to: to, promotion: promotion);
       _gameController.applyRemoteMove(move);
