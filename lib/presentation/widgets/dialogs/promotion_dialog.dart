@@ -98,7 +98,7 @@ Future<PromotionPiece?> showPromotionDialog(BuildContext context, {required Piec
       pieceTheme: pieceTheme,
       onPieceSelected: (piece) => {
         selected = piece,
-        Navigator.of(context).pop,
+        Navigator.of(context).pop(),
       },
       onCancelled: () {
         selected = null;
