@@ -46,7 +46,6 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: 3.32.8
-      - run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
@@ -76,7 +75,6 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: 3.32.8
-      - run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
