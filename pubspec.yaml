@@ -5,14 +5,14 @@ publish_to: 'none'
 version: 1.0.0-beta
 
 environment:
-  sdk: ^3.10.4
+  sdk: ^3.8.1
 
 dependencies:
   flutter:
     sdk: flutter
 
   # UI Components
-  cupertino_icons: ^1.0.9
+  cupertino_icons: ^1.0.8
 
   # State Management
   flutter_riverpod: ^2.6.1
@@ -32,7 +32,7 @@ dependencies:
   hive_flutter: ^1.1.0
 
   # Settings Storage
-  shared_preferences: ^2.5.5
+  shared_preferences: ^2.5.3
 
   # Utilities
   uuid: ^4.5.3
