@@ -9,7 +9,7 @@ void main() {
     });
 
     test('uses extended handshake timeout for cross-platform handshaking', () {
-      expect(TimingConstants.handshakeTimeoutMs, 8000);
+      expect(TimingConstants.handshakeTimeoutMs, 45000);
     });
   });
 }
