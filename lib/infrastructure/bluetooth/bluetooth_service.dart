@@ -244,39 +244,105 @@ class BluetoothService {
   Future<BleConnection> connect(BleDeviceInfo deviceInfo, {bool asHost = false}) async {
     await stopScanning();
 
-    bool bleConnected = false;
-    try {
-      await deviceInfo.device.connect(
-        license: License.free,
-        timeout: const Duration(milliseconds: TimingConstants.connectionTimeoutMs),
-      );
-      bleConnected = true;
+    final deadline = DateTime.now().add(
+      const Duration(milliseconds: TimingConstants.connectionRecoveryBudgetMs),
+    );
 
-      if (Platform.isAndroid) {
-        try {
-          await deviceInfo.device.requestMtu(BleConstants.maxMtu);
-        } catch (e) {
-          Logger.warn('Failed to request MTU on Android: $e', tag: 'BluetoothService');
+    var attempt = 0;
+    Object? lastError;
+    var exhaustedRecoverableRetries = false;
+
+    while (true) {
+      attempt++;
+      var bleConnected = false;
+      try {
+        await deviceInfo.device.connect(
+          license: License.free,
+          timeout: const Duration(milliseconds: TimingConstants.connectionTimeoutMs),
+        );
+        bleConnected = true;
+
+        if (Platform.isAndroid) {
+          try {
+            await deviceInfo.device.requestMtu(BleConstants.maxMtu);
+          } catch (e) {
+            Logger.warn('Failed to request MTU on Android: $e', tag: 'BluetoothService');
+          }
         }
+
+        final connection = BleConnection(
+          device: deviceInfo.device,
+          isHost: asHost,
+        );
+
+        await connection.initialize();
+        return connection;
+      } catch (e) {
+        lastError = e;
+
+        // Tear down the BLE link so the remote side detects disconnect promptly.
+        if (bleConnected) {
+          try {
+            await deviceInfo.device.disconnect();
+          } catch (_) {}
+        }
+
+        final remainingMs =
+            deadline.difference(DateTime.now()).inMilliseconds;
+        final shouldRetry = Platform.isAndroid &&
+            remainingMs > 0 &&
+            _isRecoverableConnectFailure(e);
+
+        if (!shouldRetry) {
+          exhaustedRecoverableRetries = Platform.isAndroid &&
+              remainingMs <= 0 &&
+              _isRecoverableConnectFailure(e);
+          break;
+        }
+
+        Logger.warn(
+          'Connect attempt $attempt failed with recoverable error; retrying in '
+          '${TimingConstants.connectionRetryDelayMs}ms: $e',
+          tag: 'BluetoothService',
+        );
+
+        await Future.delayed(
+          const Duration(milliseconds: TimingConstants.connectionRetryDelayMs),
+        );
       }
-
-      final connection = BleConnection(
-        device: deviceInfo.device,
-        isHost: asHost,
-      );
-
-      await connection.initialize();
-
-      return connection;
-    } catch (e) {
-      // Tear down the BLE link so the remote side detects disconnect promptly
-      if (bleConnected) {
-        try {
-          await deviceInfo.device.disconnect();
-        } catch (_) {}
-      }
-      throw BleConnectionException('Failed to connect to device: $e', originalError: e);
     }
+
+    if (exhaustedRecoverableRetries) {
+      throw BleConnectionException(
+        'Connection recovery timed out while pairing or resolving the remote device. '
+        'Please keep both devices nearby and retry.',
+        originalError: lastError,
+      );
+    }
+
+    throw BleConnectionException(
+      'Failed to connect to device: $lastError',
+      originalError: lastError,
+    );
+  }
+
+  bool _isRecoverableConnectFailure(Object error) {
+    final text = error.toString().toLowerCase();
+
+    // Common transient failures while the OS finishes pairing/bonding or
+    // while private addresses rotate and are re-resolved.
+    if (text.contains('device not found')) return true;
+    if (text.contains('bond')) return true;
+    if (text.contains('pair')) return true;
+    if (text.contains('status 133')) return true;
+    if (text.contains('gatt error')) return true;
+    if (text.contains('timeout')) return true;
+
+    // Permission or adapter-state failures are not recoverable by retry loop.
+    if (text.contains('permission')) return false;
+    if (text.contains('bluetooth is not enabled')) return false;
+
+    return false;
   }
 
   // The peripheral manager for host mode
