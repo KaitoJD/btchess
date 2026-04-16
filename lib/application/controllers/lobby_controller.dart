@@ -247,7 +247,19 @@ class LobbyController extends StateNotifier<LobbyState> {
         }
 
       case BleConnectionStatus.disconnected:
-        // If we were in an active lobby and got disconnected, go to error
+        // Host can briefly disconnect during peer pairing/bond transitions.
+        // Keep lobby open so the peer can complete pairing and reconnect.
+        if (state.isHost &&
+            (state.status == LobbyStatus.creating ||
+                state.status == LobbyStatus.waitingForOpponent)) {
+          state = state.copyWith(
+            status: LobbyStatus.waitingForOpponent,
+            clearError: true,
+          );
+          break;
+        }
+
+        // For all other active pre-game states, disconnected means failure.
         if (state.isActive && state.status != LobbyStatus.inGame) {
           state = state.copyWith(
             status: LobbyStatus.error,
