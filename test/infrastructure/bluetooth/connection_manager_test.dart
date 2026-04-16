@@ -258,4 +258,27 @@ void main() {
 
     await hostManager.disconnect();
   });
+
+  test('superseded setup attempt cannot overwrite newer connection state', () async {
+    final sharedManager = ConnectionManager();
+    final slowTransport = _FakeHostTransport();
+    final fastTransport = _EagerHostHandshakeTransport();
+
+    final firstAttempt = sharedManager.setupConnection(slowTransport);
+    final firstAttemptExpectation = expectLater(
+      firstAttempt,
+      throwsA(isA<BleDisconnectedException>()),
+    );
+
+    await Future<void>.delayed(Duration.zero);
+
+    final secondAttempt = sharedManager.setupConnection(fastTransport);
+    await secondAttempt;
+
+    expect(sharedManager.state, ConnectionState.connected);
+    await firstAttemptExpectation;
+    expect(sharedManager.state, ConnectionState.connected);
+
+    await sharedManager.disconnect();
+  });
 }
