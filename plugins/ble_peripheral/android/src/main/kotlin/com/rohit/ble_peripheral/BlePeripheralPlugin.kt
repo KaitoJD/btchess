@@ -48,7 +48,7 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
     private var gattServer: BluetoothGattServer? = null
     private val bluetoothDevicesMap: MutableMap<String, BluetoothDevice> = HashMap()
     private val emptyBytes = byteArrayOf()
-    private val listOfDevicesWaitingForBond = mutableListOf<String>()
+    private val devicesWaitingForBond: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
     private var isAdvertising: Boolean? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -187,7 +187,8 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
             characteristicId.findCharacteristic() ?: throw Exception("Characteristic not found")
         char.value = value
         if (deviceId != null) {
-            val device = bluetoothDevicesMap[deviceId] ?: throw Exception("Device not found")
+            val device = resolveDeviceForUpdate(deviceId)
+                ?: throw Exception("Device not found")
             handler?.post {
                 gattServer?.notifyCharacteristicChanged(
                     device,
@@ -219,6 +220,51 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
             Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),
             requestCodeBluetoothEnablePermission
         )
+    }
+
+    private fun registerConnectedDevice(device: BluetoothDevice) {
+        synchronized(bluetoothDevicesMap) {
+            bluetoothDevicesMap[device.address] = device
+        }
+    }
+
+    private fun removeConnectedDevice(deviceAddress: String) {
+        synchronized(bluetoothDevicesMap) {
+            bluetoothDevicesMap.remove(deviceAddress)
+        }
+    }
+
+    private fun resolveDeviceForUpdate(requestedDeviceId: String): BluetoothDevice? {
+        synchronized(bluetoothDevicesMap) {
+            bluetoothDevicesMap[requestedDeviceId]?.let { return it }
+
+            // Pairing and address transitions can leave a stale id while exactly one
+            // device remains connected in this 1v1 game session.
+            if (bluetoothDevicesMap.size == 1) {
+                val fallback = bluetoothDevicesMap.values.first()
+                Log.w(
+                    TAG,
+                    "updateCharacteristic fallback device used. requested=$requestedDeviceId fallback=${fallback.address}"
+                )
+                return fallback
+            }
+
+            val adapter = bluetoothManager?.adapter
+            if (adapter != null) {
+                try {
+                    val remote = adapter.getRemoteDevice(requestedDeviceId)
+                    bluetoothDevicesMap[remote.address]?.let { return it }
+                } catch (e: IllegalArgumentException) {
+                    Log.w(TAG, "Invalid remote device id for updateCharacteristic: $requestedDeviceId")
+                }
+            }
+
+            Log.w(
+                TAG,
+                "updateCharacteristic device lookup failed. requested=$requestedDeviceId known=${bluetoothDevicesMap.keys.joinToString()}"
+            )
+            return null
+        }
     }
 
     private fun onConnectionUpdate(device: BluetoothDevice, status: Int, newState: Int) {
@@ -292,25 +338,24 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
                     BluetoothProfile.STATE_CONNECTED -> {
                         if (device.bondState == BluetoothDevice.BOND_NONE) {
                             // Wait for bonding
-                            listOfDevicesWaitingForBond.add(device.address)
-                            device.createBond()
+                            devicesWaitingForBond.add(device.address)
+                            if (!device.createBond()) {
+                                Log.w(TAG, "createBond returned false for ${device.address}")
+                            }
                         } else if (device.bondState == BluetoothDevice.BOND_BONDED) {
                             handler?.post {
                                 gattServer?.connect(device, true)
                             }
-                            synchronized(bluetoothDevicesMap) {
-                                bluetoothDevicesMap.put(
-                                    device.address,
-                                    device
-                                )
-                            }
+                            registerConnectedDevice(device)
+                            devicesWaitingForBond.remove(device.address)
                         }
                         onConnectionUpdate(device, status, newState)
                     }
 
                     BluetoothProfile.STATE_DISCONNECTED -> {
                         val deviceAddress = device.address
-                        synchronized(bluetoothDevicesMap) { bluetoothDevicesMap.remove(deviceAddress) }
+                        removeConnectedDevice(deviceAddress)
+                        devicesWaitingForBond.remove(deviceAddress)
                         onConnectionUpdate(device, status, newState)
                     }
 
@@ -588,12 +633,18 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
                 }
 
                 // if waiting for connection and device is bonded
-                val waitingForConnection = listOfDevicesWaitingForBond.contains(device?.address)
+                val waitingForConnection = devicesWaitingForBond.contains(device?.address)
                 if (state == BluetoothDevice.BOND_BONDED && device != null && waitingForConnection) {
-                    listOfDevicesWaitingForBond.remove(device.address)
+                    devicesWaitingForBond.remove(device.address)
+                    registerConnectedDevice(device)
                     handler?.post {
-                        gattServer?.connect(device, true)
+                        val connected = gattServer?.connect(device, true)
+                        if (connected == false) {
+                            Log.e(TAG, "gattServer.connect failed after bonding for ${device.address}")
+                        }
                     }
+                } else if (state == BluetoothDevice.BOND_NONE && device != null) {
+                    devicesWaitingForBond.remove(device.address)
                 }
             }
         }
