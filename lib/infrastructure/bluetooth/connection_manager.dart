@@ -61,6 +61,9 @@ class ConnectionManager {
   // Completes when the underlying transport stream closes or errors.
   Completer<void>? _connectionClosedCompleter;
 
+  // Monotonic token for setup/disconnect lifecycle; used to ignore stale async callbacks.
+  int _setupGeneration = 0;
+
   // Buffers handshake messages that can arrive before _waitForMessage
   // attaches its own stream listener during the handshaking phase.
   final Queue<HandshakeMessage> _handshakeBuffer = Queue<HandshakeMessage>();
@@ -112,8 +115,18 @@ class ConnectionManager {
 
   // Sets up connection with an existing BleTransport (client or host)
   Future<void> setupConnection(BleTransport connection) async {
-    // Cancel any existing subscription to prevent duplicate listeners on reconnect
-    _messageSubscription?.cancel();
+    final generation = ++_setupGeneration;
+
+    // Cancel any existing subscription to prevent duplicate listeners on reconnect.
+    final existingSubscription = _messageSubscription;
+    if (existingSubscription != null) {
+      await existingSubscription.cancel();
+    }
+
+    // Unblock any previous waiters before replacing lifecycle completer.
+    if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
+      _connectionClosedCompleter?.complete();
+    }
 
     _connection = connection;
     _updateState(ConnectionState.handshaking);
@@ -121,16 +134,38 @@ class ConnectionManager {
     _connectionClosedCompleter = Completer<void>();
 
     _messageSubscription = connection.messages.listen(
-      _handleMessage,
-      onError: _handleError,
-      onDone: _handleDisconnect,
+      (message) {
+        if (_isStaleGeneration(generation)) return;
+        _handleMessage(message);
+      },
+      onError: (error) {
+        if (_isStaleGeneration(generation)) return;
+        _handleError(error);
+      },
+      onDone: () {
+        if (_isStaleGeneration(generation)) return;
+        _handleDisconnect();
+      },
     );
 
     try {
       await _performHandshake();
+
+      if (_isStaleGeneration(generation)) {
+        throw const BleDisconnectedException(
+          'Connection setup superseded by a newer attempt',
+        );
+      }
+
       _updateState(ConnectionState.connected);
       _startPingTimer();
     } catch (e) {
+      if (_isStaleGeneration(generation)) {
+        throw const BleDisconnectedException(
+          'Connection setup superseded by a newer attempt',
+        );
+      }
+
       _lastError = UserErrorFormatter.formatError(
         e,
         context: 'Connection setup failed',
@@ -575,6 +610,8 @@ class ConnectionManager {
     return _nextMessageId;
   }
 
+  bool _isStaleGeneration(int generation) => generation != _setupGeneration;
+
   void _updateState(ConnectionState newState) {
     _state = newState;
     _stateController.add(newState);
@@ -582,8 +619,14 @@ class ConnectionManager {
 
   // Disconnects from the current connection
   Future<void> disconnect() async {
+    ++_setupGeneration;
     _stopPingTimer();
-    _messageSubscription?.cancel();
+
+    if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
+      _connectionClosedCompleter?.complete();
+    }
+
+    await _messageSubscription?.cancel();
     await _connection?.disconnect();
     _connection = null;
     _updateState(ConnectionState.disconnected);
