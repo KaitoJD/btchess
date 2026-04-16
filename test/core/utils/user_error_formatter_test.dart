@@ -56,6 +56,22 @@ void main() {
 
       expect(message, 'Bluetooth is turned off');
     });
+
+    test('maps device not found wording to pairing retry message', () {
+      final message = UserErrorFormatter.formatMessage(
+        'PlatformException(Exception, java.lang.Exception: Device not found, null)',
+      );
+
+      expect(message, 'Device temporarily unavailable while pairing. Retrying...');
+    });
+
+    test('maps bond/pair wording to pairing in-progress message', () {
+      final message = UserErrorFormatter.formatMessage(
+        'Bluetooth bond operation in progress',
+      );
+
+      expect(message, 'Bluetooth pairing in progress. Please complete pairing and wait.');
+    });
   });
 
   group('UserErrorFormatter.fixHintForMessage', () {
@@ -70,6 +86,13 @@ void main() {
       final hint = UserErrorFormatter.fixHintForMessage('Something went wrong :(');
 
       expect(hint, isNull);
+    });
+
+    test('returns guidance for device-not-found message', () {
+      final hint = UserErrorFormatter.fixHintForMessage('Device not found');
+
+      expect(hint, isNotNull);
+      expect(hint, contains('pairing'));
     });
   });
 }
