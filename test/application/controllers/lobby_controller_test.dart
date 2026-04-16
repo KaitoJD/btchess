@@ -65,6 +65,25 @@ void main() {
       verify(() => mockBluetoothController.createLobby('test-game')).called(1);
     });
 
+    test('host lobby remains waiting on transient disconnected state', () async {
+      when(() => mockBluetoothController.createLobby(any()))
+          .thenAnswer((_) async {});
+
+      await controller.createLobby(
+        gameName: 'test-game',
+        playerName: 'host',
+      );
+
+      expect(controller.state.status, LobbyStatus.waitingForOpponent);
+
+      bleStateNotifier.state = bleStateNotifier.state.copyWith(
+        connectionStatus: BleConnectionStatus.disconnected,
+      );
+
+      expect(controller.state.status, LobbyStatus.waitingForOpponent);
+      expect(controller.state.lastError, isNull);
+    });
+
     test('transitions to error when createLobby fails', () async {
       when(() => mockBluetoothController.createLobby(any()))
           .thenThrow(Exception('advertising failed'));
