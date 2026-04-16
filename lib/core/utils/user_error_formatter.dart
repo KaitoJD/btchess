@@ -57,6 +57,12 @@ abstract class UserErrorFormatter {
         lower.contains('permission')) {
       return 'Grant Bluetooth permissions and try again.';
     }
+    if (lower.contains('device not found')) {
+      return 'Complete the system pairing prompt, keep both devices nearby, then retry.';
+    }
+    if (lower.contains('bond') || lower.contains('pair')) {
+      return 'Finish Bluetooth pairing on both devices and keep the app open.';
+    }
     if (lower.contains('not your turn')) {
       return 'Wait for your opponent to move, then try again.';
     }
@@ -128,6 +134,12 @@ abstract class UserErrorFormatter {
     if (lower.contains('permissions not granted') ||
         lower == 'bluetooth permission is required') {
       return 'Bluetooth permissions not granted';
+    }
+    if (lower.contains('device not found')) {
+      return 'Device temporarily unavailable while pairing. Retrying...';
+    }
+    if (lower.contains('bond') || lower.contains('pair')) {
+      return 'Bluetooth pairing in progress. Please complete pairing and wait.';
     }
     if (lower.contains('not your turn')) {
       return 'Not your turn';
