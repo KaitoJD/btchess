@@ -21,7 +21,7 @@
 
 ## 2. Download the IPA file
 
-[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta/btchess_1.0.0-beta.1.ipa)
+[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta.1/btchess_1.0.0-beta.1.ipa)
 
 ## 3. Install Sideloadly
 
