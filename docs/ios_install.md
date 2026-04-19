@@ -14,14 +14,14 @@
 
 ## 1. Prerequisites
 
-- An iOS device running iOS 12 or later
+- An iOS device running iOS 13 or later
 - An [Apple Account](https://support.apple.com/en-us/108647?device-type=iphone) that you can access
 - A Windows/macOS machine
 - A USB cable to connect the iOS device to the Windows/macOS machine
 
 ## 2. Download the IPA file
 
-[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta/btchess_1.0.0-beta.ipa)
+[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta.1/btchess_1.0.0-beta.1.ipa)
 
 ## 3. Install Sideloadly
 

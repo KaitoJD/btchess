@@ -16,7 +16,7 @@ This document is for you if you want to test or experience the (latest) developm
 
 ## 1. Prerequisites
 
-- An iOS device running iOS 12 or later
+- An iOS device running iOS 13 or later
 - An [Apple Account](https://support.apple.com/en-us/108647?device-type=iphone) that you can access
 - A Windows/macOS machine with [GitHub CLI](https://cli.github.com/) installed and signed in
 - A USB cable to connect the iOS device to the Windows machine
