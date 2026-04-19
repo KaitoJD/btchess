@@ -15,7 +15,7 @@
 
 ## 🚀 Get Started
 
-- __Android__: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta/btchess_1.0.0-beta.1.apk)
+- __Android__: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta.1/btchess_1.0.0-beta.1.apk)
 - __iOS__: You can check the installation guide [here](/docs/ios_install.md)
 
 ## ✨ Features
