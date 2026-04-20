@@ -20,12 +20,8 @@
 
 ## ✨ Features
 
-- Play via Bluetooth (No Internet Needed)
-    - Connect two phones and play anywhere, anytime
-    - No Wi-Fi required - No mobile data needed - Just turn on Bluetooth and start playing
-- Play on the Same Device
-    - One phone, two players – simple and fun
-    - Perfect for hanging out with friends
+- __Play via Bluetooth (No Wi-Fi required - No mobile data needed)__
+- Play on the Same Device (One phone, two players)
 - Auto Save Your Games
     - Resume unfinished games anytime
     - Review past matches
