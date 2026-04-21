@@ -29,6 +29,8 @@
 - Open the Sideloadly setup file and follow the setup wizard.
 - _Please make sure that you have your Apple account signed in iTunes and iCloud_
 
+> [!important]
+>
 > ___Note for Windows users__: According to Sideloadly, you should install the desktop (non-Microsoft-Store) versions of iTunes and iCloud. If you have the Microsoft Store versions installed, uninstall them first. Then install the appropriate iTunes and iCloud installers linked below._
 > - [iTunes x64](https://www.apple.com/itunes/download/win64) - [iTunes x32](https://www.apple.com/itunes/download/win32)
 > - [iCloud](https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe)
