@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   # UI Components
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
 
   # State Management
   flutter_riverpod: ^2.6.1
