@@ -7,7 +7,7 @@
 </p>
 
 [![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
-![Version](https://img.shields.io/badge/version-1.0.0_beta.1-blue)
+![Version](https://img.shields.io/badge/version-1.0.0_rc-blue)
 ![Android size](https://img.shields.io/badge/On_Android-51MB-3DDC84)
 ![iOS size](https://img.shields.io/badge/On_iOS-27MB-7D7D7D)
 
@@ -15,8 +15,8 @@
 
 ## 🚀 Get Started
 
-- __Android__: [Download here](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-beta.1/btchess_1.0.0-beta.1.apk)
-- __iOS__: You can check the installation guide [here](/docs/ios_install.md)
+- __Android__: [Download APK](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-rc/btchess_1.0.0-rc.apk)
+- __iOS__: [Check the installation guide](/docs/ios_install.md)
 
 ## ✨ Features
 
