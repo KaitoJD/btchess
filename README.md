@@ -8,8 +8,8 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
 ![Version](https://img.shields.io/badge/version-1.0.0_rc-blue)
-![Android size](https://img.shields.io/badge/On_Android-51MB-3DDC84)
-![iOS size](https://img.shields.io/badge/On_iOS-27MB-7D7D7D)
+![Android size](https://img.shields.io/badge/On_Android-23.4_MB-3DDC84)
+![iOS size](https://img.shields.io/badge/On_iOS-26.6_MB-7D7D7D)
 
 </div>
 
