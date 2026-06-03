@@ -1,10 +1,8 @@
 <div align="center">
 
-<img width="600" src="docs\assets\banner.png">
+<img width="100%" src="docs\assets\banner.png">
 
-<p>
-    <b>Turn any moment into a chess match. No internet. No accounts. Just you and your opponent.</b>
-</p>
+<h3><b>Turn any moment into a chess match. No internet. No accounts. Just you and your opponent.</b></h3>
 
 [![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
 ![Version](https://img.shields.io/badge/version-1.0.0_rc-blue)
@@ -30,13 +28,12 @@
 ## 📸 Demo
 
 <p align="center">
-  <img src="docs/assets/local_game.gif" width="250" alt="Local Game Demo">
+  <img src="docs/assets/local_game.gif" height="600" alt="Local Game Demo">
   <br><em>Local Game (Play on the Same Device)</em>
 </p>
 <br>
 <p align="center">
-  <img src="docs/assets/bledemo1.gif" height="600" alt="BLE Game Demo">
-  <img src="docs/assets/bledemo2.gif" height="600" alt="BLE Game Demo">
+  <img src="docs/assets/bledemo.gif" height="600" alt="BLE Game Demo">
   <br><em>BLE Multiplayer Game</em>
 </p>
 
