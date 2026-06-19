@@ -14,17 +14,17 @@ import '../../mocks/mock_game_repository.dart';
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(GameState.newGame(id: 'fallback', mode: GameMode.hotseat));
+    registerFallbackValue(
+      GameState.newGame(id: 'fallback', mode: GameMode.hotseat),
+    );
   });
 
   Widget buildApp(MockGameRepository repository) {
     return ProviderScope(
-      overrides: [
-        gameRepositoryProvider.overrideWithValue(repository),
-      ],
-      child: MaterialApp(
+      overrides: [gameRepositoryProvider.overrideWithValue(repository)],
+      child: const MaterialApp(
         onGenerateRoute: AppRouter.onGenerateRoute,
-        home: const HomeScreen(),
+        home: HomeScreen(),
       ),
     );
   }
@@ -51,7 +51,9 @@ void main() {
         mode: savedGame.mode,
       );
 
-      when(() => repository.getMostRecentGame()).thenAnswer((_) async => savedGame);
+      when(
+        () => repository.getMostRecentGame(),
+      ).thenAnswer((_) async => savedGame);
       when(() => repository.savedGameToState(savedGame)).thenReturn(gameState);
       when(() => repository.saveGame(any())).thenAnswer((_) async {});
 
