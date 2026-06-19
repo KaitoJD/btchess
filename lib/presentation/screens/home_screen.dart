@@ -185,7 +185,7 @@ class HomeScreen extends ConsumerWidget {
     final gameRepository = ref.read(gameRepositoryProvider);
     final gameState = gameRepository.savedGameToState(savedGame);
     ref.read(gameControllerProvider.notifier).loadGame(gameState);
-    AppRouter.navigateAndReplace(context, AppRoutes.game);
+    Navigator.of(context).pushNamed(AppRoutes.game);
   }
 
   String _formatDate(DateTime date) {

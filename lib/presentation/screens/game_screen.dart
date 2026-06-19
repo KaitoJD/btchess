@@ -209,7 +209,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         if (!didPop && isInProgress) {
           final shouldExit = await showExitGameDialog(context, isBleGame: isBleGame);
           if (shouldExit && context.mounted) {
-            Navigator.of(context).pop();
+            _exitToHome();
           }
         }
       },
@@ -561,7 +561,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (isInProgress) {
       final shouldExit = await showExitGameDialog(context, isBleGame: isBleGame);
       if (shouldExit && mounted) {
-        Navigator.of(context).pop();
+        _exitToHome();
       }
     } else {
       Navigator.of(context).pop();
@@ -569,6 +569,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _handleNewGame() {
-    Navigator.of(context).pop();
+    _exitToHome();
+  }
+
+  void _exitToHome() {
+    AppRouter.navigateAndClear(context, AppRoutes.home);
   }
 }
