@@ -4,7 +4,7 @@ This document is for you if you want to test or experience the (latest) developm
 
 > [!note]
 >
-> The installation may take time, and development builds are often unstable.
+> The installation may take time, and development builds are often unstable. This guide installs the app by sideloading the IPA file with Sideloadly.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ This document is for you if you want to test or experience the (latest) developm
 
 > [!tip]
 >
-> If you have GitHub CLI installed and signed in, run the script `latest-ipa-getter.bat` (you can find the script in the [`scripts`](/scripts/) folder) where you want to create `btchess.ipa`. If the script finishes and you see `btchess.ipa`, continue to [Step 3: Install Sideloadly](#3-install-sideloadly).
+> If you have GitHub CLI installed and signed in, run the script `latest-ipa-getter.bat` (Windows) or `latest-ipa-getter.sh` (macOS) (you can find the script in the [`scripts`](/scripts/) folder). If the script finishes and you see `btchess.ipa`, continue to [Step 3: Install Sideloadly](#3-install-sideloadly).
 
 If you want to try other builds of the app, follow the steps below.
 
@@ -39,7 +39,7 @@ If you want to try other builds of the app, follow the steps below.
 
 > [!tip]
 >
-> Run the script `ipa-packager.bat` (you can find the script in the [`scripts`](/scripts/) folder) __after placing that script in the same folder as the `ios-xcarchive.zip` you downloaded.__ If the script runs successfully and produces `btchess.ipa`, proceed to [Step 3: Install Sideloadly](#3-install-sideloadly).
+> Run the script `ipa-packager.bat` (Windows) or `ipa-packager.sh` (macOS) (you can find the script in the [`scripts`](/scripts/) folder) __after placing that script in the same folder as the__ `ios-xcarchive.zip`. If the script runs successfully and produces `btchess.ipa`, proceed to [Step 3: Install Sideloadly](#3-install-sideloadly).
 
 If the script fails or you don't get an `btchess.ipa`, create the IPA manually:
 

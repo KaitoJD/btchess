@@ -4,41 +4,59 @@
 
 - [Prerequisites](#1-prerequisites)
 - [Installation](#2-installation)
-- [Emulator Setup](#3-emulator-setup)
-	- [Android Emulator](#31-android-emulator)
-	- [iOS Simulator (macOS only)](#32-ios-simulator-macos-only)
-- [Running the App](#4-running-the-app)
-- [BLE Testing](#5-ble-testing)
-	- [Android](#51-android)
-	- [iOS](#52-ios)
-	- [Testing Procedure](#53-testing-procedure)
-- [Code Generation](#6-code-generation)
-- [Running Tests](#7-running-tests)
+- [Code Generation](#3-code-generation)
+- [Emulator Setup](#4-emulator-setup)
+	- [Android Emulator](#41-android-emulator)
+	- [iOS Simulator (macOS only)](#42-ios-simulator-macos-only)
+- [Running the App](#5-running-the-app)
+- [BLE Testing](#6-ble-testing)
+	- [Android](#61-android)
+	- [iOS](#62-ios)
+- [Running Unit Tests](#7-running-unit-tests)
 
 ## 1. Prerequisites
 
-- Flutter SDK 3.x or later
+- Flutter SDK 3.32.8
 - Dart SDK (bundled with Flutter)
-- Android Studio (for Android builds) or Xcode (for iOS builds)
-- Physical Android or iOS devices for BLE testing (BLE does not work on emulators)
+- Android Studio, or Xcode
+- Physical Android or iOS devices for BLE testing
+
+Verify your local Flutter SDK version and toolchains before installing dependencies:
+
+```bash
+flutter --version
+flutter doctor
+```
+
+The output should show Flutter `3.32.8`, the bundled Dart SDK version, and the status of configured toolchains such as Android toolchain and Xcode.
 
 ## 2. Installation
 
 ```bash
 git clone https://github.com/KaitoJD/btchess.git
-```
-```bash
 cd btchess
-```
-```bash
 flutter pub get
 ```
 
-## 3. Emulator Setup
+## 3. Code Generation
+
+Hive type adapters require code generation:
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+For development, use watch mode:
+
+```bash
+dart run build_runner watch --delete-conflicting-outputs
+```
+
+## 4. Emulator Setup
 
 While BLE features require physical devices, you can use an emulator for general UI development and testing non-BLE features (e.g., hotseat mode, settings, board rendering).
 
-### 3.1. Android Emulator
+### 4.1. Android Emulator
 
 1. Open Android Studio and go to **Tools > Device Manager**.
 2. Click **Create Virtual Device**.
@@ -52,7 +70,7 @@ While BLE features require physical devices, you can use an emulator for general
 flutter devices
 ```
 
-### 3.2. iOS Simulator (macOS only)
+### 4.2. iOS Simulator (macOS only)
 
 1. Install Xcode from the Mac App Store.
 2. Open Xcode and go to **Xcode > Settings > Platforms** to install the desired iOS simulator runtime.
@@ -68,35 +86,29 @@ open -a Simulator
 flutter devices
 ```
 
-> **Note:** Emulators and simulators do **not** support BLE. Use them only for UI work and hotseat mode. BLE multiplayer testing requires two physical devices — see the [BLE Testing](#ble-testing) section.
+> **Note:** Emulators and simulators do **not** support BLE. Use them only for UI work and hotseat mode. BLE multiplayer testing requires two physical devices.
 
-## 4. Running the App
+## 5. Running the App
 
 ```bash
 # Run on connected device or emulator
 flutter run
-```
 
-```bash
 # Run in debug mode with verbose logging
 flutter run --debug
-```
 
-```bash
 # Build release APK
 flutter build apk
-```
 
-```bash
 # Build release iOS
 flutter build ios
 ```
 
-## 5. BLE Testing
+## 6. BLE Testing
 
 BLE requires two physical devices. Emulators and simulators do not support BLE peripheral mode or scanning for real devices.
 
-### 5.1. Android
+### 6.1. Android
 
 Minimum SDK 21. The following permissions are declared in AndroidManifest.xml and requested at runtime:
 
@@ -107,7 +119,7 @@ Minimum SDK 21. The following permissions are declared in AndroidManifest.xml an
 
 Enable Bluetooth and location services on the device before testing.
 
-### 5.2. iOS
+### 6.2. iOS
 
 Minimum iOS 12.0. The following usage descriptions are in Info.plist:
 
@@ -116,34 +128,7 @@ Minimum iOS 12.0. The following usage descriptions are in Info.plist:
 
 The user will be prompted to allow Bluetooth access on first launch.
 
-### 5.3. Testing Procedure
-
-1. Install the app on two devices.
-2. On device A, select Bluetooth mode and create a lobby (host).
-3. On device B, select Bluetooth mode and join (client). The host should appear in the scan list.
-4. Tap the host entry to connect. The handshake completes automatically.
-5. Verify lobby ready state behavior:
-	- Host shows "Opponent Connected" and a "Start Game" button.
-	- Client shows "Opponent Connected" and waits for host to start.
-6. Tap "Start Game" on the host device. Both devices should enter the game.
-7. Play a game. Verify moves, resign, and draw flows all work.
-8. To test reconnection: toggle Bluetooth off on the client device, then back on. The client should auto-reconnect and sync state.
-
-## 6. Code Generation
-
-Hive type adapters require code generation:
-
-```bash
-dart run build_runner build --delete-conflicting-outputs
-```
-
-For development, use watch mode:
-
-```bash
-dart run build_runner watch --delete-conflicting-outputs
-```
-
-## 7. Running Tests
+## 7. Running Unit Tests
 
 ```bash
 # Unit tests

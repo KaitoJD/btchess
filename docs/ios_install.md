@@ -2,7 +2,7 @@
 
 > [!note]
 >
-> __The process of installing BTChess on iOS devices can be complex and time-consuming.__
+> __The process of installing BTChess on iOS devices can be complex and time-consuming.__ This is not the only way to install the app on an iOS device.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ## 2. Download the IPA file
 
-[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-rc/btchess_1.0.0-rc.ipa)
+[Click here to download the latest released IPA file](https://github.com/KaitoJD/btchess/releases/download/v1.0.0/btchess_1.0.0.ipa)
 
 ## 3. Install Sideloadly
 

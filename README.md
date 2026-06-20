@@ -5,7 +5,7 @@
 <h3><b>Turn any moment into a chess match. No internet. No accounts. Just you and your opponent.</b></h3>
 
 [![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
-![Version](https://img.shields.io/badge/version-1.0.0_rc-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Android size](https://img.shields.io/badge/On_Android-23.4_MB-3DDC84)
 ![iOS size](https://img.shields.io/badge/On_iOS-26.6_MB-7D7D7D)
 
@@ -13,7 +13,7 @@
 
 ## 🚀 Get Started
 
-- __Android__: [Download APK](https://github.com/KaitoJD/btchess/releases/download/v1.0.0-rc/btchess_1.0.0-rc.apk)
+- __Android__: [Download APK](https://github.com/KaitoJD/btchess/releases/download/v1.0.0/btchess_1.0.0.apk)
 - __iOS__: [Check the installation guide](/docs/ios_install.md)
 
 ## ✨ Features
@@ -49,20 +49,6 @@
 > [!tip]
 >
 > __Make sure you have added the device of the opponent you are about to connect to in the Bluetooth Settings beforehand to ensure an uninterrupted experience.__
-
-## 🎯 Who Is This For?
-
-- Students looking for quick fun
-- Chess lovers
-- Friends who want to compete
-- Anyone who wants offline games
-
-## 🤔 Why BTChess?
-
-- No annoying ads
-- Fast and lightweight
-- Works completely offline
-- Simple and easy to use
 
 ## 📬 Feedback & Support
 
