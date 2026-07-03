@@ -25,7 +25,7 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
 
       final debugModeEnabled = ref.read(debugModeProvider);
       UserErrorFormatter.setDebugMode(enabled: debugModeEnabled);
-      Logger.setLevel(debugModeEnabled ? LogLevel.debug : LogLevel.off);
+      Logger.setLevel(debugModeEnabled ? LogLevel.debug : LogLevel.error);
     });
   }
 
@@ -33,7 +33,7 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
   Widget build(BuildContext context) {
     ref.listen<bool>(debugModeProvider, (_, enabled) {
       UserErrorFormatter.setDebugMode(enabled: enabled);
-      Logger.setLevel(enabled ? LogLevel.debug : LogLevel.off);
+      Logger.setLevel(enabled ? LogLevel.debug : LogLevel.error);
     });
 
     return MaterialApp(
@@ -60,18 +60,11 @@ class _AppLoader extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.grid_on,
-                size: 80,
-                color: Colors.brown,
-              ),
+              Icon(Icons.grid_on, size: 80, color: Colors.brown),
               SizedBox(height: 24),
               Text(
                 AppConstants.appName,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 24),
               CircularProgressIndicator(),

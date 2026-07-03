@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 
+import '../../core/utils/logger.dart';
 import 'audio_assets.dart';
 
 // Service responsible for playing chess game sound effects.
@@ -64,8 +65,20 @@ class AudioService {
     try {
       await _player.stop();
       await _player.play(AssetSource(assetPath));
-    } catch (_) {
-      // Gracefully ignore errors (missing files, platform issues, etc.)
+    } catch (e, stackTrace) {
+      Logger.debug(
+        'Failed to play audio asset $assetPath: $e',
+        tag: 'AudioService',
+      );
+      assert(() {
+        Logger.error(
+          'Audio playback failed',
+          tag: 'AudioService',
+          error: e,
+          stackTrace: stackTrace,
+        );
+        return true;
+      }());
     }
   }
 }

@@ -24,7 +24,7 @@ enum LogLevel {
 //   Logger.info('Game started', tag: 'GameController');
 //   Logger.bleMessage(bytes, label: 'MOVE received');
 abstract class Logger {
-  static LogLevel _level = kDebugMode ? LogLevel.debug : LogLevel.off;
+  static LogLevel _level = kDebugMode ? LogLevel.debug : LogLevel.error;
 
   // Current log level
   static LogLevel get level => _level;
@@ -35,9 +35,20 @@ abstract class Logger {
   }
 
   // Logs an error message (level 1)
-  static void error(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
+  static void error(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
     if (_level.index < LogLevel.error.index) return;
-    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   // Logs a warning message (level 2)
@@ -84,8 +95,6 @@ abstract class Logger {
     Object? error,
     StackTrace? stackTrace,
   }) {
-    if (!kDebugMode) return;
-
     final prefix = tag != null ? '$tag: ' : '';
     final levelLabel = level.name.toUpperCase();
     final formatted = '[$levelLabel] $prefix$message';
