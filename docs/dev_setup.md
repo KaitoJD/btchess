@@ -104,6 +104,16 @@ flutter build apk
 flutter build ios
 ```
 
+Android release builds use `android/key.properties` when it is present. Keep
+the file local and out of version control:
+
+```properties
+storePassword=<store password>
+keyPassword=<key password>
+keyAlias=<key alias>
+storeFile=<absolute or android/app-relative keystore path>
+```
+
 ## 6. BLE Testing
 
 BLE requires two physical devices. Emulators and simulators do not support BLE peripheral mode or scanning for real devices.
