@@ -16,14 +16,13 @@ import '../../domain/services/chess_service.dart';
 import '../../infrastructure/persistence/game_repository.dart';
 
 class GameController extends StateNotifier<GameState?> {
-
   GameController({
     required ChessService chessService,
     GameRepository? gameRepository,
   }) : _chessService = chessService,
        _gameRepository = gameRepository,
        super(null);
-       
+
   final ChessService _chessService;
   final GameRepository? _gameRepository;
   final Uuid _uuid = const Uuid();
@@ -49,24 +48,53 @@ class GameController extends StateNotifier<GameState?> {
     if (whitePlayer == null && blackPlayer == null && mode.isBle) {
       if (mode == GameMode.bleHost) {
         if (localPlayerColor == PieceColor.black) {
-          white = Player.remote(id: 'remote_white', name: 'Opponent', color: PieceColor.white);
-          black = Player.local(name: 'You', color: PieceColor.black, isHost: true);
+          white = Player.remote(
+            id: 'remote_white',
+            name: 'Opponent',
+            color: PieceColor.white,
+          );
+          black = Player.local(
+            name: 'You',
+            color: PieceColor.black,
+            isHost: true,
+          );
         } else {
-          white = Player.local(name: 'You', color: PieceColor.white, isHost: true);
-          black = Player.remote(id: 'remote_black', name: 'Opponent', color: PieceColor.black);
+          white = Player.local(
+            name: 'You',
+            color: PieceColor.white,
+            isHost: true,
+          );
+          black = Player.remote(
+            id: 'remote_black',
+            name: 'Opponent',
+            color: PieceColor.black,
+          );
         }
       } else if (mode == GameMode.bleClient) {
         if (localPlayerColor == PieceColor.white) {
           white = Player.local(name: 'You', color: PieceColor.white);
-          black = Player.remote(id: 'remote_black', name: 'Host', color: PieceColor.black);
+          black = Player.remote(
+            id: 'remote_black',
+            name: 'Host',
+            color: PieceColor.black,
+          );
         } else {
-          white = Player.remote(id: 'remote_white', name: 'Host', color: PieceColor.white);
+          white = Player.remote(
+            id: 'remote_white',
+            name: 'Host',
+            color: PieceColor.white,
+          );
           black = Player.local(name: 'You', color: PieceColor.black);
         }
       }
     }
 
-    state = GameState.newGame(id: id, mode: mode, whitePlayer: white, blackPlayer: black);
+    state = GameState.newGame(
+      id: id,
+      mode: mode,
+      whitePlayer: white,
+      blackPlayer: black,
+    );
 
     _autoSave();
   }
@@ -125,12 +153,18 @@ class GameController extends StateNotifier<GameState?> {
       return false;
     }
 
-    if (_chessService.requiresPromotion(state!.fen, from, to) && promotion == null) {
+    if (_chessService.requiresPromotion(state!.fen, from, to) &&
+        promotion == null) {
       return false;
     }
 
-    final result = _chessService.makeMove(state!.fen, from, to, promotion: promotion);
-  
+    final result = _chessService.makeMove(
+      state!.fen,
+      from,
+      to,
+      promotion: promotion,
+    );
+
     if (!result.success || result.move == null || result.fen == null) {
       return false;
     }
@@ -141,7 +175,9 @@ class GameController extends StateNotifier<GameState?> {
     GameResult? gameResult;
 
     if (newStatus == GameStatus.checkmate) {
-      final winner = state!.currentTurn == PieceColor.white ? Winner.white : Winner.black;
+      final winner = state!.currentTurn == PieceColor.white
+          ? Winner.white
+          : Winner.black;
       gameResult = GameResult.checkmate(winner, finalFen: result.fen);
     } else if (newStatus == GameStatus.stalemate) {
       gameResult = GameResult.stalemate(finalFen: result.fen);
@@ -151,7 +187,8 @@ class GameController extends StateNotifier<GameState?> {
       }
     }
 
-    if (gameResult == null && _chessService.getHalfMoveClock(result.fen!) >= 100) {
+    if (gameResult == null &&
+        _chessService.getHalfMoveClock(result.fen!) >= 100) {
       gameResult = GameResult.fiftyMoveRule(finalFen: result.fen);
       state = state!.copyWith(status: GameStatus.draw);
     }
@@ -182,7 +219,12 @@ class GameController extends StateNotifier<GameState?> {
     final replayedMoves = <Move>[];
 
     for (final move in movesToReplay) {
-      final result = _chessService.makeMove(fen, move.from, move.to, promotion: move.promotion);
+      final result = _chessService.makeMove(
+        fen,
+        move.from,
+        move.to,
+        promotion: move.promotion,
+      );
 
       if (!result.success || result.fen == null || result.move == null) {
         return false;
@@ -221,13 +263,12 @@ class GameController extends StateNotifier<GameState?> {
   void resign(PieceColor resigningColor) {
     if (state == null || state!.isEnded) return;
 
-    final winner = resigningColor == PieceColor.white? Winner.black : Winner.white;
+    final winner = resigningColor == PieceColor.white
+        ? Winner.black
+        : Winner.white;
     final result = GameResult.resignation(winner, finalFen: state!.fen);
 
-    state = state!.copyWith(
-      status: GameStatus.resigned,
-      result: result,
-    );
+    state = state!.copyWith(status: GameStatus.resigned, result: result);
 
     _autoSave();
   }
@@ -236,10 +277,7 @@ class GameController extends StateNotifier<GameState?> {
     if (state == null || state!.isEnded) return;
     if (state!.drawOffered) return;
 
-    state = state!.copyWith(
-      drawOffered: true,
-      drawOfferedBy: offeringColor,
-    ); 
+    state = state!.copyWith(drawOffered: true, drawOfferedBy: offeringColor);
   }
 
   void acceptDraw() {
@@ -314,7 +352,9 @@ class GameController extends StateNotifier<GameState?> {
     if (state == null) return false;
     if (state!.mode == GameMode.hotseat) return true;
 
-    final localColor = state!.whitePlayer.isLocal ? PieceColor.white : PieceColor.black;
+    final localColor = state!.whitePlayer.isLocal
+        ? PieceColor.white
+        : PieceColor.black;
 
     return state!.currentTurn == localColor;
   }
@@ -336,11 +376,13 @@ class GameController extends StateNotifier<GameState?> {
     if (state == null || _gameRepository == null) return;
     try {
       await _gameRepository.saveGame(state!);
-    } catch (e) {
-      assert(() {
-        Logger.error('Failed to auto-save game: $e', tag: 'GameController');
-        return true;
-      }());
+    } catch (e, stackTrace) {
+      Logger.error(
+        'Failed to auto-save game',
+        tag: 'GameController',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }
