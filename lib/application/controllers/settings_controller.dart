@@ -3,9 +3,10 @@ import '../../infrastructure/persistence/settings_repository.dart';
 import '../states/settings_state.dart';
 
 class SettingsController extends StateNotifier<SettingsState> {
+  SettingsController({required SettingsRepository repository})
+    : _repository = repository,
+      super(const SettingsState());
 
-  SettingsController({required SettingsRepository repository}) : _repository = repository, super(const SettingsState());
-  
   final SettingsRepository _repository;
 
   Future<void> loadSettings() async {
@@ -18,7 +19,6 @@ class SettingsController extends StateNotifier<SettingsState> {
       final boardTheme = await _repository.getBoardTheme();
       final pieceTheme = await _repository.getPieceTheme();
       final debugMode = await _repository.getDebugMode();
-      final playerName = await _repository.getPlayerName();
       final autoFlipBoard = await _repository.getAutoFlipBoard();
 
       state = SettingsState(
@@ -28,7 +28,6 @@ class SettingsController extends StateNotifier<SettingsState> {
         boardTheme: boardTheme,
         pieceTheme: pieceTheme,
         debugMode: debugMode,
-        playerName: playerName,
         autoFlipBoard: autoFlipBoard,
         isLoaded: true,
       );
@@ -99,14 +98,6 @@ class SettingsController extends StateNotifier<SettingsState> {
     state = state.copyWith(debugMode: value);
 
     await _repository.setDebugMode(value: value);
-  }
-
-  Future<void> setPlayerName(String name) async {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) return;
-    state = state.copyWith(playerName: trimmed);
-
-    await _repository.setPlayerName(trimmed);
   }
 
   Future<void> toggleAutoFlipBoard() async {

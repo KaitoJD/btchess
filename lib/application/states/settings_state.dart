@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 
 class SettingsState extends Equatable {
-
   const SettingsState({
     this.soundEnabled = true,
     this.showLegalMoves = true,
@@ -10,20 +9,18 @@ class SettingsState extends Equatable {
     this.boardTheme = BoardTheme.classic,
     this.pieceTheme = PieceTheme.standard,
     this.debugMode = false,
-    this.playerName = 'Player',
     this.autoFlipBoard = false,
     this.isLoaded = false,
   });
 
   factory SettingsState.defaults() => const SettingsState(isLoaded: true);
-  
+
   final bool soundEnabled;
   final bool showLegalMoves;
   final bool showCoordinates;
   final BoardTheme boardTheme;
   final PieceTheme pieceTheme;
   final bool debugMode;
-  final String playerName;
   final bool autoFlipBoard;
   final bool isLoaded;
 
@@ -34,7 +31,6 @@ class SettingsState extends Equatable {
     BoardTheme? boardTheme,
     PieceTheme? pieceTheme,
     bool? debugMode,
-    String? playerName,
     bool? autoFlipBoard,
     bool? isLoaded,
   }) {
@@ -45,7 +41,6 @@ class SettingsState extends Equatable {
       boardTheme: boardTheme ?? this.boardTheme,
       pieceTheme: pieceTheme ?? this.pieceTheme,
       debugMode: debugMode ?? this.debugMode,
-      playerName: playerName ?? this.playerName,
       autoFlipBoard: autoFlipBoard ?? this.autoFlipBoard,
       isLoaded: isLoaded ?? this.isLoaded,
     );
@@ -59,12 +54,11 @@ class SettingsState extends Equatable {
     boardTheme,
     pieceTheme,
     debugMode,
-    playerName,
     autoFlipBoard,
     isLoaded,
   ];
 
   @override
-  String toString() => 'SettingsState(sound: $soundEnabled, legalMoves: $showLegalMoves, theme: $boardTheme)';
+  String toString() =>
+      'SettingsState(sound: $soundEnabled, legalMoves: $showLegalMoves, theme: $boardTheme)';
 }
-

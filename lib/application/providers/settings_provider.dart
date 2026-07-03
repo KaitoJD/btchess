@@ -7,11 +7,12 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository();
 });
 
-final settingsControllerProvider = StateNotifierProvider<SettingsController, SettingsState>((ref) {
-  final repository = ref.watch(settingsRepositoryProvider);
+final settingsControllerProvider =
+    StateNotifierProvider<SettingsController, SettingsState>((ref) {
+      final repository = ref.watch(settingsRepositoryProvider);
 
-  return SettingsController(repository: repository);
-});
+      return SettingsController(repository: repository);
+    });
 
 final settingsLoadedProvider = Provider<bool>((ref) {
   return ref.watch(settingsControllerProvider).isLoaded;
@@ -39,10 +40,6 @@ final pieceThemeProvider = Provider<PieceTheme>((ref) {
 
 final debugModeProvider = Provider<bool>((ref) {
   return ref.watch(settingsControllerProvider).debugMode;
-});
-
-final playerNameProvider = Provider<String>((ref) {
-  return ref.watch(settingsControllerProvider).playerName;
 });
 
 final autoFlipBoardProvider = Provider<bool>((ref) {

@@ -14,22 +14,15 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
       body: ListView(
         children: [
-          const _SectionHeader(title: 'Player'),
-          _NameTile(
-            name: settings.playerName,
-            onChanged: (name) => controller.setPlayerName(name),
-          ),
-          const Divider(),
           const _SectionHeader(title: 'Game'),
           SwitchListTile(
             title: const Text('Show Legal Moves'),
-            subtitle: const Text('Highlight valid moves when selecting a piece'),
+            subtitle: const Text(
+              'Highlight valid moves when selecting a piece',
+            ),
             value: settings.showLegalMoves,
             onChanged: (value) => controller.setShowLegalMoves(value: value),
           ),
@@ -97,18 +90,23 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16)
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Future<void> _showResetDialog(BuildContext context, dynamic controller) async {
+  Future<void> _showResetDialog(
+    BuildContext context,
+    dynamic controller,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset Settings'),
-        content: const Text('This will reset all settings to their default values.'),
+        content: const Text(
+          'This will reset all settings to their default values.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -148,60 +146,6 @@ class _SectionHeader extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _NameTile extends StatelessWidget {
-  const _NameTile({
-    required this.name,
-    required this.onChanged,
-  });
-
-  final String name;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: const Text('Player Name'),
-      subtitle: Text(name),
-      trailing: const Icon(Icons.edit),
-      onTap: () => _showNameDialog(context),
-    );
-  }
-
-  Future<void> _showNameDialog(BuildContext context) async {
-    final controller = TextEditingController(text: name);
-
-    final newName = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Player Name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Enter your name',
-          ),
-          textCapitalization: TextCapitalization.words,
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (newName != null && newName.isNotEmpty) {
-      onChanged(newName);
-    }
   }
 }
 
@@ -245,7 +189,8 @@ class _ThemeSelector<T extends Enum> extends StatelessWidget {
                     Icons.check,
                     color: Theme.of(context).colorScheme.primary,
                   )
-                else const SizedBox(width: 24),
+                else
+                  const SizedBox(width: 24),
                 const SizedBox(width: 12),
                 Text(getLabel(v)),
               ],

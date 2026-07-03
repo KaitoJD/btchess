@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+const String _deprecatedPlayerNameKey = 'player_name';
+
 abstract class SettingsKeys {
   static const String soundEnabled = 'sound_enabled';
   static const String showLegalMoves = 'show_legal_moves';
@@ -7,7 +9,6 @@ abstract class SettingsKeys {
   static const String boardTheme = 'board_theme';
   static const String pieceTheme = 'piece_theme';
   static const String debugMode = 'debug_mode';
-  static const String playerName = 'player_name';
   static const String autoFlipBoard = 'auto_flip_board';
 }
 
@@ -21,15 +22,15 @@ enum BoardTheme {
   String get displayName {
     switch (this) {
       case BoardTheme.classic:
-      return 'Classic';
+        return 'Classic';
       case BoardTheme.wood:
-      return 'Wood';
+        return 'Wood';
       case BoardTheme.blue:
-      return 'Blue';
+        return 'Blue';
       case BoardTheme.green:
-      return 'Green';
+        return 'Green';
       case BoardTheme.gray:
-      return 'Gray';
+        return 'Gray';
     }
   }
 }
@@ -43,13 +44,13 @@ enum PieceTheme {
   String get displayName {
     switch (this) {
       case PieceTheme.standard:
-      return 'Standard';
+        return 'Standard';
       case PieceTheme.neo:
-      return 'Neo';
+        return 'Neo';
       case PieceTheme.alpha:
-      return 'Alpha';
+        return 'Alpha';
       case PieceTheme.chess24:
-      return 'Chess24';
+        return 'Chess24';
     }
   }
 }
@@ -121,8 +122,8 @@ class SettingsRepository {
   Future<PieceTheme> getPieceTheme() async {
     final prefs = await _getPrefs();
     final index = prefs.getInt(SettingsKeys.pieceTheme) ?? 0;
-    
-    return PieceTheme.values[index.clamp(0, PieceTheme.values.length - 1)]; 
+
+    return PieceTheme.values[index.clamp(0, PieceTheme.values.length - 1)];
   }
 
   Future<void> setPieceTheme(PieceTheme theme) async {
@@ -141,18 +142,6 @@ class SettingsRepository {
     final prefs = await _getPrefs();
 
     await prefs.setBool(SettingsKeys.debugMode, value);
-  }
-
-  Future<String> getPlayerName() async {
-    final prefs = await _getPrefs();
-
-    return prefs.getString(SettingsKeys.playerName) ?? 'Player';
-  }
-
-  Future<void> setPlayerName(String name) async {
-    final prefs = await _getPrefs();
-
-    await prefs.setString(SettingsKeys.playerName, name);
   }
 
   Future<bool> getAutoFlipBoard() async {
@@ -175,7 +164,6 @@ class SettingsRepository {
       SettingsKeys.boardTheme: await getBoardTheme(),
       SettingsKeys.pieceTheme: await getPieceTheme(),
       SettingsKeys.debugMode: await getDebugMode(),
-      SettingsKeys.playerName: await getPlayerName(),
       SettingsKeys.autoFlipBoard: await getAutoFlipBoard(),
     };
   }
@@ -189,7 +177,7 @@ class SettingsRepository {
     await prefs.remove(SettingsKeys.boardTheme);
     await prefs.remove(SettingsKeys.pieceTheme);
     await prefs.remove(SettingsKeys.debugMode);
-    await prefs.remove(SettingsKeys.playerName);
+    await prefs.remove(_deprecatedPlayerNameKey);
     await prefs.remove(SettingsKeys.autoFlipBoard);
   }
 }
