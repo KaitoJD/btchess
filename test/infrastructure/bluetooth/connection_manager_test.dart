@@ -195,15 +195,17 @@ void main() {
 
     expect(forwardedMoveCount, 1);
 
-    final ackCountBefore =
-        transport.sentStateNotifications.whereType<AckMessage>().length;
+    final ackCountBefore = transport.sentStateNotifications
+        .whereType<AckMessage>()
+        .length;
     expect(ackCountBefore, 0);
 
     // Host finishes processing and ACKs the move.
     await manager.sendAck(move.messageId);
 
-    final ackCountAfterFirstAck =
-        transport.sentStateNotifications.whereType<AckMessage>().length;
+    final ackCountAfterFirstAck = transport.sentStateNotifications
+        .whereType<AckMessage>()
+        .length;
     expect(ackCountAfterFirstAck, 1);
 
     // Any later duplicate replays the cached ACK and does not forward again.
@@ -211,8 +213,9 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(forwardedMoveCount, 1);
-    final ackCountAfterReplay =
-        transport.sentStateNotifications.whereType<AckMessage>().length;
+    final ackCountAfterReplay = transport.sentStateNotifications
+        .whereType<AckMessage>()
+        .length;
     expect(ackCountAfterReplay, 2);
 
     await sub.cancel();
@@ -230,55 +233,84 @@ void main() {
     await clientManager.disconnect();
   });
 
-  test('host handshake succeeds when client handshake arrives immediately on listen', () async {
-    final hostManager = ConnectionManager();
-    final transport = _EagerHostHandshakeTransport();
+  test(
+    'host handshake succeeds when client handshake arrives immediately on listen',
+    () async {
+      final hostManager = ConnectionManager();
+      final transport = _EagerHostHandshakeTransport();
 
-    await hostManager.setupConnection(transport);
+      await hostManager.setupConnection(transport);
 
-    expect(hostManager.isConnected, isTrue);
-    expect(transport.sentControl.whereType<HandshakeMessage>().length, 1);
+      expect(hostManager.isConnected, isTrue);
+      expect(transport.sentControl.whereType<HandshakeMessage>().length, 1);
 
-    await hostManager.disconnect();
-  });
+      await hostManager.disconnect();
+    },
+  );
 
-  test('host handshake fails fast when transport disconnects before handshake', () async {
-    final hostManager = ConnectionManager();
-    final disconnectingTransport = _FakeHostTransport();
+  test(
+    'host handshake fails fast when transport disconnects before handshake',
+    () async {
+      final hostManager = ConnectionManager();
+      final disconnectingTransport = _FakeHostTransport();
 
-    final stopwatch = Stopwatch()..start();
-    final setupFuture = hostManager.setupConnection(disconnectingTransport);
+      final stopwatch = Stopwatch()..start();
+      final setupFuture = hostManager.setupConnection(disconnectingTransport);
 
-    await disconnectingTransport.disconnect();
+      await disconnectingTransport.disconnect();
 
-    await expectLater(setupFuture, throwsA(isA<BleDisconnectedException>()));
-    stopwatch.stop();
+      await expectLater(setupFuture, throwsA(isA<BleDisconnectedException>()));
+      stopwatch.stop();
 
-    expect(stopwatch.elapsedMilliseconds, lessThan(1000));
+      expect(stopwatch.elapsedMilliseconds, lessThan(1000));
 
-    await hostManager.disconnect();
-  });
+      await hostManager.disconnect();
+    },
+  );
 
-  test('superseded setup attempt cannot overwrite newer connection state', () async {
-    final sharedManager = ConnectionManager();
-    final slowTransport = _FakeHostTransport();
-    final fastTransport = _EagerHostHandshakeTransport();
+  test(
+    'pending ACK completes with disconnect error when transport closes',
+    () async {
+      await connectHost();
 
-    final firstAttempt = sharedManager.setupConnection(slowTransport);
-    final firstAttemptExpectation = expectLater(
-      firstAttempt,
-      throwsA(isA<BleDisconnectedException>()),
-    );
+      final stopwatch = Stopwatch()..start();
+      final sendFuture = manager.sendMove(
+        const MoveMessage(messageId: 90, from: 12, to: 28),
+      );
 
-    await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      await transport.disconnect();
 
-    final secondAttempt = sharedManager.setupConnection(fastTransport);
-    await secondAttempt;
+      await expectLater(sendFuture, throwsA(isA<BleDisconnectedException>()));
+      stopwatch.stop();
 
-    expect(sharedManager.state, ConnectionState.connected);
-    await firstAttemptExpectation;
-    expect(sharedManager.state, ConnectionState.connected);
+      expect(stopwatch.elapsedMilliseconds, lessThan(1000));
+    },
+  );
 
-    await sharedManager.disconnect();
-  });
+  test(
+    'superseded setup attempt cannot overwrite newer connection state',
+    () async {
+      final sharedManager = ConnectionManager();
+      final slowTransport = _FakeHostTransport();
+      final fastTransport = _EagerHostHandshakeTransport();
+
+      final firstAttempt = sharedManager.setupConnection(slowTransport);
+      final firstAttemptExpectation = expectLater(
+        firstAttempt,
+        throwsA(isA<BleDisconnectedException>()),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+
+      final secondAttempt = sharedManager.setupConnection(fastTransport);
+      await secondAttempt;
+
+      expect(sharedManager.state, ConnectionState.connected);
+      await firstAttemptExpectation;
+      expect(sharedManager.state, ConnectionState.connected);
+
+      await sharedManager.disconnect();
+    },
+  );
 }

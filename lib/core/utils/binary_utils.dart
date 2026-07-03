@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 // Utility functions for binary data manipulation
@@ -45,10 +46,10 @@ abstract class BinaryUtils {
     if (offset + 4 > bytes.length) {
       throw RangeError('Not enough bytes to read uint32');
     }
-    return  (bytes[offset] << 24) |
-            (bytes[offset + 1] << 16) |
-            (bytes[offset + 2] << 8) |
-            bytes[offset + 3];
+    return (bytes[offset] << 24) |
+        (bytes[offset + 1] << 16) |
+        (bytes[offset + 2] << 8) |
+        bytes[offset + 3];
   }
 
   // Writes a uint32 to bytes at the given offset (big-endian)
@@ -97,7 +98,7 @@ class ByteBufferBuilder {
 
   // Adds a UTF-8 encoded string
   ByteBufferBuilder addString(String str) {
-    _bytes.addAll(str.codeUnits);
+    _bytes.addAll(utf8.encode(str));
     return this;
   }
 
@@ -119,7 +120,7 @@ class ByteBufferReader {
 
   // Returns the number of remaining bytes
   int get remaining => _bytes.length - _offset;
-  
+
   // Returns true if there are more bytes to read
   bool get hasMore => _offset < _bytes.length;
 
@@ -164,6 +165,6 @@ class ByteBufferReader {
 
   // Reads remaining bytes as a UTF-8 string
   String readRemainingAsString() {
-    return String.fromCharCodes(readRemaining());
+    return utf8.decode(readRemaining());
   }
 }

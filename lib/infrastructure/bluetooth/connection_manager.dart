@@ -50,10 +50,12 @@ class ConnectionManager {
   int _nextMessageId = 0;
 
   // Stream controller for connection state
-  final StreamController<ConnectionState> _stateController = StreamController<ConnectionState>.broadcast();
+  final StreamController<ConnectionState> _stateController =
+      StreamController<ConnectionState>.broadcast();
 
   // Stream controller for incoming game messages
-  final StreamController<BleMessage> _messageController = StreamController<BleMessage>.broadcast();
+  final StreamController<BleMessage> _messageController =
+      StreamController<BleMessage>.broadcast();
 
   // Message subscription
   StreamSubscription<BleMessage>? _messageSubscription;
@@ -183,7 +185,9 @@ class ConnectionManager {
       );
       // Host waits for client handshake first, then responds
       final clientHandshake = await _waitForMessage<HandshakeMessage>(
-        timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
+        timeout: const Duration(
+          milliseconds: TimingConstants.handshakeTimeoutMs,
+        ),
       );
 
       if (clientHandshake.protocolVersion != BleConstants.protocolVersion) {
@@ -221,7 +225,9 @@ class ConnectionManager {
       // Subscribe for the handshake response before sending to avoid
       // dropping an immediate host response on broadcast streams.
       final responseFuture = _waitForMessage<HandshakeMessage>(
-        timeout: const Duration(milliseconds: TimingConstants.handshakeTimeoutMs),
+        timeout: const Duration(
+          milliseconds: TimingConstants.handshakeTimeoutMs,
+        ),
       );
 
       Logger.debug(
@@ -244,7 +250,9 @@ class ConnectionManager {
     }
   }
 
-  Future<T> _waitForMessage<T extends BleMessage>({required Duration timeout}) async {
+  Future<T> _waitForMessage<T extends BleMessage>({
+    required Duration timeout,
+  }) async {
     // Consume buffered handshake messages first to avoid races where
     // handshakes arrive before this method's listener is attached.
     if (T == HandshakeMessage && _handshakeBuffer.isNotEmpty) {
@@ -263,9 +271,7 @@ class ConnectionManager {
     });
 
     try {
-      final candidateFutures = <Future<T>>[
-        completer.future,
-      ];
+      final candidateFutures = <Future<T>>[completer.future];
 
       if (_connectionClosedCompleter != null) {
         candidateFutures.add(
@@ -375,6 +381,11 @@ class ConnectionManager {
     if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
       _connectionClosedCompleter?.complete();
     }
+    _completePendingAcksWith(
+      BleDisconnectedException(
+        'Connection error while waiting for ACK: $error',
+      ),
+    );
     _lastError = UserErrorFormatter.formatError(
       error,
       context: 'Connection error',
@@ -386,6 +397,9 @@ class ConnectionManager {
     if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
       _connectionClosedCompleter?.complete();
     }
+    _completePendingAcksWith(
+      const BleDisconnectedException('Connection closed while waiting for ACK'),
+    );
     _updateState(ConnectionState.disconnected);
     _stopPingTimer();
   }
@@ -402,9 +416,13 @@ class ConnectionManager {
 
     return _sendWithRetry(move);
   }
-  
+
   Future<AckMessage> _sendWithRetry(BleMessage message) async {
-    for (var attempt = 0; attempt < TimingConstants.totalMoveAttempts; attempt++) {
+    for (
+      var attempt = 0;
+      attempt < TimingConstants.totalMoveAttempts;
+      attempt++
+    ) {
       try {
         final completer = Completer<AckMessage>();
         _pendingAcks[message.messageId] = completer;
@@ -433,7 +451,10 @@ class ConnectionManager {
 
     throw const BleTimeoutException(
       'No ACK received after ${TimingConstants.totalMoveAttempts} attempts',
-      timeout: Duration(milliseconds: TimingConstants.ackTimeoutMs * TimingConstants.totalMoveAttempts),
+      timeout: Duration(
+        milliseconds:
+            TimingConstants.ackTimeoutMs * TimingConstants.totalMoveAttempts,
+      ),
     );
   }
 
@@ -448,7 +469,10 @@ class ConnectionManager {
   // Send an ACK
   //
   // Host sends via STATE_NOTIFY characteristic; client sends via CONTROL.
-  Future<void> sendAck(int messageId, {BleErrorCode error = BleErrorCode.success}) async {
+  Future<void> sendAck(
+    int messageId, {
+    BleErrorCode error = BleErrorCode.success,
+  }) async {
     final ack = AckMessage(
       messageId: messageId,
       status: error.isSuccess ? 0x00 : 0x01,
@@ -612,6 +636,17 @@ class ConnectionManager {
 
   bool _isStaleGeneration(int generation) => generation != _setupGeneration;
 
+  void _completePendingAcksWith(Object error, [StackTrace? stackTrace]) {
+    final pendingAcks = _pendingAcks.values.toList(growable: false);
+    _pendingAcks.clear();
+
+    for (final completer in pendingAcks) {
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
+      }
+    }
+  }
+
   void _updateState(ConnectionState newState) {
     _state = newState;
     _stateController.add(newState);
@@ -625,6 +660,9 @@ class ConnectionManager {
     if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
       _connectionClosedCompleter?.complete();
     }
+    _completePendingAcksWith(
+      const BleDisconnectedException('Disconnected while waiting for ACK'),
+    );
 
     await _messageSubscription?.cancel();
     await _connection?.disconnect();
@@ -638,9 +676,9 @@ class ConnectionManager {
   }
 
   // Disposes resources
-  void dispose() {
-    disconnect();
-    _stateController.close();
-    _messageController.close();
+  Future<void> dispose() async {
+    await disconnect();
+    await _stateController.close();
+    await _messageController.close();
   }
 }

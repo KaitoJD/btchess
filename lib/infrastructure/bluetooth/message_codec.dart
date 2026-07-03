@@ -12,7 +12,7 @@ class MessageCodec {
 
   // Encodes a message to bytes
   Uint8List encode(BleMessage message) {
-    return switch(message) {
+    return switch (message) {
       final HandshakeMessage m => _encodeHandshake(m),
       final MoveMessage m => _encodeMove(m),
       final AckMessage m => _encodeAck(m),
@@ -32,119 +32,118 @@ class MessageCodec {
 
   Uint8List _encodeHandshake(HandshakeMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.handshake.value)
-            .addUint16(m.messageId)
-            .addByte(m.protocolVersion)
-            .addByte(m.role)
-            .addByte(m.hostColor)
-            .build();
+        .addByte(MessageType.handshake.value)
+        .addUint16(m.messageId)
+        .addByte(m.protocolVersion)
+        .addByte(m.role)
+        .addByte(m.hostColor)
+        .build();
   }
 
   Uint8List _encodeMove(MoveMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.move.value)
-            .addUint16(m.messageId)
-            .addByte(m.from)
-            .addByte(m.to)
-            .addByte(m.promotion)
-            .build();
+        .addByte(MessageType.move.value)
+        .addUint16(m.messageId)
+        .addByte(m.from)
+        .addByte(m.to)
+        .addByte(m.promotion)
+        .build();
   }
 
   Uint8List _encodeAck(AckMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.ack.value)
-            .addUint16(m.messageId)
-            .addByte(m.status)
-            .addByte(m.errorCode)
-            .build();
+        .addByte(MessageType.ack.value)
+        .addUint16(m.messageId)
+        .addByte(m.status)
+        .addByte(m.errorCode)
+        .build();
   }
 
   Uint8List _encodeSyncRequest(SyncRequestMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.syncRequest.value)
-            .addUint16(m.messageId)
-            .build();
+        .addByte(MessageType.syncRequest.value)
+        .addUint16(m.messageId)
+        .build();
   }
 
   Uint8List _encodeSyncResponse(SyncResponseMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.syncResponse.value)
-            .addUint16(m.messageId)
-            .addByte(m.sequence)
-            .addByte(m.total)
-            .addBytes(m.payload)
-            .build();
+        .addByte(MessageType.syncResponse.value)
+        .addUint16(m.messageId)
+        .addByte(m.sequence)
+        .addByte(m.total)
+        .addBytes(m.payload)
+        .build();
   }
 
   Uint8List _encodeGameEnd(GameEndMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.gameEnd.value)
-            .addUint16(m.messageId)
-            .addByte(m.reason)
-            .addByte(m.winner)
-            .build();
+        .addByte(MessageType.gameEnd.value)
+        .addUint16(m.messageId)
+        .addByte(m.reason)
+        .addByte(m.winner)
+        .build();
   }
 
   Uint8List _encodeDrawOffer(DrawOfferMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.drawOffer.value)
-            .addUint16(m.messageId)
-            .build();
+        .addByte(MessageType.drawOffer.value)
+        .addUint16(m.messageId)
+        .build();
   }
 
   Uint8List _encodeDrawResponse(DrawResponseMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.drawResponse.value)
-            .addUint16(m.messageId)
-            .addByte(m.accepted ? 0x01 : 0x00)
-            .build();
+        .addByte(MessageType.drawResponse.value)
+        .addUint16(m.messageId)
+        .addByte(m.accepted ? 0x01 : 0x00)
+        .build();
   }
 
   Uint8List _encodeResign(ResignMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.resign.value)
-            .addUint16(m.messageId)
-            .build();
+        .addByte(MessageType.resign.value)
+        .addUint16(m.messageId)
+        .build();
   }
 
   Uint8List _encodePing(PingMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.ping.value)
-            .addUint16(m.messageId)
-            .addUint32(m.timestamp)
-            .build();
+        .addByte(MessageType.ping.value)
+        .addUint16(m.messageId)
+        .addUint32(m.timestamp)
+        .build();
   }
 
   Uint8List _encodePong(PongMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.pong.value)
-            .addUint16(m.messageId)
-            .addUint32(m.timestamp)
-            .build();
+        .addByte(MessageType.pong.value)
+        .addUint16(m.messageId)
+        .addUint32(m.timestamp)
+        .build();
   }
 
   Uint8List _encodeGameStart(GameStartMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.gameStart.value)
-            .addUint16(m.messageId)
-            .build();
+        .addByte(MessageType.gameStart.value)
+        .addUint16(m.messageId)
+        .build();
   }
 
   Uint8List _encodeRematchRequest(RematchRequestMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.rematchRequest.value)
-            .addUint16(m.messageId)
-            .build();
+        .addByte(MessageType.rematchRequest.value)
+        .addUint16(m.messageId)
+        .build();
   }
 
   Uint8List _encodeRematchResponse(RematchResponseMessage m) {
     return ByteBufferBuilder()
-            .addByte(MessageType.rematchResponse.value)
-            .addUint16(m.messageId)
-            .addByte(m.accepted ? 0x01 : 0x00)
-            .build();
+        .addByte(MessageType.rematchResponse.value)
+        .addUint16(m.messageId)
+        .addByte(m.accepted ? 0x01 : 0x00)
+        .build();
   }
-
 
   // - Decoding
 
@@ -159,7 +158,9 @@ class MessageCodec {
     final type = MessageType.fromValue(typeValue);
 
     if (type == null) {
-      throw BleMessageException('Unknown message type: 0x${typeValue.toRadixString(16)}');
+      throw BleMessageException(
+        'Unknown message type: 0x${typeValue.toRadixString(16)}',
+      );
     }
 
     return switch (type) {
@@ -168,7 +169,9 @@ class MessageCodec {
       MessageType.ack => _decodeAck(reader),
       MessageType.syncRequest => _decodeSyncRequest(reader),
       MessageType.syncResponse => _decodeSyncResponse(reader),
-      MessageType.chunk => _decodeSyncResponse(reader), // Same format
+      MessageType.chunk => throw const BleMessageException(
+        'MessageType.chunk is reserved; sync payload chunks use syncResponse',
+      ),
       MessageType.gameEnd => _decodeGameEnd(reader),
       MessageType.drawOffer => _decodeDrawOffer(reader),
       MessageType.drawResponse => _decodeDrawResponse(reader),
@@ -182,7 +185,10 @@ class MessageCodec {
   }
 
   HandshakeMessage _decodeHandshake(ByteBufferReader reader) {
-    _ensureRemaining(reader, 5); // messageId(2) + version(1) + role(1) + hostColor(1)
+    _ensureRemaining(
+      reader,
+      5,
+    ); // messageId(2) + version(1) + role(1) + hostColor(1)
 
     return HandshakeMessage(
       messageId: reader.readUint16(),
@@ -308,9 +314,8 @@ class MessageCodec {
   void _ensureRemaining(ByteBufferReader reader, int count) {
     if (reader.remaining < count) {
       throw BleMessageException(
-        'Malformed message: expected $count bytes, got ${reader.remaining}'
+        'Malformed message: expected $count bytes, got ${reader.remaining}',
       );
     }
   }
-
 }

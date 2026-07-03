@@ -35,14 +35,14 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     PermissionCheckFn? checkPermissions,
     PermissionCheckFn? requestPermissions,
     PermissionCheckFn? isPermissionPermanentlyDenied,
-  })  : _bluetoothService = bluetoothService,
-        _connectionManager = connectionManager,
-        _gameController = gameController,
-        _checkPermissions = checkPermissions ?? BlePermissions.areGranted,
-        _requestPermissions = requestPermissions ?? BlePermissions.request,
-        _isPermissionPermanentlyDenied =
-            isPermissionPermanentlyDenied ?? BlePermissions.isPermanentlyDenied,
-        super(BluetoothState.initial()) {
+  }) : _bluetoothService = bluetoothService,
+       _connectionManager = connectionManager,
+       _gameController = gameController,
+       _checkPermissions = checkPermissions ?? BlePermissions.areGranted,
+       _requestPermissions = requestPermissions ?? BlePermissions.request,
+       _isPermissionPermanentlyDenied =
+           isPermissionPermanentlyDenied ?? BlePermissions.isPermanentlyDenied,
+       super(BluetoothState.initial()) {
     _init();
   }
 
@@ -119,7 +119,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         state = state.copyWith(
           connectionStatus: BleConnectionStatus.error,
           isScanning: false,
-          lastError: UserErrorFormatter.formatMessage('Bluetooth is turned off'),
+          lastError: UserErrorFormatter.formatMessage(
+            'Bluetooth is turned off',
+          ),
         );
         return;
       }
@@ -152,7 +154,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // Only reset connection status if we were scanning
       if (state.connectionStatus == BleConnectionStatus.scanning) {
-        state = state.copyWith(connectionStatus: BleConnectionStatus.disconnected);
+        state = state.copyWith(
+          connectionStatus: BleConnectionStatus.disconnected,
+        );
       }
     } catch (e) {
       state = state.copyWith(isScanning: false);
@@ -197,7 +201,8 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // Listen for client connections from the peripheral manager
       _clientConnectedSubscription?.cancel();
-      _clientConnectedSubscription = _bluetoothService.peripheralManager
+      _clientConnectedSubscription = _bluetoothService
+          .peripheralManager
           .clientConnected
           .listen(_onHostClientConnected);
 
@@ -251,7 +256,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         return 'Bluetooth permission is permanently denied. Please enable it in Settings.';
       }
     } catch (e) {
-      Logger.warn('Failed to check permanent permission denial state: $e', tag: 'BluetoothController');
+      Logger.warn(
+        'Failed to check permanent permission denial state: $e',
+        tag: 'BluetoothController',
+      );
     }
 
     try {
@@ -283,7 +291,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // Read host color from handshake and propagate to state
       final hostColorCode = _connectionManager.receivedHostColor;
-      final hostColor = hostColorCode == 0x02 ? PieceColor.black : PieceColor.white;
+      final hostColor = hostColorCode == 0x02
+          ? PieceColor.black
+          : PieceColor.white;
       state = state.copyWith(hostColor: hostColor);
     } catch (e) {
       // Clean up transport/connection on failure
@@ -348,7 +358,8 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
   // Fully disconnects from the remote device and resets BLE state
   Future<void> disconnect({bool preserveRematchDeclined = false}) async {
-    final keepRematchDeclined = preserveRematchDeclined && state.rematchDeclined;
+    final keepRematchDeclined =
+        preserveRematchDeclined && state.rematchDeclined;
 
     try {
       await stopAdvertising();
@@ -422,8 +433,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         await _connectionManager.sendMoveNotification(moveMsg);
       } catch (e) {
         // Notification failure is non-fatal; client can resync
-        Logger.error('Failed to notify client of move: $e',
-            tag: 'BluetoothController');
+        Logger.error(
+          'Failed to notify client of move: $e',
+          tag: 'BluetoothController',
+        );
       }
 
       _checkAndSendGameEnd();
@@ -459,10 +472,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       } catch (e) {
         state = state.copyWith(
           clearPendingMove: true,
-          lastError: UserErrorFormatter.formatError(
-            e,
-            context: 'Move failed',
-          ),
+          lastError: UserErrorFormatter.formatError(e, context: 'Move failed'),
         );
       }
     }
@@ -477,11 +487,11 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       _gameController.offerDraw(
         state.isHost
             ? (_gameController.state?.whitePlayer.isHost == true
-                ? PieceColor.white
-                : PieceColor.black)
+                  ? PieceColor.white
+                  : PieceColor.black)
             : (_gameController.state?.whitePlayer.isLocal == true
-                ? PieceColor.white
-                : PieceColor.black),
+                  ? PieceColor.white
+                  : PieceColor.black),
       );
     } catch (e) {
       state = state.copyWith(
@@ -536,7 +546,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       // Host notifies the game end
       if (state.isHost) {
-        final winner = localColor == PieceColor.white ? Winner.black : Winner.white;
+        final winner = localColor == PieceColor.white
+            ? Winner.black
+            : Winner.white;
         await _connectionManager.sendGameEnd(
           GameEndReason.resign.code,
           winner.code,
@@ -544,10 +556,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       }
     } catch (e) {
       state = state.copyWith(
-        lastError: UserErrorFormatter.formatError(
-          e,
-          context: 'Resign failed',
-        ),
+        lastError: UserErrorFormatter.formatError(e, context: 'Resign failed'),
       );
     }
   }
@@ -745,7 +754,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       // Host receives a MOVE from the client → validate, apply, ACK
       final gameState = _gameController.state;
       if (gameState == null || gameState.isEnded) {
-        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.gameEnded);
+        await _connectionManager.sendAck(
+          moveMsg.messageId,
+          error: BleErrorCode.gameEnded,
+        );
         return;
       }
 
@@ -758,7 +770,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       );
 
       if (gameState.currentTurn != remoteTurn) {
-        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.notYourTurn);
+        await _connectionManager.sendAck(
+          moveMsg.messageId,
+          error: BleErrorCode.notYourTurn,
+        );
         return;
       }
 
@@ -789,7 +804,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         // Check for game end after applying the move
         _checkAndSendGameEnd();
       } else {
-        await _connectionManager.sendAck(moveMsg.messageId, error: BleErrorCode.invalidMove);
+        await _connectionManager.sendAck(
+          moveMsg.messageId,
+          error: BleErrorCode.invalidMove,
+        );
       }
     } else {
       // Client receives a MOVE notification from the host → apply directly
@@ -805,7 +823,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
           tag: 'BluetoothController',
         );
         state = state.copyWith(
-          lastError: UserErrorFormatter.formatMessage('Received malformed move from host; requesting sync'),
+          lastError: UserErrorFormatter.formatMessage(
+            'Received malformed move from host; requesting sync',
+          ),
         );
         unawaited(requestSync());
         return;
@@ -861,7 +881,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     );
   }
 
-  Future<void> _handleIncomingRematchResponse(RematchResponseMessage response) async {
+  Future<void> _handleIncomingRematchResponse(
+    RematchResponseMessage response,
+  ) async {
     if (!state.rematchRequestedByLocal) return;
 
     if (response.accepted) {
@@ -884,11 +906,10 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
     // Host broadcasts game end
     if (state.isHost) {
-      final winner = remoteColor == PieceColor.white ? Winner.black : Winner.white;
-      _connectionManager.sendGameEnd(
-        GameEndReason.resign.code,
-        winner.code,
-      );
+      final winner = remoteColor == PieceColor.white
+          ? Winner.black
+          : Winner.white;
+      _connectionManager.sendGameEnd(GameEndReason.resign.code, winner.code);
     }
   }
 
@@ -976,7 +997,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       GameStatus? status;
       if (statusName != null) {
-        status = GameStatus.values.where((s) => s.name == statusName).firstOrNull;
+        status = GameStatus.values
+            .where((s) => s.name == statusName)
+            .firstOrNull;
       }
 
       _gameController.syncState(fen: fen, moves: moves, status: status);
@@ -997,10 +1020,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     final result = gameState.result;
     if (result == null) return;
 
-    _connectionManager.sendGameEnd(
-      result.reason.code,
-      result.winner.code,
-    );
+    _connectionManager.sendGameEnd(result.reason.code, result.winner.code);
   }
 
   void _startRematch() {
@@ -1066,7 +1086,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     _messageSubscription?.cancel();
     _deviceScanSubscription?.cancel();
     _clientConnectedSubscription?.cancel();
-    _connectionManager.dispose();
+    unawaited(_connectionManager.dispose());
     _bluetoothService.dispose();
     super.dispose();
   }

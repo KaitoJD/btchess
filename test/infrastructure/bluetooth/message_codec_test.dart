@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'dart:typed_data';
+import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:btchess/infrastructure/bluetooth/message_codec.dart';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 import '../../fixtures/message_fixtures.dart';
@@ -34,7 +35,10 @@ void main() {
         final encoded = codec.encode(MessageFixtures.handshakeHost);
         final decoded = codec.decode(encoded) as HandshakeMessage;
         expect(decoded.messageId, MessageFixtures.handshakeHost.messageId);
-        expect(decoded.protocolVersion, MessageFixtures.handshakeHost.protocolVersion);
+        expect(
+          decoded.protocolVersion,
+          MessageFixtures.handshakeHost.protocolVersion,
+        );
         expect(decoded.role, MessageFixtures.handshakeHost.role);
         expect(decoded.hostColor, MessageFixtures.handshakeHost.hostColor);
       });
@@ -73,8 +77,8 @@ void main() {
         expect(msg, isA<MoveMessage>());
         final move = msg as MoveMessage;
         expect(move.messageId, 1);
-        expect(move.from, 12);   // e2
-        expect(move.to, 28);     // e4
+        expect(move.from, 12); // e2
+        expect(move.to, 28); // e4
         expect(move.promotion, 0);
         expect(move.hasPromotion, isFalse);
       });
@@ -85,9 +89,10 @@ void main() {
       });
 
       test('decodes MOVE with promotion', () {
-        final msg = codec.decode(MessageFixtures.moveWithPromotionBytes) as MoveMessage;
-        expect(msg.from, 52);    // e7
-        expect(msg.to, 60);      // e8
+        final msg =
+            codec.decode(MessageFixtures.moveWithPromotionBytes) as MoveMessage;
+        expect(msg.from, 52); // e7
+        expect(msg.to, 60); // e8
         expect(msg.promotion, 1); // Queen
         expect(msg.hasPromotion, isTrue);
       });
@@ -163,6 +168,12 @@ void main() {
         expect(decoded.total, 1);
         expect(decoded.payloadAsString, 'test-fen-data');
       });
+
+      test('rejects reserved chunk message type', () {
+        final bytes = Uint8List.fromList([0x05, 0x00, 0x05, 0x01, 0x01, 0x61]);
+
+        expect(() => codec.decode(bytes), throwsA(isA<BleMessageException>()));
+      });
     });
 
     group('GameEnd', () {
@@ -175,8 +186,8 @@ void main() {
         final msg = codec.decode(MessageFixtures.gameEndCheckmateBytes);
         expect(msg, isA<GameEndMessage>());
         final gameEnd = msg as GameEndMessage;
-        expect(gameEnd.reason, 0x01);  // checkmate
-        expect(gameEnd.winner, 0x01);  // white
+        expect(gameEnd.reason, 0x01); // checkmate
+        expect(gameEnd.winner, 0x01); // white
       });
     });
 
@@ -205,12 +216,16 @@ void main() {
       });
 
       test('decodes accepted draw response', () {
-        final msg = codec.decode(MessageFixtures.drawResponseAcceptedBytes) as DrawResponseMessage;
+        final msg =
+            codec.decode(MessageFixtures.drawResponseAcceptedBytes)
+                as DrawResponseMessage;
         expect(msg.accepted, isTrue);
       });
 
       test('decodes rejected draw response', () {
-        final msg = codec.decode(MessageFixtures.drawResponseRejectedBytes) as DrawResponseMessage;
+        final msg =
+            codec.decode(MessageFixtures.drawResponseRejectedBytes)
+                as DrawResponseMessage;
         expect(msg.accepted, isFalse);
       });
     });
@@ -294,14 +309,16 @@ void main() {
       });
 
       test('decodes accepted rematch response', () {
-        final msg = codec.decode(MessageFixtures.rematchResponseAcceptedBytes)
-            as RematchResponseMessage;
+        final msg =
+            codec.decode(MessageFixtures.rematchResponseAcceptedBytes)
+                as RematchResponseMessage;
         expect(msg.accepted, isTrue);
       });
 
       test('decodes rejected rematch response', () {
-        final msg = codec.decode(MessageFixtures.rematchResponseRejectedBytes)
-            as RematchResponseMessage;
+        final msg =
+            codec.decode(MessageFixtures.rematchResponseRejectedBytes)
+                as RematchResponseMessage;
         expect(msg.accepted, isFalse);
       });
     });
@@ -363,4 +380,3 @@ void main() {
     });
   });
 }
-

@@ -46,18 +46,25 @@ void main() {
     messageController = StreamController<BleMessage>.broadcast();
 
     // Stub streams so _init() doesn't crash
-    when(() => mockConnectionManager.stateStream)
-        .thenAnswer((_) => connStateController.stream);
-    when(() => mockConnectionManager.messages)
-        .thenAnswer((_) => messageController.stream);
-    when(() => mockBluetoothService.discoveredDevices)
-        .thenAnswer((_) => const Stream<List<BleDeviceInfo>>.empty());
-    when(() => mockBluetoothService.isBluetoothOn)
-        .thenAnswer((_) async => true);
-    when(() => mockBluetoothService.peripheralManager)
-      .thenReturn(mockPeripheralManager);
-    when(() => mockPeripheralManager.clientConnected)
-      .thenAnswer((_) => const Stream<String>.empty());
+    when(
+      () => mockConnectionManager.stateStream,
+    ).thenAnswer((_) => connStateController.stream);
+    when(
+      () => mockConnectionManager.messages,
+    ).thenAnswer((_) => messageController.stream);
+    when(
+      () => mockBluetoothService.discoveredDevices,
+    ).thenAnswer((_) => const Stream<List<BleDeviceInfo>>.empty());
+    when(
+      () => mockBluetoothService.isBluetoothOn,
+    ).thenAnswer((_) async => true);
+    when(() => mockConnectionManager.dispose()).thenAnswer((_) async {});
+    when(
+      () => mockBluetoothService.peripheralManager,
+    ).thenReturn(mockPeripheralManager);
+    when(
+      () => mockPeripheralManager.clientConnected,
+    ).thenAnswer((_) => const Stream<String>.empty());
 
     hasPermission = true;
     requestGranted = true;
@@ -88,7 +95,10 @@ void main() {
   group('BluetoothController', () {
     group('initial state', () {
       test('starts with disconnected state', () {
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
         expect(controller.state.isHost, isFalse);
         expect(controller.state.isScanning, isFalse);
         expect(controller.state.scannedDevices, isEmpty);
@@ -106,63 +116,83 @@ void main() {
         expect(controller.state.isScanning, isFalse);
       });
 
-      test('startScanning enters scanning state when permission is granted',
-          () async {
-        when(() => mockBluetoothService.startScanning()).thenAnswer((_) async {});
+      test(
+        'startScanning enters scanning state when permission is granted',
+        () async {
+          when(
+            () => mockBluetoothService.startScanning(),
+          ).thenAnswer((_) async {});
 
-        await controller.startScanning();
+          await controller.startScanning();
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.scanning);
-        expect(controller.state.isScanning, isTrue);
-        verify(() => mockBluetoothService.startScanning()).called(1);
-      });
+          expect(
+            controller.state.connectionStatus,
+            BleConnectionStatus.scanning,
+          );
+          expect(controller.state.isScanning, isTrue);
+          verify(() => mockBluetoothService.startScanning()).called(1);
+        },
+      );
 
-      test('startScanning shows settings guidance when permission permanently denied',
-          () async {
-        hasPermission = false;
-        requestGranted = false;
-        permanentlyDenied = true;
+      test(
+        'startScanning shows settings guidance when permission permanently denied',
+        () async {
+          hasPermission = false;
+          requestGranted = false;
+          permanentlyDenied = true;
 
-        await controller.startScanning();
+          await controller.startScanning();
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(
-          controller.state.lastError,
-          'Bluetooth permission is permanently denied. Please enable it in Settings.',
-        );
-      });
+          expect(controller.state.connectionStatus, BleConnectionStatus.error);
+          expect(
+            controller.state.lastError,
+            'Bluetooth permission is permanently denied. Please enable it in Settings.',
+          );
+        },
+      );
 
-      test('startScanning reports bluetooth off when permission request fails and adapter is off',
-          () async {
-        hasPermission = false;
-        requestGranted = false;
-        permanentlyDenied = false;
-        when(() => mockBluetoothService.isBluetoothOn).thenAnswer((_) async => false);
+      test(
+        'startScanning reports bluetooth off when permission request fails and adapter is off',
+        () async {
+          hasPermission = false;
+          requestGranted = false;
+          permanentlyDenied = false;
+          when(
+            () => mockBluetoothService.isBluetoothOn,
+          ).thenAnswer((_) async => false);
 
-        await controller.startScanning();
+          await controller.startScanning();
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(controller.state.lastError, 'Bluetooth is turned off');
-      });
+          expect(controller.state.connectionStatus, BleConnectionStatus.error);
+          expect(controller.state.lastError, 'Bluetooth is turned off');
+        },
+      );
 
-      test('startScanning reports bluetooth off when permission is granted but adapter is off',
-          () async {
-        hasPermission = true;
-        when(() => mockBluetoothService.isBluetoothOn).thenAnswer((_) async => false);
+      test(
+        'startScanning reports bluetooth off when permission is granted but adapter is off',
+        () async {
+          hasPermission = true;
+          when(
+            () => mockBluetoothService.isBluetoothOn,
+          ).thenAnswer((_) async => false);
 
-        await controller.startScanning();
+          await controller.startScanning();
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(controller.state.lastError, 'Bluetooth is turned off');
-        verifyNever(() => mockBluetoothService.startScanning());
-      });
+          expect(controller.state.connectionStatus, BleConnectionStatus.error);
+          expect(controller.state.lastError, 'Bluetooth is turned off');
+          verifyNever(() => mockBluetoothService.startScanning());
+        },
+      );
     });
 
     group('connection state changes', () {
       test('connected state updates controller', () async {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
-        expect(controller.state.connectionStatus, BleConnectionStatus.connected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.connected,
+        );
       });
 
       test('disconnected state resets pending move and device', () async {
@@ -172,7 +202,10 @@ void main() {
         connStateController.add(cm.ConnectionState.disconnected);
         await Future.delayed(Duration.zero);
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
         expect(controller.state.hasPendingMove, isFalse);
       });
 
@@ -185,29 +218,44 @@ void main() {
       test('reconnecting state transitions', () async {
         connStateController.add(cm.ConnectionState.reconnecting);
         await Future.delayed(Duration.zero);
-        expect(controller.state.connectionStatus, BleConnectionStatus.reconnecting);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.reconnecting,
+        );
       });
     });
 
     group('disconnect', () {
       test('disconnect resets state', () async {
         when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
-        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+        when(
+          () => mockBluetoothService.stopAdvertising(),
+        ).thenAnswer((_) async {});
 
         await controller.disconnect();
 
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
         expect(controller.state.isHost, isFalse);
       });
 
       test('disconnect tolerates errors', () async {
-        when(() => mockConnectionManager.disconnect()).thenThrow(Exception('error'));
-        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.disconnect(),
+        ).thenThrow(Exception('error'));
+        when(
+          () => mockBluetoothService.stopAdvertising(),
+        ).thenAnswer((_) async {});
 
         await controller.disconnect();
 
         // Should not throw, state is reset regardless
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
       });
     });
 
@@ -217,8 +265,9 @@ void main() {
       });
 
       test('createLobby rethrows when advertising setup fails', () async {
-        when(() => mockBluetoothService.startAdvertising(any()))
-            .thenThrow(const BleConnectionException('boom'));
+        when(
+          () => mockBluetoothService.startAdvertising(any()),
+        ).thenThrow(const BleConnectionException('boom'));
 
         await expectLater(
           controller.createLobby('test-game'),
@@ -226,39 +275,52 @@ void main() {
         );
 
         expect(controller.state.connectionStatus, BleConnectionStatus.error);
-        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
+        expect(
+          controller.state.lastError,
+          UserErrorFormatter.genericErrorMessage,
+        );
       });
 
       test('createLobby keeps host state when advertising succeeds', () async {
-        when(() => mockBluetoothService.startAdvertising(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => mockBluetoothService.startAdvertising(any()),
+        ).thenAnswer((_) async {});
 
         await controller.createLobby('test-game');
 
         expect(controller.state.isHost, isTrue);
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
-        verify(() => mockBluetoothService.startAdvertising('test-game')).called(1);
-      });
-
-      test('createLobby shows settings guidance when permission permanently denied',
-          () async {
-        hasPermission = false;
-        requestGranted = false;
-        permanentlyDenied = true;
-
-        await controller.createLobby('test-game');
-
-        expect(controller.state.connectionStatus, BleConnectionStatus.error);
         expect(
-          controller.state.lastError,
-          'Bluetooth permission is permanently denied. Please enable it in Settings.',
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
         );
+        verify(
+          () => mockBluetoothService.startAdvertising('test-game'),
+        ).called(1);
       });
+
+      test(
+        'createLobby shows settings guidance when permission permanently denied',
+        () async {
+          hasPermission = false;
+          requestGranted = false;
+          permanentlyDenied = true;
+
+          await controller.createLobby('test-game');
+
+          expect(controller.state.connectionStatus, BleConnectionStatus.error);
+          expect(
+            controller.state.lastError,
+            'Bluetooth permission is permanently denied. Please enable it in Settings.',
+          );
+        },
+      );
     });
 
     group('stopScanning state', () {
       test('stopScanning is safe when not scanning', () async {
-        when(() => mockBluetoothService.stopScanning()).thenAnswer((_) async {});
+        when(
+          () => mockBluetoothService.stopScanning(),
+        ).thenAnswer((_) async {});
         // Should not throw even when not currently scanning
         await controller.stopScanning();
         expect(controller.state.isScanning, isFalse);
@@ -278,8 +340,9 @@ void main() {
         await Future.delayed(Duration.zero);
 
         // Stub sendAck to succeed
-        when(() => mockConnectionManager.sendAck(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendAck(any()),
+        ).thenAnswer((_) async {});
 
         // Simulate receiving a GAME_START message
         messageController.add(const GameStartMessage(messageId: 42));
@@ -296,8 +359,9 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendAck(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendAck(any()),
+        ).thenAnswer((_) async {});
 
         messageController.add(const GameStartMessage(messageId: 100));
         await Future.delayed(Duration.zero);
@@ -313,8 +377,9 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchRequest())
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchRequest(),
+        ).thenAnswer((_) async {});
 
         await controller.sendRematchRequest();
 
@@ -341,16 +406,20 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchRequest())
-            .thenAnswer((_) async {});
-        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchRequest(),
+        ).thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchResponse(accepted: true),
+        ).thenAnswer((_) async {});
 
         await controller.sendRematchRequest();
         messageController.add(const RematchRequestMessage(messageId: 21));
         await Future.delayed(const Duration(milliseconds: 10));
 
-        verify(() => mockConnectionManager.sendRematchResponse(accepted: true)).called(1);
+        verify(
+          () => mockConnectionManager.sendRematchResponse(accepted: true),
+        ).called(1);
         expect(controller.state.rematchStartSignal, 1);
       });
 
@@ -363,48 +432,63 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchResponse(accepted: true),
+        ).thenAnswer((_) async {});
 
         await controller.sendRematchResponse(accepted: true);
 
-        verify(() => mockConnectionManager.sendRematchResponse(accepted: true)).called(1);
+        verify(
+          () => mockConnectionManager.sendRematchResponse(accepted: true),
+        ).called(1);
         expect(controller.state.rematchStartSignal, 1);
       });
 
-      test('accepting rematch still starts rematch when response send fails', () async {
-        gameController.newGame(
-          mode: GameMode.bleHost,
-          localPlayerColor: PieceColor.white,
-        );
+      test(
+        'accepting rematch still starts rematch when response send fails',
+        () async {
+          gameController.newGame(
+            mode: GameMode.bleHost,
+            localPlayerColor: PieceColor.white,
+          );
 
-        connStateController.add(cm.ConnectionState.connected);
-        await Future.delayed(Duration.zero);
+          connStateController.add(cm.ConnectionState.connected);
+          await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(accepted: true))
-            .thenThrow(Exception('send failed'));
+          when(
+            () => mockConnectionManager.sendRematchResponse(accepted: true),
+          ).thenThrow(Exception('send failed'));
 
-        await controller.sendRematchResponse(accepted: true);
+          await controller.sendRematchResponse(accepted: true);
 
-        expect(controller.state.rematchStartSignal, 1);
-      });
+          expect(controller.state.rematchStartSignal, 1);
+        },
+      );
 
       test('declined rematch disconnects and keeps declined marker', () async {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchRequest())
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchRequest(),
+        ).thenAnswer((_) async {});
         when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
-        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+        when(
+          () => mockBluetoothService.stopAdvertising(),
+        ).thenAnswer((_) async {});
 
         await controller.sendRematchRequest();
         final beforeSignal = controller.state.rematchStartSignal;
-        messageController.add(const RematchResponseMessage(messageId: 22, accepted: false));
+        messageController.add(
+          const RematchResponseMessage(messageId: 22, accepted: false),
+        );
         await Future.delayed(Duration.zero);
 
         expect(controller.state.rematchDeclined, isTrue);
-        expect(controller.state.connectionStatus, BleConnectionStatus.disconnected);
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
         expect(controller.state.rematchStartSignal, beforeSignal);
       });
 
@@ -412,10 +496,13 @@ void main() {
         connStateController.add(cm.ConnectionState.connected);
         await Future.delayed(Duration.zero);
 
-        when(() => mockConnectionManager.sendRematchResponse(accepted: false))
-            .thenAnswer((_) async {});
+        when(
+          () => mockConnectionManager.sendRematchResponse(accepted: false),
+        ).thenAnswer((_) async {});
         when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
-        when(() => mockBluetoothService.stopAdvertising()).thenAnswer((_) async {});
+        when(
+          () => mockBluetoothService.stopAdvertising(),
+        ).thenAnswer((_) async {});
 
         final beforeSignal = controller.state.rematchStartSignal;
         await controller.sendRematchResponse(accepted: false);
@@ -426,55 +513,72 @@ void main() {
     });
 
     group('incoming move validation', () {
-      test('host rejects incoming malformed promotion code with malformed ack', () async {
-        when(() => mockBluetoothService.startAdvertising(any()))
-            .thenAnswer((_) async {});
-        when(() => mockConnectionManager.sendAck(any()))
-          .thenAnswer((_) async {});
-        when(() => mockConnectionManager.sendAck(any(), error: BleErrorCode.malformedMessage))
-            .thenAnswer((_) async {});
+      test(
+        'host rejects incoming malformed promotion code with malformed ack',
+        () async {
+          when(
+            () => mockBluetoothService.startAdvertising(any()),
+          ).thenAnswer((_) async {});
+          when(
+            () => mockConnectionManager.sendAck(any()),
+          ).thenAnswer((_) async {});
+          when(
+            () => mockConnectionManager.sendAck(
+              any(),
+              error: BleErrorCode.malformedMessage,
+            ),
+          ).thenAnswer((_) async {});
 
-        await controller.createLobby('promo-host');
-        gameController.newGame(
-          mode: GameMode.bleHost,
-          localPlayerColor: PieceColor.white,
-        );
+          await controller.createLobby('promo-host');
+          gameController.newGame(
+            mode: GameMode.bleHost,
+            localPlayerColor: PieceColor.white,
+          );
 
-        gameController.makeMove(
-          from: Square.fromAlgebraic('e2'),
-          to: Square.fromAlgebraic('e4'),
-        );
+          gameController.makeMove(
+            from: Square.fromAlgebraic('e2'),
+            to: Square.fromAlgebraic('e4'),
+          );
 
-        connStateController.add(cm.ConnectionState.connected);
-        await Future.delayed(Duration.zero);
+          connStateController.add(cm.ConnectionState.connected);
+          await Future.delayed(Duration.zero);
 
-        messageController.add(
-          const MoveMessage(messageId: 77, from: 52, to: 60, promotion: 5),
-        );
-        await Future.delayed(Duration.zero);
+          messageController.add(
+            const MoveMessage(messageId: 77, from: 52, to: 60, promotion: 5),
+          );
+          await Future.delayed(Duration.zero);
 
-        verify(() => mockConnectionManager.sendAck(
+          verify(
+            () => mockConnectionManager.sendAck(
               77,
               error: BleErrorCode.malformedMessage,
-            )).called(1);
-      });
+            ),
+          ).called(1);
+        },
+      );
 
-      test('client requests sync on malformed incoming promotion code', () async {
-        when(() => mockConnectionManager.sendSyncRequest())
-            .thenAnswer((_) async {});
+      test(
+        'client requests sync on malformed incoming promotion code',
+        () async {
+          when(
+            () => mockConnectionManager.sendSyncRequest(),
+          ).thenAnswer((_) async {});
 
-        connStateController.add(cm.ConnectionState.connected);
-        await Future.delayed(Duration.zero);
+          connStateController.add(cm.ConnectionState.connected);
+          await Future.delayed(Duration.zero);
 
-        messageController.add(
-          const MoveMessage(messageId: 88, from: 52, to: 60, promotion: 9),
-        );
-        await Future.delayed(Duration.zero);
+          messageController.add(
+            const MoveMessage(messageId: 88, from: 52, to: 60, promotion: 9),
+          );
+          await Future.delayed(Duration.zero);
 
-        verify(() => mockConnectionManager.sendSyncRequest()).called(1);
-        expect(controller.state.lastError, UserErrorFormatter.genericErrorMessage);
-      });
+          verify(() => mockConnectionManager.sendSyncRequest()).called(1);
+          expect(
+            controller.state.lastError,
+            UserErrorFormatter.genericErrorMessage,
+          );
+        },
+      );
     });
   });
 }
-

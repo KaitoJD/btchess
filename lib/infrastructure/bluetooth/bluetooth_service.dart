@@ -27,7 +27,8 @@ class BluetoothService {
   final BlePeripheralManager _peripheralManager = BlePeripheralManager();
 
   // Stream controller for scanned devices
-  final StreamController<List<BleDeviceInfo>> _devicesController = StreamController<List<BleDeviceInfo>>.broadcast();
+  final StreamController<List<BleDeviceInfo>> _devicesController =
+      StreamController<List<BleDeviceInfo>>.broadcast();
 
   // Currently discovered devices
   final Map<String, BleDeviceInfo> _discoveredDevices = {};
@@ -47,10 +48,11 @@ class BluetoothService {
   bool _isScanning = false;
 
   // Stream of discovered devices
-  Stream<List<BleDeviceInfo>> get discoveredDevices => _devicesController.stream;
+  Stream<List<BleDeviceInfo>> get discoveredDevices =>
+      _devicesController.stream;
 
   // Whether BLE is supported on this device
-  Future<bool> get isSupported async{
+  Future<bool> get isSupported async {
     return FlutterBluePlus.isSupported;
   }
 
@@ -61,7 +63,8 @@ class BluetoothService {
   }
 
   // Stream of Bluetooth adapter state changes
-  Stream<BluetoothAdapterState> get adapterState => FlutterBluePlus.adapterState;
+  Stream<BluetoothAdapterState> get adapterState =>
+      FlutterBluePlus.adapterState;
 
   // Whether currently scanning
   bool get isScanning => _isScanning;
@@ -154,7 +157,10 @@ class BluetoothService {
             timeout: const Duration(seconds: BleConstants.scanTimeoutSeconds),
           );
         } catch (e) {
-          Logger.warn('Failed to switch to scan fallback mode: $e', tag: 'BluetoothService');
+          Logger.warn(
+            'Failed to switch to scan fallback mode: $e',
+            tag: 'BluetoothService',
+          );
         }
       },
     );
@@ -241,7 +247,10 @@ class BluetoothService {
   }
 
   // Connects to a device
-  Future<BleConnection> connect(BleDeviceInfo deviceInfo, {bool asHost = false}) async {
+  Future<BleConnection> connect(
+    BleDeviceInfo deviceInfo, {
+    bool asHost = false,
+  }) async {
     await stopScanning();
 
     final deadline = DateTime.now().add(
@@ -257,8 +266,10 @@ class BluetoothService {
       var bleConnected = false;
       try {
         await deviceInfo.device.connect(
-          license: License.free,
-          timeout: const Duration(milliseconds: TimingConstants.connectionTimeoutMs),
+          license: License.nonprofit,
+          timeout: const Duration(
+            milliseconds: TimingConstants.connectionTimeoutMs,
+          ),
         );
         bleConnected = true;
 
@@ -266,7 +277,10 @@ class BluetoothService {
           try {
             await deviceInfo.device.requestMtu(BleConstants.maxMtu);
           } catch (e) {
-            Logger.warn('Failed to request MTU on Android: $e', tag: 'BluetoothService');
+            Logger.warn(
+              'Failed to request MTU on Android: $e',
+              tag: 'BluetoothService',
+            );
           }
         }
 
@@ -287,14 +301,15 @@ class BluetoothService {
           } catch (_) {}
         }
 
-        final remainingMs =
-            deadline.difference(DateTime.now()).inMilliseconds;
-        final shouldRetry = Platform.isAndroid &&
+        final remainingMs = deadline.difference(DateTime.now()).inMilliseconds;
+        final shouldRetry =
+            Platform.isAndroid &&
             remainingMs > 0 &&
             _isRecoverableConnectFailure(e);
 
         if (!shouldRetry) {
-          exhaustedRecoverableRetries = Platform.isAndroid &&
+          exhaustedRecoverableRetries =
+              Platform.isAndroid &&
               remainingMs <= 0 &&
               _isRecoverableConnectFailure(e);
           break;
