@@ -5,6 +5,9 @@ import 'package:btchess/domain/models/saved_game.dart';
 import 'package:btchess/domain/models/game_mode.dart';
 import 'package:btchess/domain/models/game_state.dart';
 import 'package:btchess/domain/models/game_result.dart';
+import 'package:btchess/domain/models/square.dart';
+import 'package:btchess/domain/services/chess_service.dart';
+import 'package:btchess/domain/enums/game_status.dart';
 import 'package:btchess/domain/enums/game_end_reason.dart';
 import 'package:btchess/domain/enums/winner.dart';
 import 'package:btchess/infrastructure/persistence/game_repository.dart';
@@ -56,14 +59,14 @@ void main() {
       });
 
       test('saves completed game with result', () async {
-        final result = GameResult.checkmate(Winner.white, finalFen: FenFixtures.scholarsMate);
+        final result = GameResult.checkmate(
+          Winner.white,
+          finalFen: FenFixtures.scholarsMate,
+        );
         final gameState = GameState.newGame(
           id: 'test-2',
           mode: GameMode.hotseat,
-        ).copyWith(
-          fen: FenFixtures.scholarsMate,
-          result: result,
-        );
+        ).copyWith(fen: FenFixtures.scholarsMate, result: result);
 
         await repository.saveGame(gameState);
         final saved = await repository.getGame('test-2');
@@ -101,10 +104,14 @@ void main() {
 
     group('getInProgressGames', () {
       test('returns only in-progress games', () async {
-        final inProgress = GameState.newGame(id: 'ip-1', mode: GameMode.hotseat);
-        final completed = GameState.newGame(id: 'done-1', mode: GameMode.hotseat).copyWith(
-          result: GameResult.checkmate(Winner.white),
+        final inProgress = GameState.newGame(
+          id: 'ip-1',
+          mode: GameMode.hotseat,
         );
+        final completed = GameState.newGame(
+          id: 'done-1',
+          mode: GameMode.hotseat,
+        ).copyWith(result: GameResult.checkmate(Winner.white));
 
         await repository.saveGame(inProgress);
         await repository.saveGame(completed);
@@ -117,10 +124,14 @@ void main() {
 
     group('getCompletedGames', () {
       test('returns only completed games', () async {
-        final inProgress = GameState.newGame(id: 'ip-1', mode: GameMode.hotseat);
-        final completed = GameState.newGame(id: 'done-1', mode: GameMode.hotseat).copyWith(
-          result: GameResult.checkmate(Winner.white),
+        final inProgress = GameState.newGame(
+          id: 'ip-1',
+          mode: GameMode.hotseat,
         );
+        final completed = GameState.newGame(
+          id: 'done-1',
+          mode: GameMode.hotseat,
+        ).copyWith(result: GameResult.checkmate(Winner.white));
 
         await repository.saveGame(inProgress);
         await repository.saveGame(completed);
@@ -147,9 +158,10 @@ void main() {
       });
 
       test('returns null when no in-progress games', () async {
-        final completed = GameState.newGame(id: 'done', mode: GameMode.hotseat).copyWith(
-          result: GameResult.stalemate(),
-        );
+        final completed = GameState.newGame(
+          id: 'done',
+          mode: GameMode.hotseat,
+        ).copyWith(result: GameResult.stalemate());
         await repository.saveGame(completed);
 
         final recent = await repository.getMostRecentGame();
@@ -202,7 +214,10 @@ void main() {
 
     group('savedGameToState', () {
       test('converts SavedGame back to GameState', () async {
-        final original = GameState.newGame(id: 'convert-1', mode: GameMode.hotseat);
+        final original = GameState.newGame(
+          id: 'convert-1',
+          mode: GameMode.hotseat,
+        );
         await repository.saveGame(original);
 
         final saved = await repository.getGame('convert-1');
@@ -212,6 +227,93 @@ void main() {
         expect(restored.fen, FenFixtures.startingPosition);
         expect(restored.mode, GameMode.hotseat);
       });
+
+      test(
+        'restores replayed move history and captured-piece metadata',
+        () async {
+          const chessService = ChessService();
+          var gameState = GameState.newGame(
+            id: 'restore-moves',
+            mode: GameMode.hotseat,
+          );
+
+          for (final (from, to) in [('e2', 'e4'), ('d7', 'd5'), ('e4', 'd5')]) {
+            final result = chessService.makeMove(
+              gameState.fen,
+              Square.fromAlgebraic(from),
+              Square.fromAlgebraic(to),
+            );
+            gameState = gameState.copyWith(
+              fen: result.fen,
+              moves: [...gameState.moves, result.move!],
+              currentTurn: chessService.getCurrentTurn(result.fen!),
+              status: result.status,
+            );
+          }
+
+          await repository.saveGame(gameState);
+          final saved = await repository.getGame('restore-moves');
+          final restored = repository.savedGameToState(saved!);
+
+          expect(saved.uciMoves, ['e2e4', 'd7d5', 'e4d5']);
+          expect(restored.fen, gameState.fen);
+          expect(restored.moves.map((move) => move.uci), saved.uciMoves);
+          expect(restored.moves.last.capturedPiece, isNotNull);
+          expect(restored.moves.last.san, 'exd5');
+        },
+      );
+
+      test('restores completed game status from result', () async {
+        final gameState =
+            GameState.newGame(
+              id: 'restore-status',
+              mode: GameMode.hotseat,
+            ).copyWith(
+              fen: FenFixtures.scholarsMate,
+              result: GameResult.checkmate(
+                Winner.white,
+                finalFen: FenFixtures.scholarsMate,
+              ),
+            );
+
+        await repository.saveGame(gameState);
+        final saved = await repository.getGame('restore-status');
+        final restored = repository.savedGameToState(saved!);
+
+        expect(restored.result, isNotNull);
+        expect(restored.status, GameStatus.checkmate);
+      });
+    });
+
+    group('safe enum decoding', () {
+      test('falls back to hotseat for invalid saved mode index', () {
+        final savedGame = SavedGame(
+          id: 'bad-mode',
+          fen: FenFixtures.startingPosition,
+          moves: const [],
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+          modeIndex: 999,
+        );
+
+        expect(savedGame.mode, GameMode.hotseat);
+      });
+
+      test('ignores invalid saved result indexes', () {
+        final savedGame = SavedGame(
+          id: 'bad-result',
+          fen: FenFixtures.startingPosition,
+          moves: const [],
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+          modeIndex: GameMode.hotseat.index,
+          winnerIndex: 99,
+          endReasonIndex: GameEndReason.checkmate.index,
+        );
+
+        expect(savedGame.result, isNull);
+        expect(savedGame.isCompleted, isFalse);
+      });
     });
 
     group('update existing game', () {
@@ -219,9 +321,7 @@ void main() {
         final state1 = GameState.newGame(id: 'upd-1', mode: GameMode.hotseat);
         await repository.saveGame(state1);
 
-        final updated = state1.copyWith(
-          fen: FenFixtures.afterE4,
-        );
+        final updated = state1.copyWith(fen: FenFixtures.afterE4);
         await repository.saveGame(updated);
 
         final saved = await repository.getGame('upd-1');
@@ -233,4 +333,3 @@ void main() {
     });
   });
 }
-
