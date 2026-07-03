@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/piece.dart';
+import '../../../domain/models/settings_models.dart';
 import '../../../domain/models/square.dart';
-import '../../../infrastructure/persistence/settings_repository.dart';
 import '../../themes/board_themes.dart';
 import 'piece_widget.dart';
 
 class SquareDragData {
-
-  const SquareDragData({
-    required this.square,
-    required this.piece,
-  });
+  const SquareDragData({required this.square, required this.piece});
   final Square square;
   final Piece piece;
 }
 
 class SquareWidget extends StatelessWidget {
-
   const SquareWidget({
-    required this.square, required this.size, required this.theme, required this.pieceTheme, super.key,
+    required this.square,
+    required this.size,
+    required this.theme,
+    required this.pieceTheme,
+    super.key,
     this.piece,
     this.isSelected = false,
     this.isLegalMove = false,
@@ -66,15 +65,15 @@ class SquareWidget extends StatelessWidget {
           child: Container(
             width: size,
             height: size,
-            decoration: BoxDecoration(
-              color: _getBackgroundColor(isDropTarget),
-            ),
+            decoration: BoxDecoration(color: _getBackgroundColor(isDropTarget)),
             child: Stack(
               children: [
-                if (isSelected || isLastMove || isCheck || isDropTarget) _buildHighlightOverlay(isDropTarget),
+                if (isSelected || isLastMove || isCheck || isDropTarget)
+                  _buildHighlightOverlay(isDropTarget),
                 if (isLegalMove) _buildLegalMoveIndicator(),
                 if (piece != null) _buildPiece(),
-                if (showFileCoordinate || showRankCoordinate) _buildCoordinates(),
+                if (showFileCoordinate || showRankCoordinate)
+                  _buildCoordinates(),
               ],
             ),
           ),
@@ -108,11 +107,7 @@ class SquareWidget extends StatelessWidget {
       overlayColor = Colors.transparent;
     }
 
-    return Container(
-      width: size,
-      height: size,
-      color: overlayColor,
-    );
+    return Container(width: size, height: size, color: overlayColor);
   }
 
   Widget _buildLegalMoveIndicator() {
@@ -161,13 +156,18 @@ class SquareWidget extends StatelessWidget {
       );
     }
 
-    return PieceWidget(piece: piece!, size: size, pieceTheme: pieceTheme, rotated: shouldRotate);
+    return PieceWidget(
+      piece: piece!,
+      size: size,
+      pieceTheme: pieceTheme,
+      rotated: shouldRotate,
+    );
   }
 
   Widget _buildCoordinates() {
     return Stack(
       children: [
-        if (showFileCoordinate) 
+        if (showFileCoordinate)
           Positioned(
             right: 2,
             bottom: 1,
@@ -176,11 +176,13 @@ class SquareWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: size * 0.15,
                 fontWeight: FontWeight.bold,
-                color: square.isLight ? theme.darkSquare.withValues(alpha: 0.8) : theme.lightSquare.withValues(alpha: 0.8),
+                color: square.isLight
+                    ? theme.darkSquare.withValues(alpha: 0.8)
+                    : theme.lightSquare.withValues(alpha: 0.8),
               ),
             ),
           ),
-        if (showRankCoordinate) 
+        if (showRankCoordinate)
           Positioned(
             left: 2,
             top: 1,
@@ -189,7 +191,9 @@ class SquareWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: size * 0.15,
                 fontWeight: FontWeight.bold,
-                color: square.isLight ? theme.darkSquare.withValues(alpha: 0.8) : theme.lightSquare.withValues(alpha: 0.8),
+                color: square.isLight
+                    ? theme.darkSquare.withValues(alpha: 0.8)
+                    : theme.lightSquare.withValues(alpha: 0.8),
               ),
             ),
           ),

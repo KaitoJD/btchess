@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../infrastructure/persistence/settings_repository.dart';
+import '../../domain/models/settings_models.dart';
 
 class SettingsState extends Equatable {
   const SettingsState({
@@ -11,6 +11,7 @@ class SettingsState extends Equatable {
     this.debugMode = false,
     this.autoFlipBoard = false,
     this.isLoaded = false,
+    this.lastError,
   });
 
   factory SettingsState.defaults() => const SettingsState(isLoaded: true);
@@ -23,6 +24,7 @@ class SettingsState extends Equatable {
   final bool debugMode;
   final bool autoFlipBoard;
   final bool isLoaded;
+  final String? lastError;
 
   SettingsState copyWith({
     bool? soundEnabled,
@@ -33,6 +35,8 @@ class SettingsState extends Equatable {
     bool? debugMode,
     bool? autoFlipBoard,
     bool? isLoaded,
+    String? lastError,
+    bool clearLastError = false,
   }) {
     return SettingsState(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -43,6 +47,7 @@ class SettingsState extends Equatable {
       debugMode: debugMode ?? this.debugMode,
       autoFlipBoard: autoFlipBoard ?? this.autoFlipBoard,
       isLoaded: isLoaded ?? this.isLoaded,
+      lastError: clearLastError ? null : (lastError ?? this.lastError),
     );
   }
 
@@ -56,6 +61,7 @@ class SettingsState extends Equatable {
     debugMode,
     autoFlipBoard,
     isLoaded,
+    lastError,
   ];
 
   @override

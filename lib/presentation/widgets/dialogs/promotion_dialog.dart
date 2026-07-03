@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../domain/enums/promotion_piece.dart';
 import '../../../domain/models/piece.dart';
-import '../../../infrastructure/persistence/settings_repository.dart';
+import '../../../domain/models/settings_models.dart';
 import '../../themes/piece_themes.dart';
 
 class PromotionDialog extends StatelessWidget {
-
   const PromotionDialog({
-    required this.color, required this.onPieceSelected, required this.pieceTheme, super.key,
+    required this.color,
+    required this.onPieceSelected,
+    required this.pieceTheme,
+    super.key,
     this.onCancelled,
   });
   final PieceColor color;
@@ -47,19 +49,18 @@ class PromotionDialog extends StatelessWidget {
   PieceType _getPieceType(PromotionPiece promotionPiece) {
     switch (promotionPiece) {
       case PromotionPiece.queen:
-      return PieceType.queen;
+        return PieceType.queen;
       case PromotionPiece.rook:
-      return PieceType.rook;
+        return PieceType.rook;
       case PromotionPiece.bishop:
-      return PieceType.bishop;
+        return PieceType.bishop;
       case PromotionPiece.knight:
-      return PieceType.knight;
+        return PieceType.knight;
     }
   }
 }
 
 class _PromotionOption extends StatelessWidget {
-  
   const _PromotionOption({
     required this.piece,
     required this.pieceTheme,
@@ -77,17 +78,17 @@ class _PromotionOption extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(8),
-        child: SvgPicture.asset(
-          assetPath,
-          width: 48,
-          height: 48,
-        ),
+        child: SvgPicture.asset(assetPath, width: 48, height: 48),
       ),
     );
   }
 }
 
-Future<PromotionPiece?> showPromotionDialog(BuildContext context, {required PieceColor color, required PieceTheme pieceTheme}) async {
+Future<PromotionPiece?> showPromotionDialog(
+  BuildContext context, {
+  required PieceColor color,
+  required PieceTheme pieceTheme,
+}) async {
   PromotionPiece? selected;
 
   await showDialog<void>(

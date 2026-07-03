@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/logger.dart';
+import '../../domain/models/settings_models.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 import '../states/settings_state.dart';
 
@@ -32,7 +34,12 @@ class SettingsController extends StateNotifier<SettingsState> {
         isLoaded: true,
       );
     } catch (e) {
-      state = SettingsState.defaults();
+      Logger.error(
+        'Failed to load settings; using defaults',
+        tag: 'SettingsController',
+        error: e,
+      );
+      state = SettingsState.defaults().copyWith(lastError: e.toString());
     }
   }
 
