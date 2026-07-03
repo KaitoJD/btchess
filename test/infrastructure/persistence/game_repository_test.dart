@@ -285,6 +285,45 @@ void main() {
       });
     });
 
+    group('legacy Hive compatibility', () {
+      test('reads saved games written before uciMoves existed', () async {
+        await repository.close();
+        await Hive.close();
+
+        Hive.resetAdapters();
+        Hive.init(tempDir.path);
+        _registerDefaultHiveAdaptersForTest();
+        Hive.registerAdapter<SavedGame>(_LegacySavedGameAdapter());
+        final legacyBox = await Hive.openBox<SavedGame>('games');
+        final legacySavedGame = SavedGame(
+          id: 'legacy-without-uci',
+          fen: FenFixtures.afterE4,
+          moves: const ['e4'],
+          createdAt: DateTime.utc(2026),
+          updatedAt: DateTime.utc(2026),
+          modeIndex: GameMode.hotseat.index,
+        );
+
+        await legacyBox.put(legacySavedGame.id, legacySavedGame);
+        await legacyBox.close();
+        await Hive.close();
+
+        Hive.resetAdapters();
+        Hive.init(tempDir.path);
+        _registerDefaultHiveAdaptersForTest();
+        Hive.registerAdapter(SavedGameAdapter());
+
+        repository = GameRepository();
+        await repository.init();
+
+        final savedGame = await repository.getGame(legacySavedGame.id);
+        expect(savedGame, isNotNull);
+        expect(savedGame!.uciMoves, isEmpty);
+
+        expect(() => repository.savedGameToState(savedGame), returnsNormally);
+      });
+    });
+
     group('safe enum decoding', () {
       test('falls back to hotseat for invalid saved mode index', () {
         final savedGame = SavedGame(
@@ -332,4 +371,135 @@ void main() {
       });
     });
   });
+}
+
+void _registerDefaultHiveAdaptersForTest() {
+  // Hive.resetAdapters() also clears Hive's built-in DateTime/BigInt adapters.
+  Hive
+    ..registerAdapter<DateTime>(
+      _DateTimeWithTimezoneAdapterForTest(),
+      internal: true,
+    )
+    ..registerAdapter<_DateTimeWithoutTimezoneForTest>(
+      _DateTimeAdapterForTest(),
+      internal: true,
+    )
+    ..registerAdapter<BigInt>(_BigIntAdapterForTest(), internal: true);
+}
+
+class _LegacySavedGameAdapter extends TypeAdapter<SavedGame> {
+  @override
+  final int typeId = 0;
+
+  @override
+  SavedGame read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (var i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+
+    return SavedGame(
+      id: fields[0] as String,
+      fen: fields[1] as String,
+      moves: (fields[2] as List).cast<String>(),
+      createdAt: fields[3] as DateTime,
+      updatedAt: fields[4] as DateTime,
+      modeIndex: fields[5] as int,
+      winnerIndex: fields[6] as int?,
+      endReasonIndex: fields[7] as int?,
+      opponentName: fields[8] as String?,
+      pgn: fields[9] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, SavedGame obj) {
+    writer
+      ..writeByte(10)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.fen)
+      ..writeByte(2)
+      ..write(obj.moves)
+      ..writeByte(3)
+      ..write(obj.createdAt)
+      ..writeByte(4)
+      ..write(obj.updatedAt)
+      ..writeByte(5)
+      ..write(obj.modeIndex)
+      ..writeByte(6)
+      ..write(obj.winnerIndex)
+      ..writeByte(7)
+      ..write(obj.endReasonIndex)
+      ..writeByte(8)
+      ..write(obj.opponentName)
+      ..writeByte(9)
+      ..write(obj.pgn);
+  }
+}
+
+class _DateTimeWithTimezoneAdapterForTest extends TypeAdapter<DateTime> {
+  @override
+  final int typeId = 18;
+
+  @override
+  DateTime read(BinaryReader reader) {
+    final millis = reader.readInt();
+    final isUtc = reader.readBool();
+
+    return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: isUtc);
+  }
+
+  @override
+  void write(BinaryWriter writer, DateTime obj) {
+    writer
+      ..writeInt(obj.millisecondsSinceEpoch)
+      ..writeBool(obj.isUtc);
+  }
+}
+
+class _DateTimeWithoutTimezoneForTest extends DateTime {
+  _DateTimeWithoutTimezoneForTest.fromMillisecondsSinceEpoch(
+    super.millisecondsSinceEpoch,
+  ) : super.fromMillisecondsSinceEpoch();
+}
+
+class _DateTimeAdapterForTest
+    extends TypeAdapter<_DateTimeWithoutTimezoneForTest> {
+  @override
+  final int typeId = 16;
+
+  @override
+  _DateTimeWithoutTimezoneForTest read(BinaryReader reader) {
+    final millis = reader.readInt();
+
+    return _DateTimeWithoutTimezoneForTest.fromMillisecondsSinceEpoch(millis);
+  }
+
+  @override
+  void write(BinaryWriter writer, _DateTimeWithoutTimezoneForTest obj) {
+    writer.writeInt(obj.millisecondsSinceEpoch);
+  }
+}
+
+class _BigIntAdapterForTest extends TypeAdapter<BigInt> {
+  @override
+  final int typeId = 17;
+
+  @override
+  BigInt read(BinaryReader reader) {
+    final length = reader.readByte();
+    final intString = reader.readString(length);
+
+    return BigInt.parse(intString);
+  }
+
+  @override
+  void write(BinaryWriter writer, BigInt obj) {
+    final intString = obj.toString();
+    writer
+      ..writeByte(intString.length)
+      ..writeString(intString, writeByteCount: false);
+  }
 }
