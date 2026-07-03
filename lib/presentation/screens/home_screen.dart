@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/game_provider.dart';
 import '../../application/providers/persistence_provider.dart';
+import '../../application/providers/saved_games_provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/extensions/datetime_extensions.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/saved_game.dart';
 import '../routes/app_router.dart';
@@ -55,12 +57,16 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 24),
         Text(
           AppConstants.appName,
-          style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Bluetooth Chess',
-          style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -95,14 +101,12 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildResumeGameCard(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<SavedGame?>(
-      future: ref.read(gameRepositoryProvider).getMostRecentGame(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
+    final recentGame = ref.watch(mostRecentGameProvider);
 
-        final savedGame = snapshot.data!;
+    return recentGame.maybeWhen(
+      data: (savedGame) {
+        if (savedGame == null) return const SizedBox.shrink();
+
         final theme = Theme.of(context);
 
         return Card(
@@ -132,12 +136,16 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Resume Game',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${savedGame.moves.length} moves - ${_formatDate(savedGame.updatedAt)}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          '${savedGame.moves.length} moves - ${savedGame.updatedAt.toRelative()}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -153,6 +161,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         );
       },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 
@@ -175,29 +184,13 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _startQuickGame(BuildContext context, WidgetRef ref) {
-    ref.read(gameControllerProvider.notifier).newGame(
-      mode: GameMode.hotseat,
-    );
+    ref.read(gameControllerProvider.notifier).newGame(mode: GameMode.hotseat);
     Navigator.of(context).pushNamed(AppRoutes.game);
   }
 
-  Future<void> _resumeGame(BuildContext context, WidgetRef ref, SavedGame savedGame) async {
-    final gameRepository = ref.read(gameRepositoryProvider);
-    final gameState = gameRepository.savedGameToState(savedGame);
-    ref.read(gameControllerProvider.notifier).loadGame(gameState);
+  void _resumeGame(BuildContext context, WidgetRef ref, SavedGame savedGame) {
+    ref.read(savedGamesControllerProvider.notifier).resumeGame(savedGame);
     Navigator.of(context).pushNamed(AppRoutes.game);
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
 
