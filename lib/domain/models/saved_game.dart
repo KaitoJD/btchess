@@ -18,6 +18,7 @@ class SavedGame extends HiveObject {
     this.endReasonIndex,
     this.opponentName,
     this.pgn,
+    this.uciMoves = const [],
   });
 
   factory SavedGame.fromDomain({
@@ -30,6 +31,7 @@ class SavedGame extends HiveObject {
     GameResult? result,
     String? opponentName,
     String? pgn,
+    List<String> uciMoves = const [],
   }) {
     return SavedGame(
       id: id,
@@ -42,9 +44,10 @@ class SavedGame extends HiveObject {
       endReasonIndex: result?.reason.index,
       opponentName: opponentName,
       pgn: pgn,
+      uciMoves: uciMoves,
     );
   }
-  
+
   @HiveField(0)
   final String id;
 
@@ -75,18 +78,21 @@ class SavedGame extends HiveObject {
   @HiveField(9)
   final String? pgn;
 
-  GameMode get mode => GameMode.values[modeIndex];
-  bool get isCompleted => winnerIndex != null;
+  @HiveField(10)
+  final List<String> uciMoves;
+
+  GameMode get mode =>
+      _safeEnumValue(GameMode.values, modeIndex) ?? GameMode.hotseat;
+  bool get isCompleted => result != null;
   bool get isInProgress => !isCompleted;
 
   GameResult? get result {
     if (winnerIndex == null || endReasonIndex == null) return null;
-    return GameResult(
-      winner: Winner.values[winnerIndex!],
-      reason: GameEndReason.values[endReasonIndex!],
-      finalFen: fen,
-      pgn: pgn,
-    );
+    final winner = _safeEnumValue(Winner.values, winnerIndex!);
+    final reason = _safeEnumValue(GameEndReason.values, endReasonIndex!);
+    if (winner == null || reason == null) return null;
+
+    return GameResult(winner: winner, reason: reason, finalFen: fen, pgn: pgn);
   }
 
   SavedGame copyWith({
@@ -100,6 +106,7 @@ class SavedGame extends HiveObject {
     int? endReasonIndex,
     String? opponentName,
     String? pgn,
+    List<String>? uciMoves,
   }) {
     return SavedGame(
       id: id ?? this.id,
@@ -112,9 +119,16 @@ class SavedGame extends HiveObject {
       endReasonIndex: endReasonIndex ?? this.endReasonIndex,
       opponentName: opponentName ?? this.opponentName,
       pgn: pgn ?? this.pgn,
+      uciMoves: uciMoves ?? this.uciMoves,
     );
   }
 
   @override
-  String toString() => 'SavedGame(id: $id, mode: ${mode.name}, completed: $isCompleted)';
+  String toString() =>
+      'SavedGame(id: $id, mode: ${mode.name}, completed: $isCompleted)';
+
+  T? _safeEnumValue<T>(List<T> values, int index) {
+    if (index < 0 || index >= values.length) return null;
+    return values[index];
+  }
 }

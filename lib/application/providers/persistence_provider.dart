@@ -5,8 +5,9 @@ import '../../application/providers/services_provider.dart';
 
 final gameRepositoryProvider = Provider<GameRepository>((ref) {
   final pgnService = ref.watch(pgnServiceProvider);
+  final chessService = ref.watch(chessServiceProvider);
 
-  return GameRepository(pgnService: pgnService);
+  return GameRepository(pgnService: pgnService, chessService: chessService);
 });
 
 final gameRepositoryInitProvider = FutureProvider<void>((ref) async {
@@ -47,7 +48,10 @@ final mostRecentGameProvider = FutureProvider<SavedGame?>((ref) async {
   return repository.getMostRecentGame();
 });
 
-final savedGameProvider = FutureProvider.family<SavedGame?, String>((ref, id) async {
+final savedGameProvider = FutureProvider.family<SavedGame?, String>((
+  ref,
+  id,
+) async {
   await ref.watch(gameRepositoryInitProvider.future);
 
   final repository = ref.read(gameRepositoryProvider);
