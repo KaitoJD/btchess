@@ -78,7 +78,7 @@ class SavedGame extends HiveObject {
   @HiveField(9)
   final String? pgn;
 
-  @HiveField(10)
+  @HiveField(10, defaultValue: <String>[])
   final List<String> uciMoves;
 
   GameMode get mode =>
