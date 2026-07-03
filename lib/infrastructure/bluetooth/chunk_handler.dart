@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import '../../core/constants/ble_constants.dart';
 import '../../core/constants/timing_constants.dart';
+import '../../core/errors/ble_exception.dart';
 import '../../core/utils/binary_utils.dart';
 import 'message_models.dart';
 
@@ -19,9 +21,9 @@ class ChunkHandler {
   // Chunks a payload into multiple SyncResponseMessage objects
   List<SyncResponseMessage> chunkPayload({
     required int messageId,
-    required String payload
+    required String payload,
   }) {
-    final payloadBytes = Uint8List.fromList(payload.codeUnits);
+    final payloadBytes = Uint8List.fromList(utf8.encode(payload));
 
     if (payloadBytes.length <= maxChunkPayload) {
       return [
@@ -42,12 +44,14 @@ class ChunkHandler {
       final end = (start + maxChunkPayload).clamp(0, payloadBytes.length);
       final chunkPayload = payloadBytes.sublist(start, end);
 
-      chunks.add(SyncResponseMessage(
-        messageId: messageId,
-        sequence: i + 1,
-        total: totalChunks,
-        payload: chunkPayload,
-      ));
+      chunks.add(
+        SyncResponseMessage(
+          messageId: messageId,
+          sequence: i + 1,
+          total: totalChunks,
+          payload: chunkPayload,
+        ),
+      );
     }
 
     return chunks;
@@ -58,6 +62,8 @@ class ChunkHandler {
   // Adds a chunk to the reassembly buffer
   // Returns the complete payload if all chunks received, null otherwise
   String? addChunk(SyncResponseMessage chunk) {
+    _validateChunk(chunk);
+
     final messageId = chunk.messageId;
 
     if (chunk.total == 1) {
@@ -100,12 +106,28 @@ class ChunkHandler {
       }
     }
 
-    return String.fromCharCodes(builder.build());
+    return utf8.decode(builder.build());
+  }
+
+  void _validateChunk(SyncResponseMessage chunk) {
+    if (chunk.total < 1) {
+      throw const BleMessageException(
+        'Invalid chunk total: must be at least 1',
+      );
+    }
+
+    if (chunk.sequence < 1 || chunk.sequence > chunk.total) {
+      throw BleMessageException(
+        'Invalid chunk sequence ${chunk.sequence}/${chunk.total}',
+      );
+    }
   }
 
   // Checks for and remove timed-out reassembly operations
   void cleanupTimedOut() {
-    const timeout = Duration(milliseconds: TimingConstants.chunkReassemblyTimeoutMs);
+    const timeout = Duration(
+      milliseconds: TimingConstants.chunkReassemblyTimeoutMs,
+    );
     final now = DateTime.now();
 
     _reassemblyBuffers.removeWhere((_, state) {
@@ -129,7 +151,7 @@ class ChunkHandler {
   }
 
   // Returns progress info for a pending reassembly
-  (int recieved, int total)? getReassemblyProgress(int messageId) {
+  (int received, int total)? getReassemblyProgress(int messageId) {
     final state = _reassemblyBuffers[messageId];
     if (state == null) return null;
     return (state.chunks.length, state.totalChunks);

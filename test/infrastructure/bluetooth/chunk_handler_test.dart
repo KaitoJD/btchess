@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:btchess/core/errors/ble_exception.dart';
 import 'package:btchess/infrastructure/bluetooth/chunk_handler.dart';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 
@@ -40,13 +42,26 @@ void main() {
       });
 
       test('reassembled chunks equal original payload', () {
-        const original = 'Hello, this is a test FEN string that is long enough to chunk!';
+        const original =
+            'Hello, this is a test FEN string that is long enough to chunk!';
         final chunks = handler.chunkPayload(messageId: 1, payload: original);
 
         String? result;
         for (final chunk in chunks) {
           result = handler.addChunk(chunk);
         }
+        expect(result, original);
+      });
+
+      test('uses UTF-8 for non-ASCII payloads', () {
+        const original = 'sync payload: Trắng thắng';
+        final chunks = handler.chunkPayload(messageId: 2, payload: original);
+
+        String? result;
+        for (final chunk in chunks) {
+          result = handler.addChunk(chunk);
+        }
+
         expect(result, original);
       });
     });
@@ -57,7 +72,7 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 3,
-          payload: Uint8List.fromList('abc'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('abc')),
         );
         expect(handler.addChunk(chunk), isNull);
       });
@@ -67,13 +82,13 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 2,
-          payload: Uint8List.fromList('hello'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('hello')),
         );
         final chunk2 = SyncResponseMessage(
           messageId: 1,
           sequence: 2,
           total: 2,
-          payload: Uint8List.fromList('world'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('world')),
         );
 
         expect(handler.addChunk(chunk1), isNull);
@@ -86,13 +101,13 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 2,
-          payload: Uint8List.fromList('hello'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('hello')),
         );
         final chunk2 = SyncResponseMessage(
           messageId: 1,
           sequence: 2,
           total: 2,
-          payload: Uint8List.fromList('world'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('world')),
         );
 
         // Receive chunk 2 first, then chunk 1
@@ -106,10 +121,49 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 1,
-          payload: Uint8List.fromList('data'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('data')),
         );
         final result = handler.addChunk(chunk);
         expect(result, 'data');
+      });
+
+      test('throws for invalid chunk sequence', () {
+        final chunk = SyncResponseMessage(
+          messageId: 1,
+          sequence: 3,
+          total: 2,
+          payload: Uint8List.fromList(utf8.encode('bad')),
+        );
+
+        expect(
+          () => handler.addChunk(chunk),
+          throwsA(isA<BleMessageException>()),
+        );
+      });
+
+      test('throws for invalid chunk total', () {
+        final chunk = SyncResponseMessage(
+          messageId: 1,
+          sequence: 1,
+          total: 0,
+          payload: Uint8List.fromList(utf8.encode('bad')),
+        );
+
+        expect(
+          () => handler.addChunk(chunk),
+          throwsA(isA<BleMessageException>()),
+        );
+      });
+
+      test('throws for malformed UTF-8 payload', () {
+        final chunk = SyncResponseMessage(
+          messageId: 1,
+          sequence: 1,
+          total: 1,
+          payload: Uint8List.fromList([0xC3, 0x28]),
+        );
+
+        expect(() => handler.addChunk(chunk), throwsA(isA<FormatException>()));
       });
     });
 
@@ -123,7 +177,7 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 3,
-          payload: Uint8List.fromList('abc'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('abc')),
         );
         handler.addChunk(chunk);
         expect(handler.hasPendingReassembly(1), isTrue);
@@ -140,7 +194,7 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 3,
-          payload: Uint8List.fromList('abc'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('abc')),
         );
         handler.addChunk(chunk);
         final progress = handler.getReassemblyProgress(1);
@@ -156,7 +210,7 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 3,
-          payload: Uint8List.fromList('abc'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('abc')),
         );
         handler.addChunk(chunk);
         expect(handler.hasPendingReassembly(1), isTrue);
@@ -171,7 +225,7 @@ void main() {
           messageId: 1,
           sequence: 1,
           total: 3,
-          payload: Uint8List.fromList('abc'.codeUnits),
+          payload: Uint8List.fromList(utf8.encode('abc')),
         );
         handler.addChunk(chunk);
         handler.clear();
@@ -180,4 +234,3 @@ void main() {
     });
   });
 }
-

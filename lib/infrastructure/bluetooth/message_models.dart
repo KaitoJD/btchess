@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import '../../core/constants/error_codes.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/constants/message_types.dart';
@@ -24,7 +25,7 @@ class HandshakeMessage extends BleMessage {
 
   /// Host's chosen color: 0x00 = unspecified, 0x01 = white, 0x02 = black.
   final int hostColor;
-  
+
   bool get isHost => role == 0x01;
   bool get isClient => role == 0x02;
 
@@ -32,7 +33,8 @@ class HandshakeMessage extends BleMessage {
   MessageType get type => MessageType.handshake;
 
   @override
-  String toString() => 'Handshake(id: $messageId, version: $protocolVersion, role: ${isHost ? "HOST" : "CLIENT"}, hostColor: 0x${hostColor.toRadixString(16)})';
+  String toString() =>
+      'Handshake(id: $messageId, version: $protocolVersion, role: ${isHost ? "HOST" : "CLIENT"}, hostColor: 0x${hostColor.toRadixString(16)})';
 }
 
 class MoveMessage extends BleMessage {
@@ -54,7 +56,8 @@ class MoveMessage extends BleMessage {
   MessageType get type => MessageType.move;
 
   @override
-  String toString() => 'Move(id: $messageId, from: $from, to: $to, promo: $promotion)';
+  String toString() =>
+      'Move(id: $messageId, from: $from, to: $to, promo: $promotion)';
 }
 
 class AckMessage extends BleMessage {
@@ -76,7 +79,8 @@ class AckMessage extends BleMessage {
   MessageType get type => MessageType.ack;
 
   @override
-  String toString() => 'Ack(id: $messageId, status: ${isSuccess ? "OK" : "ERROR"}, error: 0x${errorCode.toRadixString(16)})';
+  String toString() =>
+      'Ack(id: $messageId, status: ${isSuccess ? "OK" : "ERROR"}, error: 0x${errorCode.toRadixString(16)})';
 }
 
 class SyncRequestMessage extends BleMessage {
@@ -104,13 +108,14 @@ class SyncResponseMessage extends BleMessage {
   bool get isComplete => sequence == total;
   bool get isChunked => total > 1;
 
-  String get payloadAsString => String.fromCharCodes(payload);
+  String get payloadAsString => utf8.decode(payload);
 
   @override
   MessageType get type => MessageType.syncResponse;
 
   @override
-  String toString() => 'SyncResponse(id: $messageId, seq: $sequence/$total, payload: ${payload.length} bytes)';
+  String toString() =>
+      'SyncResponse(id: $messageId, seq: $sequence/$total, payload: ${payload.length} bytes)';
 }
 
 class GameEndMessage extends BleMessage {
@@ -130,12 +135,13 @@ class GameEndMessage extends BleMessage {
   MessageType get type => MessageType.gameEnd;
 
   @override
-  String toString() => 'GameEnd(id: $messageId, reason: $reason, winner: $winner)';
+  String toString() =>
+      'GameEnd(id: $messageId, reason: $reason, winner: $winner)';
 }
 
 class DrawOfferMessage extends BleMessage {
   const DrawOfferMessage({required super.messageId});
-  
+
   @override
   MessageType get type => MessageType.drawOffer;
 
@@ -144,10 +150,7 @@ class DrawOfferMessage extends BleMessage {
 }
 
 class DrawResponseMessage extends BleMessage {
-  const DrawResponseMessage({
-    required super.messageId,
-    required this.accepted,
-  });
+  const DrawResponseMessage({required super.messageId, required this.accepted});
 
   final bool accepted;
 
@@ -169,10 +172,7 @@ class ResignMessage extends BleMessage {
 }
 
 class PingMessage extends BleMessage {
-  const PingMessage({
-    required super.messageId,
-    required this.timestamp,
-  });
+  const PingMessage({required super.messageId, required this.timestamp});
 
   final int timestamp;
 
@@ -184,10 +184,7 @@ class PingMessage extends BleMessage {
 }
 
 class PongMessage extends BleMessage {
-  const PongMessage({
-    required super.messageId,
-    required this.timestamp,
-  });
+  const PongMessage({required super.messageId, required this.timestamp});
 
   final int timestamp;
 

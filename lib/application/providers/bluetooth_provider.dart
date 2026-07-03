@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../infrastructure/bluetooth/ble_permissions.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
@@ -19,7 +21,9 @@ final bluetoothServiceProvider = Provider<BluetoothService>((ref) {
 //  lifecycle, handshake, ping/pong, ACK tracking, and message routing
 final connectionManagerProvider = Provider<ConnectionManager>((ref) {
   final manager = ConnectionManager();
-  ref.onDispose(() => manager.dispose());
+  ref.onDispose(() {
+    unawaited(manager.dispose());
+  });
   return manager;
 });
 
@@ -28,22 +32,23 @@ final connectionManagerProvider = Provider<ConnectionManager>((ref) {
 // Depends on [BluetoothService], [ConnectionManager], and [GameController]
 final bluetoothControllerProvider =
     StateNotifierProvider<BluetoothController, BluetoothState>((ref) {
-  final bluetoothService = ref.watch(bluetoothServiceProvider);
-  final connectionManager = ref.watch(connectionManagerProvider);
-  final gameController = ref.read(gameControllerProvider.notifier);
+      final bluetoothService = ref.watch(bluetoothServiceProvider);
+      final connectionManager = ref.watch(connectionManagerProvider);
+      final gameController = ref.read(gameControllerProvider.notifier);
 
-  return BluetoothController(
-    bluetoothService: bluetoothService,
-    connectionManager: connectionManager,
-    gameController: gameController,
-  );
-});
+      return BluetoothController(
+        bluetoothService: bluetoothService,
+        connectionManager: connectionManager,
+        gameController: gameController,
+      );
+    });
 
 // Provides the [LobbyController] which manages the lobby lifecycle
 //
 // Depends on [BluetoothController] and [GameController]
-final lobbyControllerProvider =
-    StateNotifierProvider<LobbyController, LobbyState>((ref) {
+final lobbyControllerProvider = StateNotifierProvider<LobbyController, LobbyState>((
+  ref,
+) {
   final bluetoothController = ref.read(bluetoothControllerProvider.notifier);
   final gameController = ref.read(gameControllerProvider.notifier);
 

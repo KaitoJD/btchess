@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 
@@ -29,43 +30,75 @@ class MessageFixtures {
   );
 
   /// HANDSHAKE client: [0x00, 0x00, 0x01, 0x01, 0x02, 0x00]
-  static final handshakeClientBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x02, 0x00]);
+  static final handshakeClientBytes = Uint8List.fromList([
+    0x00,
+    0x00,
+    0x01,
+    0x01,
+    0x02,
+    0x00,
+  ]);
 
   /// HANDSHAKE host (white): [0x00, 0x00, 0x01, 0x01, 0x01, 0x01]
-  static final handshakeHostBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x01, 0x01]);
+  static final handshakeHostBytes = Uint8List.fromList([
+    0x00,
+    0x00,
+    0x01,
+    0x01,
+    0x01,
+    0x01,
+  ]);
 
   /// HANDSHAKE host (black): [0x00, 0x00, 0x01, 0x01, 0x01, 0x02]
-  static final handshakeHostBlackBytes = Uint8List.fromList([0x00, 0x00, 0x01, 0x01, 0x01, 0x02]);
+  static final handshakeHostBlackBytes = Uint8List.fromList([
+    0x00,
+    0x00,
+    0x01,
+    0x01,
+    0x01,
+    0x02,
+  ]);
 
   // --- Move ---
 
   /// MOVE e2→e4: from=12 (e2), to=28 (e4), promo=0
   static const moveE2E4 = MoveMessage(
     messageId: 1,
-    from: 12,  // e2
-    to: 28,    // e4
+    from: 12, // e2
+    to: 28, // e4
   );
 
   /// MOVE e2→e4 bytes: [0x01, 0x00, 0x01, 0x0C, 0x1C, 0x00]
-  static final moveE2E4Bytes = Uint8List.fromList([0x01, 0x00, 0x01, 0x0C, 0x1C, 0x00]);
+  static final moveE2E4Bytes = Uint8List.fromList([
+    0x01,
+    0x00,
+    0x01,
+    0x0C,
+    0x1C,
+    0x00,
+  ]);
 
   /// MOVE with promotion: e7→e8=Q, from=52 (e7), to=60 (e8), promo=1 (queen)
   static const moveWithPromotion = MoveMessage(
     messageId: 2,
-    from: 52,  // e7
-    to: 60,    // e8
+    from: 52, // e7
+    to: 60, // e8
     promotion: 1, // Queen
   );
 
-  static final moveWithPromotionBytes = Uint8List.fromList([0x01, 0x00, 0x02, 0x34, 0x3C, 0x01]);
+  static final moveWithPromotionBytes = Uint8List.fromList([
+    0x01,
+    0x00,
+    0x02,
+    0x34,
+    0x3C,
+    0x01,
+  ]);
 
   // --- ACK ---
 
   /// ACK OK for msg_id=1
-  static const ackOk = AckMessage(
-    messageId: 1,
-    status: 0x00,
-  );
+  static const ackOk = AckMessage(messageId: 1, status: 0x00);
 
   /// ACK OK bytes: [0x02, 0x00, 0x01, 0x00, 0x00]
   static final ackOkBytes = Uint8List.fromList([0x02, 0x00, 0x01, 0x00, 0x00]);
@@ -77,7 +110,13 @@ class MessageFixtures {
     errorCode: 0x01, // INVALID_MOVE
   );
 
-  static final ackErrorBytes = Uint8List.fromList([0x02, 0x00, 0x01, 0x01, 0x01]);
+  static final ackErrorBytes = Uint8List.fromList([
+    0x02,
+    0x00,
+    0x01,
+    0x01,
+    0x01,
+  ]);
 
   // --- Sync Request ---
 
@@ -90,7 +129,7 @@ class MessageFixtures {
     messageId: 5,
     sequence: 1,
     total: 1,
-    payload: Uint8List.fromList('test-fen-data'.codeUnits),
+    payload: Uint8List.fromList(utf8.encode('test-fen-data')),
   );
 
   // --- Game End ---
@@ -98,11 +137,17 @@ class MessageFixtures {
   /// GAME_END: checkmate, white wins
   static const gameEndCheckmate = GameEndMessage(
     messageId: 10,
-    reason: 0x01,  // checkmate
-    winner: 0x01,  // white
+    reason: 0x01, // checkmate
+    winner: 0x01, // white
   );
 
-  static final gameEndCheckmateBytes = Uint8List.fromList([0x06, 0x00, 0x0A, 0x01, 0x01]);
+  static final gameEndCheckmateBytes = Uint8List.fromList([
+    0x06,
+    0x00,
+    0x0A,
+    0x01,
+    0x01,
+  ]);
 
   // --- Draw Offer ---
 
@@ -111,11 +156,27 @@ class MessageFixtures {
 
   // --- Draw Response ---
 
-  static const drawResponseAccepted = DrawResponseMessage(messageId: 7, accepted: true);
-  static final drawResponseAcceptedBytes = Uint8List.fromList([0x08, 0x00, 0x07, 0x01]);
+  static const drawResponseAccepted = DrawResponseMessage(
+    messageId: 7,
+    accepted: true,
+  );
+  static final drawResponseAcceptedBytes = Uint8List.fromList([
+    0x08,
+    0x00,
+    0x07,
+    0x01,
+  ]);
 
-  static const drawResponseRejected = DrawResponseMessage(messageId: 7, accepted: false);
-  static final drawResponseRejectedBytes = Uint8List.fromList([0x08, 0x00, 0x07, 0x00]);
+  static const drawResponseRejected = DrawResponseMessage(
+    messageId: 7,
+    accepted: false,
+  );
+  static final drawResponseRejectedBytes = Uint8List.fromList([
+    0x08,
+    0x00,
+    0x07,
+    0x00,
+  ]);
 
   // --- Resign ---
 
@@ -128,8 +189,24 @@ class MessageFixtures {
   static const pong = PongMessage(messageId: 1, timestamp: 1700000000);
 
   /// Timestamp 1700000000 = 0x6553F100 in big-endian
-  static final pingBytes = Uint8List.fromList([0x0A, 0x00, 0x01, 0x65, 0x53, 0xF1, 0x00]);
-  static final pongBytes = Uint8List.fromList([0x0B, 0x00, 0x01, 0x65, 0x53, 0xF1, 0x00]);
+  static final pingBytes = Uint8List.fromList([
+    0x0A,
+    0x00,
+    0x01,
+    0x65,
+    0x53,
+    0xF1,
+    0x00,
+  ]);
+  static final pongBytes = Uint8List.fromList([
+    0x0B,
+    0x00,
+    0x01,
+    0x65,
+    0x53,
+    0xF1,
+    0x00,
+  ]);
 
   // --- Game Start ---
 
@@ -147,13 +224,23 @@ class MessageFixtures {
     messageId: 11,
     accepted: true,
   );
-  static final rematchResponseAcceptedBytes = Uint8List.fromList([0x0E, 0x00, 0x0B, 0x01]);
+  static final rematchResponseAcceptedBytes = Uint8List.fromList([
+    0x0E,
+    0x00,
+    0x0B,
+    0x01,
+  ]);
 
   static const rematchResponseRejected = RematchResponseMessage(
     messageId: 11,
     accepted: false,
   );
-  static final rematchResponseRejectedBytes = Uint8List.fromList([0x0E, 0x00, 0x0B, 0x00]);
+  static final rematchResponseRejectedBytes = Uint8List.fromList([
+    0x0E,
+    0x00,
+    0x0B,
+    0x00,
+  ]);
 
   // --- Malformed / Edge cases ---
 
@@ -164,5 +251,10 @@ class MessageFixtures {
   static final unknownTypeBytes = Uint8List.fromList([0xFF, 0x00, 0x01]);
 
   /// Truncated MOVE (only 4 bytes instead of 6)
-  static final truncatedMoveBytes = Uint8List.fromList([0x01, 0x00, 0x01, 0x0C]);
+  static final truncatedMoveBytes = Uint8List.fromList([
+    0x01,
+    0x00,
+    0x01,
+    0x0C,
+  ]);
 }

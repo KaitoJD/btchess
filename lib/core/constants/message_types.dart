@@ -1,4 +1,4 @@
-// These are 1-byte message type indentifiers used in the protocol
+// These are 1-byte message type identifiers used in the protocol
 
 enum MessageType {
   handshake(0x00),
@@ -6,6 +6,7 @@ enum MessageType {
   ack(0x02),
   syncRequest(0x03),
   syncResponse(0x04),
+  // Reserved. Sync payload chunks currently use syncResponse frames.
   chunk(0x05),
   gameEnd(0x06),
   drawOffer(0x07),
