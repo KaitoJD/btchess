@@ -20,6 +20,8 @@ void main() {
   });
 
   Widget buildApp(MockGameRepository repository) {
+    when(() => repository.init()).thenAnswer((_) async {});
+
     return ProviderScope(
       overrides: [gameRepositoryProvider.overrideWithValue(repository)],
       child: const MaterialApp(

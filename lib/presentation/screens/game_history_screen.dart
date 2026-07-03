@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/providers/game_provider.dart';
 import '../../application/providers/persistence_provider.dart';
+import '../../application/providers/saved_games_provider.dart';
+import '../../core/extensions/datetime_extensions.dart';
+import '../../domain/enums/winner.dart';
 import '../../domain/models/saved_game.dart';
 import '../routes/app_router.dart';
 import 'game_over_screen.dart';
@@ -13,7 +15,8 @@ class GameHistoryScreen extends ConsumerStatefulWidget {
   ConsumerState<GameHistoryScreen> createState() => _GameHistoryScreenState();
 }
 
-class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> with SingleTickerProviderStateMixin {
+class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -46,13 +49,13 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> with Sing
         controller: _tabController,
         children: [
           _GameList(
-            futureGames: ref.read(gameRepositoryProvider).getInProgressGames(),
+            games: ref.watch(inProgressGamesProvider),
             emptyMessage: 'No games in progress',
             onGameTap: (game) => _resumeGame(game),
             onGameDelete: (game) => _deleteGame(game),
           ),
           _GameList(
-            futureGames: ref.read(gameRepositoryProvider).getCompletedGames(),
+            games: ref.watch(completedGamesProvider),
             emptyMessage: 'No completed games',
             onGameTap: (game) => _viewGame(game),
             onGameDelete: (game) => _deleteGame(game),
@@ -63,9 +66,7 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> with Sing
   }
 
   void _resumeGame(SavedGame game) {
-    final gameRepository = ref.read(gameRepositoryProvider);
-    final gameState = gameRepository.savedGameToState(game);
-    ref.read(gameControllerProvider.notifier).loadGame(gameState);
+    ref.read(savedGamesControllerProvider.notifier).resumeGame(game);
     AppRouter.navigateAndReplace(context, AppRoutes.game);
   }
 
@@ -101,39 +102,30 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> with Sing
     );
 
     if (confirmed == true) {
-      await ref.read(gameRepositoryProvider).deleteGame(game.id);
-      setState(() {});
+      await ref.read(savedGamesControllerProvider.notifier).deleteGame(game.id);
     }
   }
 }
 
 class _GameList extends StatelessWidget {
   const _GameList({
-    required this.futureGames,
+    required this.games,
     required this.emptyMessage,
     required this.onGameTap,
     required this.onGameDelete,
   });
 
-  final Future<List<SavedGame>> futureGames;
+  final AsyncValue<List<SavedGame>> games;
   final String emptyMessage;
   final void Function(SavedGame) onGameTap;
-  final void Function(SavedGame) onGameDelete;
+  final Future<void> Function(SavedGame) onGameDelete;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<SavedGame>>(
-      future: futureGames,
-      builder: (content, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        final games = snapshot.data ?? [];
+    return games.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(child: Text('Error: $error')),
+      data: (games) {
         if (games.isEmpty) {
           return Center(
             child: Column(
@@ -158,7 +150,7 @@ class _GameList extends StatelessWidget {
 
         return ListView.builder(
           itemCount: games.length,
-          itemBuilder:(context, index) {
+          itemBuilder: (context, index) {
             final game = games[index];
             return _GameTile(
               game: game,
@@ -181,7 +173,7 @@ class _GameTile extends StatelessWidget {
 
   final SavedGame game;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +190,7 @@ class _GameTile extends StatelessWidget {
         child: Icon(Icons.delete, color: colorScheme.onError),
       ),
       confirmDismiss: (_) async {
-        onDelete();
+        await onDelete();
         return false;
       },
       child: ListTile(
@@ -206,12 +198,16 @@ class _GameTile extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: game.isInProgress ? colorScheme.primaryContainer : colorScheme.surfaceContainerHighest,
+            color: game.isInProgress
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             game.isInProgress ? Icons.play_arrow : Icons.check,
-            color: game.isInProgress ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
+            color: game.isInProgress
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurfaceVariant,
           ),
         ),
         title: Text(
@@ -219,10 +215,14 @@ class _GameTile extends StatelessWidget {
           style: theme.textTheme.titleMedium,
         ),
         subtitle: Text(
-          '${game.moves.length} moves - ${_formatDate(game.updatedAt)}',
-          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          '${game.moves.length} moves - ${game.updatedAt.toRelative()}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
-        trailing: game.isCompleted ? _buildResultBadge(context) : const Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: game.isCompleted
+            ? _buildResultBadge(context)
+            : const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
     );
@@ -233,18 +233,20 @@ class _GameTile extends StatelessWidget {
     String text;
     Color color;
 
-    switch (game.winnerIndex) {
-      case 1:
+    switch (game.result?.winner) {
+      case null:
+      case Winner.draw:
+        text = 'Draw';
+        color = theme.colorScheme.secondary;
+        break;
+      case Winner.white:
         text = 'White';
         color = Colors.grey;
         break;
-      case 2:
+      case Winner.black:
         text = 'Black';
         color = Colors.black87;
         break;
-      default:
-        text = 'Draw';
-        color = theme.colorScheme.secondary;
     }
 
     return Container(
@@ -262,17 +264,5 @@ class _GameTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
