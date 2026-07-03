@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/controllers/game_controller.dart';
 import '../../application/providers/audio_provider.dart';
 import '../../application/providers/bluetooth_provider.dart';
 import '../../application/providers/game_provider.dart';
@@ -85,7 +86,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _listenForGameEnd() {
     ref.listenManual<GameState?>(gameControllerProvider, (previous, next) {
-      if (next != null && next.isEnded && !(previous?.isEnded ?? false) && !_navigatingToGameOver) {
+      if (next != null &&
+          next.isEnded &&
+          !(previous?.isEnded ?? false) &&
+          !_navigatingToGameOver) {
         _navigatingToGameOver = true;
         // Delay to let the player see the final board position
         Future.delayed(const Duration(milliseconds: 1500), () {
@@ -156,7 +160,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameControllerProvider);
-    final settings = ref.watch(settingsControllerProvider);
+    final showLegalMoves = ref.watch(showLegalMovesProvider);
+    final showCoordinates = ref.watch(showCoordinatesProvider);
+    final boardTheme = ref.watch(boardThemeProvider);
+    final pieceTheme = ref.watch(pieceThemeProvider);
+    final autoFlipBoard = ref.watch(autoFlipBoardProvider);
 
     if (gameState == null) {
       return Scaffold(
@@ -171,7 +179,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     // BLE-specific state
     final hasPendingMove = isBleGame && ref.watch(hasPendingMoveProvider);
-    final bleConnectionStatus = isBleGame ? ref.watch(bleConnectionStatusProvider) : null;
+    final bleConnectionStatus = isBleGame
+        ? ref.watch(bleConnectionStatusProvider)
+        : null;
 
     // Listen for BLE errors and show snackbar
     if (isBleGame) {
@@ -196,18 +206,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
     }
 
-    final isDisconnected = isBleGame &&
+    final isDisconnected =
+        isBleGame &&
         isInProgress &&
         (bleConnectionStatus == BleConnectionStatus.disconnected ||
             bleConnectionStatus == BleConnectionStatus.reconnecting ||
             bleConnectionStatus == BleConnectionStatus.error);
-    final isReconnecting = bleConnectionStatus == BleConnectionStatus.reconnecting;
+    final isReconnecting =
+        bleConnectionStatus == BleConnectionStatus.reconnecting;
 
     return PopScope(
       canPop: !isInProgress,
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop && isInProgress) {
-          final shouldExit = await showExitGameDialog(context, isBleGame: isBleGame);
+          final shouldExit = await showExitGameDialog(
+            context,
+            isBleGame: isBleGame,
+          );
           if (shouldExit && context.mounted) {
             _exitToHome();
           }
@@ -227,105 +242,166 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             children: [
               Column(
                 children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: PlayerInfoWidget(
-                  player: _isFlipped ? gameState.whitePlayer : gameState.blackPlayer,
-                  isActive: _isFlipped ? gameState.isWhiteTurn : gameState.isBlackTurn,
-                  isInCheck: gameState.isCheck && ((_isFlipped && gameState.isWhiteTurn) || (!_isFlipped && gameState.isBlackTurn)),
-                  capturedPieces: _getCapturedPieces(gameState.moves, _isFlipped ? PieceColor.white : PieceColor.black),
-                  materialAdvantage: _getMaterialAdvantage(gameState.moves, _isFlipped ? PieceColor.white : PieceColor.black),
-                  isTopPlayer: true,
-                  pieceTheme: settings.pieceTheme,
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Stack(
-                      children: [
-                        BoardWidget(
-                          pieces: _getPiecesMap(gameController),
-                          selectedSquare: _selectedSquare,
-                          legalMoves: settings.showLegalMoves ? _legalMoves : [],
-                          lastMove: gameState.lastMove,
-                          checkSquare: _getCheckSquare(gameState, gameController),
-                          isFlipped: _isFlipped,
-                          showCoordinates: settings.showCoordinates,
-                          interactive: isInProgress && !hasPendingMove && !isDisconnected,
-                          interactiveColor: _getInteractiveColor(gameState),
-                          theme: BoardThemesColors.fromTheme(settings.boardTheme),
-                          pieceTheme: settings.pieceTheme,
-                          rotateBlackPieces: gameState.mode.isHotseat && !settings.autoFlipBoard,
-                          onSquareSelected: (square) => _handleSquareSelected(square, gameState, gameController),
-                          onMove: (from, to) => _handleMove(from, to, gameState, gameController),
-                        ),
-                        // Spinner overlay while waiting for host ACK
-                        if (hasPendingMove)
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: Container(
-                                color: Colors.black26,
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: PlayerInfoWidget(
+                      player: _isFlipped
+                          ? gameState.whitePlayer
+                          : gameState.blackPlayer,
+                      isActive: _isFlipped
+                          ? gameState.isWhiteTurn
+                          : gameState.isBlackTurn,
+                      isInCheck:
+                          gameState.isCheck &&
+                          ((_isFlipped && gameState.isWhiteTurn) ||
+                              (!_isFlipped && gameState.isBlackTurn)),
+                      capturedPieces: _getCapturedPieces(
+                        gameState.moves,
+                        _isFlipped ? PieceColor.white : PieceColor.black,
+                      ),
+                      materialAdvantage: _getMaterialAdvantage(
+                        gameState.moves,
+                        _isFlipped ? PieceColor.white : PieceColor.black,
+                      ),
+                      isTopPlayer: true,
+                      pieceTheme: pieceTheme,
                     ),
                   ),
-                ),
+                  Expanded(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Stack(
+                          children: [
+                            BoardWidget(
+                              pieces: _getPiecesMap(gameController),
+                              selectedSquare: _selectedSquare,
+                              legalMoves: showLegalMoves ? _legalMoves : [],
+                              lastMove: gameState.lastMove,
+                              checkSquare: _getCheckSquare(
+                                gameState,
+                                gameController,
+                              ),
+                              isFlipped: _isFlipped,
+                              showCoordinates: showCoordinates,
+                              interactive:
+                                  isInProgress &&
+                                  !hasPendingMove &&
+                                  !isDisconnected,
+                              interactiveColor: _getInteractiveColor(gameState),
+                              theme: BoardThemesColors.fromTheme(boardTheme),
+                              pieceTheme: pieceTheme,
+                              rotateBlackPieces:
+                                  gameState.mode.isHotseat && !autoFlipBoard,
+                              onSquareSelected: (square) =>
+                                  _handleSquareSelected(
+                                    square,
+                                    gameState,
+                                    gameController,
+                                  ),
+                              onMove: (from, to) => _handleMove(
+                                from,
+                                to,
+                                gameState,
+                                gameController,
+                              ),
+                            ),
+                            // Spinner overlay while waiting for host ACK
+                            if (hasPendingMove)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: Container(
+                                    color: Colors.black26,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: PlayerInfoWidget(
+                      player: _isFlipped
+                          ? gameState.blackPlayer
+                          : gameState.whitePlayer,
+                      isActive: _isFlipped
+                          ? gameState.isBlackTurn
+                          : gameState.isWhiteTurn,
+                      isInCheck:
+                          gameState.isCheck &&
+                          ((_isFlipped && gameState.isBlackTurn) ||
+                              (!_isFlipped && gameState.isWhiteTurn)),
+                      capturedPieces: _getCapturedPieces(
+                        gameState.moves,
+                        _isFlipped ? PieceColor.black : PieceColor.white,
+                      ),
+                      materialAdvantage: _getMaterialAdvantage(
+                        gameState.moves,
+                        _isFlipped ? PieceColor.black : PieceColor.white,
+                      ),
+                      pieceTheme: pieceTheme,
+                    ),
+                  ),
+                  Container(
+                    height: 60,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: MoveListWidget(moves: gameState.moves),
+                  ),
+                  GameActionBar(
+                    isGameInProgress: isInProgress,
+                    canUndo: ref.watch(canUndoProvider),
+                    isDrawOffered: gameState.drawOffered,
+                    isDrawOfferedByLocalPlayer: _isDrawOfferedByLocalPlayer(
+                      gameState,
+                    ),
+                    isLocalPlayerTurn: gameController.isLocalPlayerTurn(),
+                    isBleGame: isBleGame,
+                    isWaitingForAck: hasPendingMove,
+                    onResign: () =>
+                        _handleResign(gameState.currentTurn, isBleGame),
+                    onOfferDraw: () =>
+                        _handleOfferDraw(gameState.currentTurn, isBleGame),
+                    onAcceptDraw: () => _handleAcceptDraw(isBleGame),
+                    onRejectDraw: () => _handleRejectDraw(isBleGame),
+                    onUndo: () => gameController.undoMove(),
+                    onFlipBoard: () => setState(() => _isFlipped = !_isFlipped),
+                    onNewGame: _handleNewGame,
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: PlayerInfoWidget(
-                  player: _isFlipped ? gameState.blackPlayer : gameState.whitePlayer,
-                  isActive: _isFlipped ? gameState.isBlackTurn : gameState.isWhiteTurn,
-                  isInCheck: gameState.isCheck && ((_isFlipped && gameState.isBlackTurn) || (!_isFlipped && gameState.isWhiteTurn)),
-                  capturedPieces: _getCapturedPieces(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
-                  materialAdvantage: _getMaterialAdvantage(gameState.moves, _isFlipped ? PieceColor.black : PieceColor.white),
-                  pieceTheme: settings.pieceTheme,
-                ),
-              ),
-              Container(
-                height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: MoveListWidget(moves: gameState.moves),
-              ),
-              GameActionBar(
-                isGameInProgress: isInProgress,
-                canUndo: ref.watch(canUndoProvider),
-                isDrawOffered: gameState.drawOffered,
-                isDrawOfferedByLocalPlayer: _isDrawOfferedByLocalPlayer(gameState),
-                isLocalPlayerTurn: gameController.isLocalPlayerTurn(),
-                isBleGame: isBleGame,
-                isWaitingForAck: hasPendingMove,
-                onResign: () => _handleResign(gameState.currentTurn, isBleGame),
-                onOfferDraw: () => _handleOfferDraw(gameState.currentTurn, isBleGame),
-                onAcceptDraw: () => _handleAcceptDraw(isBleGame),
-                onRejectDraw: () => _handleRejectDraw(isBleGame),
-                onUndo: () => gameController.undoMove(),
-                onFlipBoard: () => setState(() => _isFlipped = !_isFlipped),
-                onNewGame: _handleNewGame,
-              ),
-            ],
-          ),
               // Banners overlaid on top so they don't shift the layout
               if (isDisconnected)
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: _buildConnectionBanner(context, isReconnecting: isReconnecting),
+                  child: _buildConnectionBanner(
+                    context,
+                    isReconnecting: isReconnecting,
+                  ),
                 ),
               if (gameState.isEnded)
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: GameStatusWidget(status: gameState.status, currentTurn: gameState.currentTurn, result: gameState.result, asBanner: true),
+                  child: GameStatusWidget(
+                    status: gameState.status,
+                    currentTurn: gameState.currentTurn,
+                    result: gameState.result,
+                    asBanner: true,
+                  ),
                 ),
             ],
           ),
@@ -345,19 +421,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
-  Map<int, Piece> _getPiecesMap(dynamic gameController) {
-    final allPieces = gameController.getAllPieces() as Map<Square, Piece>;
+  Map<int, Piece> _getPiecesMap(GameController gameController) {
+    final allPieces = gameController.getAllPieces();
     return Map.fromEntries(
-      allPieces.entries.map((e) => MapEntry(e.key.index, e.value))
+      allPieces.entries.map((e) => MapEntry(e.key.index, e.value)),
     );
   }
 
-  Square? _getCheckSquare(dynamic gameState, dynamic gameController) {
+  Square? _getCheckSquare(GameState gameState, GameController gameController) {
     if (!gameState.isCheck) return null;
     return gameController.getKingSquare(gameState.currentTurn);
   }
 
-  PieceColor? _getInteractiveColor(dynamic gameState) {
+  PieceColor? _getInteractiveColor(GameState gameState) {
     if (gameState.mode == GameMode.hotseat) return null;
     if (gameState.whitePlayer.isLocal) return PieceColor.white;
     if (gameState.blackPlayer.isLocal) return PieceColor.black;
@@ -373,22 +449,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return gameState.drawOfferedBy == localColor;
   }
 
-  List<Piece> _getCapturedPieces(List<dynamic> moves, PieceColor capturedByColor) {
+  List<Piece> _getCapturedPieces(List<Move> moves, PieceColor capturedByColor) {
     final captured = <Piece>[];
     for (final move in moves) {
-      if (move.capturedPiece != null && move.capturedPiece.color != capturedByColor) {
-        captured.add(move.capturedPiece as Piece);
+      final capturedPiece = move.capturedPiece;
+      if (capturedPiece != null && capturedPiece.color != capturedByColor) {
+        captured.add(capturedPiece);
       }
     }
     return captured;
   }
 
-  int _getMaterialAdvantage(List<dynamic> moves, PieceColor color) {
+  int _getMaterialAdvantage(List<Move> moves, PieceColor color) {
     int balance = 0;
     for (final move in moves) {
       if (move.capturedPiece != null) {
-        final value = _pieceValue(move.capturedPiece.type);
-        if (move.capturedPiece.color != color) {
+        final capturedPiece = move.capturedPiece!;
+        final value = _pieceValue(capturedPiece.type);
+        if (capturedPiece.color != color) {
           balance += value;
         } else {
           balance -= value;
@@ -414,10 +492,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
-  void _handleSquareSelected(Square square, dynamic gameState, dynamic gameController) {
+  void _handleSquareSelected(
+    Square square,
+    GameState gameState,
+    GameController gameController,
+  ) {
     final piece = gameController.getPieceAt(square);
     final interactiveColor = _getInteractiveColor(gameState);
-    if (piece != null && piece.color == gameState.currentTurn &&
+    if (piece != null &&
+        piece.color == gameState.currentTurn &&
         (interactiveColor == null || piece.color == interactiveColor)) {
       setState(() {
         _selectedSquare = square;
@@ -437,14 +520,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
-  Future<void> _handleMove(Square from, Square to, dynamic gameState, dynamic gameController) async {
-    final isBleGame = gameState.mode.isBle as bool;
+  Future<void> _handleMove(
+    Square from,
+    Square to,
+    GameState gameState,
+    GameController gameController,
+  ) async {
+    final isBleGame = gameState.mode.isBle;
     PromotionPiece? promotion;
 
     if (gameController.requiresPromotion(from, to)) {
       final piece = gameController.getPieceAt(from);
       if (piece != null) {
-        promotion = await showPromotionDialog(context, color: piece.color, pieceTheme: ref.read(settingsControllerProvider).pieceTheme);
+        promotion = await showPromotionDialog(
+          context,
+          color: piece.color,
+          pieceTheme: ref.read(settingsControllerProvider).pieceTheme,
+        );
         if (promotion == null) {
           // User cancelled promotion dialog
           setState(() {
@@ -495,7 +587,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _handleAcceptDraw(bool isBleGame) {
     if (isBleGame) {
-      ref.read(bluetoothControllerProvider.notifier).sendDrawResponse(accepted: true);
+      ref
+          .read(bluetoothControllerProvider.notifier)
+          .sendDrawResponse(accepted: true);
     } else {
       ref.read(gameControllerProvider.notifier).acceptDraw();
     }
@@ -503,13 +597,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _handleRejectDraw(bool isBleGame) {
     if (isBleGame) {
-      ref.read(bluetoothControllerProvider.notifier).sendDrawResponse(accepted: false);
+      ref
+          .read(bluetoothControllerProvider.notifier)
+          .sendDrawResponse(accepted: false);
     } else {
       ref.read(gameControllerProvider.notifier).rejectDraw();
     }
   }
 
-  Widget _buildConnectionBanner(BuildContext context, {required bool isReconnecting}) {
+  Widget _buildConnectionBanner(
+    BuildContext context, {
+    required bool isReconnecting,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -559,7 +658,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Future<void> _handleBack(bool isInProgress, bool isBleGame) async {
     if (isInProgress) {
-      final shouldExit = await showExitGameDialog(context, isBleGame: isBleGame);
+      final shouldExit = await showExitGameDialog(
+        context,
+        isBleGame: isBleGame,
+      );
       if (shouldExit && mounted) {
         _exitToHome();
       }
