@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/piece.dart';
-import '../../infrastructure/persistence/settings_repository.dart';
+import '../../domain/models/settings_models.dart';
 
 abstract class PieceThemes {
   static String getAssetPath(PieceTheme theme, Piece piece) {
@@ -25,13 +25,16 @@ abstract class PieceThemes {
       fontFamily: 'Noto Sans Symbols 2',
       color: color == PieceColor.white ? Colors.white : Colors.black,
       shadows: addShadow
-        ? [
-          Shadow(
-            color: color == PieceColor.white ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.3),
-            offset: const Offset(1, 1),
-            blurRadius: 2,
-          ),
-        ] : null,
+          ? [
+              Shadow(
+                color: color == PieceColor.white
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.3),
+                offset: const Offset(1, 1),
+                blurRadius: 2,
+              ),
+            ]
+          : null,
     );
   }
 }

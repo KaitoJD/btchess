@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../domain/models/piece.dart';
 import '../../../domain/models/player.dart';
-import '../../../infrastructure/persistence/settings_repository.dart';
+import '../../../domain/models/settings_models.dart';
 import '../../themes/piece_themes.dart';
 
 class PlayerInfoWidget extends StatelessWidget {
-
   const PlayerInfoWidget({
-    required this.player, super.key,
+    required this.player,
+    super.key,
     this.isActive = false,
     this.isInCheck = false,
     this.capturedPieces = const [],
@@ -32,9 +32,13 @@ class PlayerInfoWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? colorScheme.primaryContainer.withValues(alpha: 0.3) : Colors.transparent,
+        color: isActive
+            ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: isActive ? Border.all(color: colorScheme.primary, width: 2) : Border.all(color: colorScheme.outlineVariant),
+        border: isActive
+            ? Border.all(color: colorScheme.primary, width: 2)
+            : Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -52,7 +56,9 @@ class PlayerInfoWidget extends StatelessWidget {
                       child: Text(
                         player.name,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isActive
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -82,7 +88,9 @@ class PlayerInfoWidget extends StatelessWidget {
                 const SizedBox(height: 4),
                 capturedPieces.isNotEmpty
                     ? _buildCapturedPieces(theme)
-                    : SizedBox(height: theme.textTheme.bodySmall?.fontSize ?? 14),
+                    : SizedBox(
+                        height: theme.textTheme.bodySmall?.fontSize ?? 14,
+                      ),
               ],
             ),
           ),
@@ -109,10 +117,7 @@ class PlayerInfoWidget extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: player.color == PieceColor.white ? Colors.white : Colors.black,
-        border: Border.all(
-          color: colorScheme.outline,
-          width: 2,
-        ),
+        border: Border.all(color: colorScheme.outline, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),

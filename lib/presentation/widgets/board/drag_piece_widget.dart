@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/piece.dart';
+import '../../../domain/models/settings_models.dart';
 import '../../../domain/models/square.dart';
-import '../../../infrastructure/persistence/settings_repository.dart';
 import 'piece_widget.dart';
 import 'square_widget.dart';
 
 class DragPieceOverlay extends StatelessWidget {
-
   const DragPieceOverlay({
-    required this.piece, required this.position, required this.size, required this.pieceTheme, super.key,
+    required this.piece,
+    required this.position,
+    required this.size,
+    required this.pieceTheme,
+    super.key,
   });
   final Piece piece;
   final Offset position;
@@ -23,11 +26,7 @@ class DragPieceOverlay extends StatelessWidget {
       child: IgnorePointer(
         child: Transform.scale(
           scale: 1.2,
-          child: PieceWidget(
-            piece: piece,
-            size: size,
-            pieceTheme: pieceTheme,
-          ),
+          child: PieceWidget(piece: piece, size: size, pieceTheme: pieceTheme),
         ),
       ),
     );
@@ -35,7 +34,6 @@ class DragPieceOverlay extends StatelessWidget {
 }
 
 class DragState {
-
   const DragState({
     required this.fromSquare,
     required this.piece,
@@ -45,11 +43,7 @@ class DragState {
   final Piece piece;
   final Offset position;
 
-  DragState copyWith({
-    Square? fromSquare,
-    Piece? piece,
-    Offset? position,
-  }) {
+  DragState copyWith({Square? fromSquare, Piece? piece, Offset? position}) {
     return DragState(
       fromSquare: fromSquare ?? this.fromSquare,
       piece: piece ?? this.piece,

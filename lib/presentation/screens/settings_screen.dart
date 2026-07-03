@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/controllers/settings_controller.dart';
 import '../../application/providers/settings_provider.dart';
 import '../../core/constants/app_constants.dart';
-import '../../infrastructure/persistence/settings_repository.dart';
+import '../../domain/models/settings_models.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -98,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _showResetDialog(
     BuildContext context,
-    dynamic controller,
+    SettingsController controller,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,

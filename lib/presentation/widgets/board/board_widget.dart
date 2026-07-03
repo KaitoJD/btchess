@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/move.dart';
 import '../../../domain/models/piece.dart';
+import '../../../domain/models/settings_models.dart';
 import '../../../domain/models/square.dart';
-import '../../../infrastructure/persistence/settings_repository.dart';
 import '../../themes/board_themes.dart';
 import 'board_coordinates_widget.dart';
 import 'square_widget.dart';
@@ -11,9 +11,9 @@ typedef OnMoveCallBack = void Function(Square from, Square to);
 typedef OnSquareSelectedCallBack = void Function(Square square);
 
 class BoardWidget extends StatefulWidget {
-
   const BoardWidget({
-    required this.pieces, super.key,
+    required this.pieces,
+    super.key,
     this.selectedSquare,
     this.legalMoves = const [],
     this.lastMove,
@@ -54,7 +54,11 @@ class _BoardWidgetState extends State<BoardWidget> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constrains) {
-        final availableSize = widget.size ?? (constrains.maxWidth < constrains.maxHeight ? constrains.maxWidth : constrains.maxHeight);
+        final availableSize =
+            widget.size ??
+            (constrains.maxWidth < constrains.maxHeight
+                ? constrains.maxWidth
+                : constrains.maxHeight);
         final coordinatePadding = widget.showCoordinates ? 20.0 : 0.0;
         const borderWidth = 2.0;
         final boardSize = availableSize - coordinatePadding - (borderWidth * 2);
@@ -79,10 +83,7 @@ class _BoardWidgetState extends State<BoardWidget> {
   Widget _buildBoard(double squareSize) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(
-          color: widget.theme.border,
-          width: 2,
-        ),
+        border: Border.all(color: widget.theme.border, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -116,7 +117,11 @@ class _BoardWidgetState extends State<BoardWidget> {
     final isLastMoveFrom = widget.lastMove?.from == square;
     final isLastMoveTo = widget.lastMove?.to == square;
     final isCheck = widget.checkSquare == square;
-    final canDrag = widget.interactive && piece != null && (widget.interactiveColor == null || piece.color == widget.interactiveColor);
+    final canDrag =
+        widget.interactive &&
+        piece != null &&
+        (widget.interactiveColor == null ||
+            piece.color == widget.interactiveColor);
     final showFileCoord = widget.isFlipped ? rank == 7 : rank == 0;
     final showRankCoord = widget.isFlipped ? file == 7 : file == 0;
 

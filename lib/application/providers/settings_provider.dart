@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/models/settings_models.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 import '../controllers/settings_controller.dart';
 import '../states/settings_state.dart';
@@ -44,4 +45,8 @@ final debugModeProvider = Provider<bool>((ref) {
 
 final autoFlipBoardProvider = Provider<bool>((ref) {
   return ref.watch(settingsControllerProvider).autoFlipBoard;
+});
+
+final settingsErrorProvider = Provider<String?>((ref) {
+  return ref.watch(settingsControllerProvider).lastError;
 });
