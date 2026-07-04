@@ -1,3 +1,8 @@
+# GitHub Actions build_master.yml expects the same values from these secrets:
+# ANDROID_RELEASE_KEYSTORE_BASE64
+# ANDROID_RELEASE_STORE_PASSWORD
+# ANDROID_RELEASE_KEY_PASSWORD
+# ANDROID_RELEASE_KEY_ALIAS
 storePassword=<password>
 keyPassword=<password>
 keyAlias=btchess_release
