@@ -129,8 +129,25 @@ jobs:
       - name: Compress xcarchive
         run: cd build/ios/archive && tar -czf Runner.xcarchive.tar.gz Runner.xcarchive
 
-      - name: Upload iOS artifact
+      - name: Create unsigned IPA
+        run: |
+          set -euo pipefail
+
+          app_path="build/ios/archive/Runner.xcarchive/Products/Applications"
+          if [ ! -d "$app_path/Runner.app" ]; then
+            echo "::error::Runner.app not found at $app_path"
+            exit 1
+          fi
+
+          rm -rf build/ios/ipa
+          mkdir -p build/ios/ipa/Payload
+          cp -R "$app_path/Runner.app" build/ios/ipa/Payload/Runner.app
+
+          cd build/ios/ipa
+          zip -0 -r btchess.ipa Payload
+
+      - name: Upload iOS IPA artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ios-xcarchive
-          path: build/ios/archive/Runner.xcarchive.tar.gz
+          name: ios-ipa
+          path: build/ios/ipa/btchess.ipa
