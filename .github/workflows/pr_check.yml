@@ -45,7 +45,10 @@ jobs:
               repo: context.repo.repo,
               pull_number: pr.number,
             });
-            const dartFiles = files.map(f => f.filename).filter(f => f.endsWith('.dart'));
+            const dartFiles = files
+              .filter(f => f.status !== 'removed')
+              .map(f => f.filename)
+              .filter(f => f.endsWith('.dart'));
             core.setOutput('files', dartFiles.join('\n'));
 
       - name: Analyze changed Dart files
@@ -54,7 +57,19 @@ jobs:
           echo "Changed Dart files:"
           printf '%s\n' "${{ steps.changed-files.outputs.files }}"
           mapfile -t filesArray <<< "${{ steps.changed-files.outputs.files }}"
-          flutter analyze "${filesArray[@]}"
+          existingFiles=()
+          for file in "${filesArray[@]}"; do
+            if [[ -f "$file" ]]; then
+              existingFiles+=("$file")
+            else
+              echo "Skipping missing Dart file: $file"
+            fi
+          done
+          if [[ ${#existingFiles[@]} -eq 0 ]]; then
+            echo "No existing changed Dart files to analyze."
+            exit 0
+          fi
+          flutter analyze "${existingFiles[@]}"
         shell: bash
 
       - name: Skip analysis when no Dart files changed
