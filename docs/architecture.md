@@ -20,11 +20,11 @@ BTChess uses a 4-layer architecture. Each layer has strict dependency rules to k
 
 **core/** -- Shared constants, utilities, error types, extensions. Pure Dart, no dependencies on other layers. Contains BLE protocol constants (UUIDs, message types, error codes, timing), binary helpers, and the Result type.
 
-**domain/** -- Business logic. Chess rules (via dartchess), models (GameState, Move, Square, Piece, Player), enums (GameStatus, GameEndReason, Winner), and services (ChessService, FenService, PgnService, MoveValidator). No Flutter imports, no infrastructure imports.
+**domain/** -- Business logic. Chess rules (via dartchess), models (GameState, Move, Square, Piece, Player, settings theme models), enums (GameStatus, GameEndReason, Winner), and services (ChessService, FenService, PgnService, MoveValidator). No Flutter imports, no infrastructure imports.
 
-**application/** -- State management with Riverpod. Controllers (StateNotifiers) for game, bluetooth, lobby, board, and settings. Providers wire controllers to the rest of the app. States are immutable data classes. This layer coordinates between domain and infrastructure.
+**application/** -- State management with Riverpod. Controllers (StateNotifiers) for game, bluetooth, lobby, saved games, and settings. Providers wire controllers to the rest of the app. States are immutable data classes. This layer coordinates between domain and infrastructure.
 
-**presentation/** -- Flutter UI. Screens (8 total), widgets (board, game info, lobby, dialogs, common), themes (app, board, piece), and routing. Only imports from application/ and domain/, never directly from infrastructure/.
+**presentation/** -- Flutter UI. Screens (8 total), widgets (board, game info, lobby, dialogs, common), themes (app, board, piece), and routing. It imports from application/, domain/, and core/ only; it should not call infrastructure directly.
 
 **infrastructure/** -- External service implementations. BLE transport (flutter_blue_plus, ble_peripheral), persistence (Hive, SharedPreferences), and audio. Imports from domain/ and core/ only.
 
@@ -45,12 +45,14 @@ Riverpod providers connect the layers:
 
 - `servicesProvider` -- ChessService, FenService, PgnService
 - `gameProvider` -- GameController (StateNotifier\<GameState\>), computed state
-- `boardProvider` -- BoardController, selection, flip
 - `bluetoothProvider` -- BluetoothService, ConnectionManager, BluetoothState, scanned devices, permissions
 - `settingsProvider` -- SettingsController (SharedPreferences-backed)
 - `persistenceProvider` -- GameRepository (Hive-backed), saved games list
+- `savedGamesProvider` -- SavedGamesController for resume/delete actions and saved-game list invalidation
 
 GameController is the central game loop. In hotseat mode it drives everything locally. In BLE mode, BluetoothController mediates between GameController and the BLE transport layer.
+
+GameScreen owns transient board UI state such as selected square, legal move highlights, and board flip. Durable game state remains in GameController.
 
 
 ## 3. BLE Multiplayer Data Flow
@@ -100,16 +102,18 @@ GameController is the central game loop. In hotseat mode it drives everything lo
 
 The infrastructure layer provides several reliability mechanisms:
 
-- **MessageCodec** -- Binary encode/decode for all 11 message types.
-- **ConnectionManager** -- Handshake state machine, ACK tracking with 3000 ms timeout, 2 retries with 500/1000 ms backoff, ping/pong keepalive (15 s interval, 30 s disconnect), dedupe cache (last 100 msg_ids).
-- **ChunkHandler** -- Splits large payloads (FEN/PGN) into MTU-sized chunks, reassembles with 10 s timeout.
-- **MessageQueue** -- Priority queue (high/normal/low), max 100 messages.
+- **MessageCodec** -- Binary encode/decode for active protocol messages. `MessageType.chunk` is reserved; chunked sync payloads are sent as SYNC_RESPONSE frames.
+- **ConnectionManager** -- Handshake state machine, ACK tracking with 3000 ms timeout, 2 retries with 500/1000 ms backoff, ping/pong keepalive (15 s interval, 30 s disconnect), host MOVE dedupe cache (last 64 msg_ids), and fast ACK failure on disconnect/error.
+- **ChunkHandler** -- Splits UTF-8 sync payloads (FEN/PGN JSON) into MTU-sized chunks, validates sequence/total metadata, and reassembles with 10 s timeout.
+- **MessageQueue** -- Priority queue utility (high/normal/low), max 100 messages. It is tested but is not the main ConnectionManager send path.
 - **RateLimiter** -- MOVE 2/s, DRAW_OFFER 1/30 s, SYNC_REQUEST 1/5 s.
 
 
 ## 4. Persistence
 
-Games are saved to Hive after each move. `GameRepository` handles CRUD with auto-cleanup at 100 saved games (oldest completed games removed first). `SavedGame` stores: id, FEN, move history (SAN), timestamps, mode, result, opponent name. Settings are stored in SharedPreferences via `SettingsRepository`.
+Games are saved to Hive after each move. `GameRepository` handles CRUD with auto-cleanup at 100 saved games by deleting the oldest saved records. `SavedGame` stores: id, FEN, display move history (SAN or UCI fallback), replayable UCI move history, timestamps, mode, result, opponent name, and PGN. On resume, `GameRepository.savedGameToState()` rebuilds domain `Move` objects by replaying stored UCI moves through `ChessService`; older saves without replayable moves still restore from FEN.
+
+Settings are stored in SharedPreferences via `SettingsRepository`. UI-facing theme enums (`BoardTheme`, `PieceTheme`) live in domain models; the repository only serializes/deserializes their stored indexes.
 
 
 ## 5. Screens and Navigation
@@ -128,3 +132,5 @@ Games are saved to Hive after each move. `GameRepository` handles CRUD with auto
 | PGN Viewer | /pgn | View/copy/share PGN |
 
 Route guards enforce BLE permissions before entering the lobby screen and prevent navigation away from an active game without confirmation.
+
+Home and Game History saved-game actions go through `SavedGamesController`; presentation does not call `GameRepository` directly.

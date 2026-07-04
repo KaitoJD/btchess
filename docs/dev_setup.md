@@ -13,6 +13,7 @@
 	- [Android](#61-android)
 	- [iOS](#62-ios)
 - [Running Unit Tests](#7-running-unit-tests)
+- [Setup GitHub Actions Secrets for CI workflow](#8-setup-github-actions-secrets-for-ci-workflow)
 
 ## 1. Prerequisites
 
@@ -98,10 +99,10 @@ flutter run
 flutter run --debug
 
 # Build release APK
-flutter build apk
+flutter build apk --release
 
 # Build release iOS
-flutter build ios
+flutter build ios --release
 ```
 
 Android release builds use `android/key.properties` when it is present. Keep
@@ -143,4 +144,118 @@ The user will be prompted to allow Bluetooth access on first launch.
 ```bash
 # Unit tests
 flutter test
+
+# For the new smoke test, run on a connected device
+flutter test integration_test/app_smoke_test.dart -d <device-id>
 ```
+
+## 8. Setup GitHub Actions Secrets for CI workflow
+
+The `build_master.yml` workflow builds a signed Android release APK. GitHub
+Actions runs from a clean checkout, so it cannot use your ignored local
+`android/key.properties` or `android/keystores/btchess-release.jks` files unless
+you provide them through repository secrets.
+
+Official reference:
+[GitHub Docs - Creating secrets for a repository](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-a-repository).
+
+Without these secrets, the Android job fails in the `Configure Android release
+signing` step with a message such as:
+
+```text
+Missing GitHub Actions secret: ANDROID_RELEASE_KEYSTORE_BASE64
+```
+
+This happens because GitHub Actions resolves an unset secret such as
+`${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}` to an empty string.
+
+### 8.1. Create Repository Secrets on GitHub
+
+For each required secret:
+
+1. Open the BTChess repository on GitHub.
+2. Click **Settings** under the repository name.
+3. In the left sidebar, under **Security**, open **Secrets and variables**.
+4. Click **Actions**.
+5. Open the **Secrets** tab.
+6. Click **New repository secret**.
+7. In **Name**, enter one of the exact secret names from the table below.
+8. In **Secret**, paste the matching raw value.
+9. Click **Add secret**.
+10. Repeat until all four repository secrets are created.
+
+Use repository secrets by default. If you use environment secrets instead, add
+the matching `environment` to the workflow job or GitHub will pass empty values.
+
+### 8.2. Required Secret Values
+
+| Secret name | Value |
+| --- | --- |
+| `ANDROID_RELEASE_KEYSTORE_BASE64` | Base64 text generated from `android/keystores/btchess-release.jks` |
+| `ANDROID_RELEASE_STORE_PASSWORD` | Raw value after `storePassword=` in `android/key.properties` |
+| `ANDROID_RELEASE_KEY_PASSWORD` | Raw value after `keyPassword=` in `android/key.properties` |
+| `ANDROID_RELEASE_KEY_ALIAS` | `btchess_release` unless you changed the alias |
+
+When GitHub asks for **Name**, paste the left column exactly. When GitHub asks
+for **Secret**, paste only the matching value from the right column. Do not paste
+`ANDROID_RELEASE_STORE_PASSWORD = ...` or `storePassword=...` as the secret
+value.
+
+### 8.3. Generate the Keystore Base64 Value
+
+From the project root on Windows PowerShell:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("android\keystores\btchess-release.jks")) | Set-Clipboard
+```
+
+Paste the clipboard value into the `ANDROID_RELEASE_KEYSTORE_BASE64` secret. The
+value should be one long base64 string, with no quotes and no extra labels.
+
+On Linux:
+
+```bash
+base64 -w 0 android/keystores/btchess-release.jks
+```
+
+On macOS:
+
+```bash
+base64 < android/keystores/btchess-release.jks | tr -d '\n'
+```
+
+### 8.4. Fill the Password and Alias Secrets
+
+Open your local ignored `android/key.properties` file. If it looks like this:
+
+```properties
+storePassword=abc123FakePassword
+keyPassword=abc123FakePassword
+keyAlias=btchess_release
+storeFile=../keystores/btchess-release.jks
+```
+
+then the GitHub secret values should be:
+
+| Secret name | Secret value |
+| --- | --- |
+| `ANDROID_RELEASE_STORE_PASSWORD` | `abc123FakePassword` |
+| `ANDROID_RELEASE_KEY_PASSWORD` | `abc123FakePassword` |
+| `ANDROID_RELEASE_KEY_ALIAS` | `btchess_release` |
+
+Do not include `storePassword=`, `keyPassword=`, or `keyAlias=` in the GitHub
+secret values. Only paste the raw value after `=`.
+
+### 8.5. Verify the Workflow
+
+After all four secrets are configured, rerun the `Build and Release` workflow.
+The Android job should:
+
+1. Decode the keystore into `android/keystores/btchess-release.jks`.
+2. Write `android/key.properties` on the CI runner.
+3. Run `flutter build apk --release`.
+4. Verify the generated APK with `apksigner`.
+5. Upload the signed Android artifact.
+
+Keep the release keystore private and backed up. Future sideload releases must
+use the same keystore so Android can update the installed app in place.

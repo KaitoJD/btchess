@@ -88,6 +88,9 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/btchess-android.apk
+
       - name: Verify APK signing
         run: |
           set -euo pipefail
@@ -95,13 +98,13 @@ jobs:
           "$ANDROID_HOME/build-tools/$build_tools_version/apksigner" verify \
             --verbose \
             --print-certs \
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/btchess-android.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: btchess-android
+          path: build/app/outputs/flutter-apk/btchess-android.apk
 
   build_ios:
     name: Build iOS Unsigned
@@ -144,10 +147,10 @@ jobs:
           cp -R "$app_path/Runner.app" build/ios/ipa/Payload/Runner.app
 
           cd build/ios/ipa
-          zip -0 -r btchess.ipa Payload
+          zip -0 -r btchess-ios.ipa Payload
 
       - name: Upload iOS IPA artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ios-ipa
-          path: build/ios/ipa/btchess.ipa
+          name: btchess-ios
+          path: build/ios/ipa/btchess-ios.ipa

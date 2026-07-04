@@ -1,6 +1,6 @@
 # BTChess - iOS Setup Guide
 
-This document is for you if you want to test or experience the (latest) development build of BTChess on an iOS device.
+This document is for you if you want to test or experience the development build of BTChess on an iOS device.
 
 > [!note]
 >
@@ -18,38 +18,15 @@ This document is for you if you want to test or experience the (latest) developm
 
 - An iOS device running iOS 13 or later
 - An [Apple Account](https://support.apple.com/en-us/108647?device-type=iphone) that you can access
-- A Windows/macOS machine with [GitHub CLI](https://cli.github.com/) installed and signed in
+- A Windows/macOS machine
 - A USB cable to connect the iOS device to the Windows machine
 
 ## 2. Prepare the IPA file
 
-> [!tip]
->
-> If you have GitHub CLI installed and signed in, run the script `latest-ipa-getter.bat` (Windows) or `latest-ipa-getter.sh` (macOS) (you can find the script in the [`scripts`](/scripts/) folder). If the script finishes and you see `btchess.ipa`, continue to [Step 3: Install Sideloadly](#3-install-sideloadly).
-
-If you want to try other builds of the app, follow the steps below.
-
-### 2.1. Download the artifact
-
 - [Go to the Actions tab on the repository main page](https://github.com/KaitoJD/btchess/actions/workflows/build_master.yml?query=is%3Asuccess)
 - Select the `Build and Release` workflow run you want to download artifacts from
-- _Under "Artifacts (Produced during runtime)" you will see two artifacts: `android-apk` and `ios-xcarchive`._ __Download the `ios-xcarchive` artifact.__
-
-### 2.2. Create the IPA
-
-> [!tip]
->
-> Run the script `ipa-packager.bat` (Windows) or `ipa-packager.sh` (macOS) (you can find the script in the [`scripts`](/scripts/) folder) __after placing that script in the same folder as the__ `ios-xcarchive.zip`. If the script runs successfully and produces `btchess.ipa`, proceed to [Step 3: Install Sideloadly](#3-install-sideloadly).
-
-If the script fails or you don't get an `btchess.ipa`, create the IPA manually:
-
-- Unzip `ios-xcarchive.zip` into a folder named `ios-xcarchive`
-- Inside `ios-xcarchive`, unzip `Runner.xcarchive.tar.gz` into a folder named `Runner.xcarchive`
-- Open `Runner.xcarchive` -> `Runner.xcarchive` -> `Products` -> `Applications`
-- Create a new folder named `Payload` there
-- Copy `Runner.app` into the `Payload` folder
-- Zip the `Payload` folder as `Payload.zip` (use "Store" compression method)
-- Rename `Payload.zip` to `btchess.ipa` (or any name with the `.ipa` extension)
+- Under _"Artifacts (Produced during runtime)"_ you will see two artifacts: `btchess-android` and `btchess-ios`. Download the `btchess-ios` artifact.
+- Extract that artifact to get access to the IPA file.
 
 ## 3. Install Sideloadly
 
@@ -98,5 +75,3 @@ _If the app still errors or requests "Developer Mode" after trusting the develop
 > [!note]
 >
 > __7-day expiration__: After 7 days the app may crash on launch. To renew, connect the device to your computer and press "Start" in Sideloadly again - app data will be preserved.
-
-If you need help or want to discuss, open a thread in the repository [Discussions](https://github.com/KaitoJD/btchess/discussions)

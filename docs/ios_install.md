@@ -70,5 +70,3 @@ _If the app still errors or requests "Developer Mode", enable Developer Mode:_
 > [!note]
 >
 > __After 7 days the app may crash on launch. To renew, connect the device to your computer and press "Start" in Sideloadly again - app data will be preserved.__
-
-If you need help or want to discuss, open a thread in the repository [Discussions](https://github.com/KaitoJD/btchess/discussions)

@@ -89,5 +89,5 @@ dart run build_runner build --delete-conflicting-outputs
 ### iOS build failures
 
 - Run `cd ios && pod install && cd ..` after adding or updating dependencies.
-- Verify the deployment target is iOS 12.0+ in Xcode.
+- Verify the deployment target is iOS 13.0+ in Xcode.
 - Signing issues: configure a valid development team in Xcode under Signing & Capabilities.
