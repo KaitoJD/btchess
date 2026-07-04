@@ -54,8 +54,48 @@ jobs:
       - name: Generate build files
         run: dart run build_runner build
 
+      - name: Configure Android release signing
+        env:
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+
+          for secret_name in \
+            ANDROID_RELEASE_KEYSTORE_BASE64 \
+            ANDROID_RELEASE_STORE_PASSWORD \
+            ANDROID_RELEASE_KEY_PASSWORD \
+            ANDROID_RELEASE_KEY_ALIAS
+          do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error::Missing GitHub Actions secret: ${secret_name}"
+              exit 1
+            fi
+          done
+
+          mkdir -p android/keystores
+          printf '%s' "$ANDROID_RELEASE_KEYSTORE_BASE64" | base64 --decode > android/keystores/btchess-release.jks
+
+          {
+            printf 'storePassword=%s\n' "$ANDROID_RELEASE_STORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$ANDROID_RELEASE_KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_RELEASE_KEY_ALIAS"
+            printf 'storeFile=../keystores/btchess-release.jks\n'
+          } > android/key.properties
+
       - name: Build APK
         run: flutter build apk --release
+
+      - name: Verify APK signing
+        run: |
+          set -euo pipefail
+          build_tools_version="$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)"
+          "$ANDROID_HOME/build-tools/$build_tools_version/apksigner" verify \
+            --verbose \
+            --print-certs \
+            build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
