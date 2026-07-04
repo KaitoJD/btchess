@@ -1,0 +1,4 @@
+storePassword=<password>
+keyPassword=<password>
+keyAlias=btchess_release
+storeFile=../keystores/btchess-release.jks

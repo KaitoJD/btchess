@@ -1,3 +1,4 @@
+import org.gradle.api.GradleException
 import java.util.Properties
 
 plugins {
@@ -11,6 +12,62 @@ val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
+val requiredKeystoreProperties = listOf(
+    "storePassword",
+    "keyPassword",
+    "keyAlias",
+    "storeFile",
+)
+val hasCompleteKeystoreProperties = requiredKeystoreProperties.all {
+    !keystoreProperties.getProperty(it).isNullOrBlank()
+}
+val releaseBuildRequested = gradle.startParameter.taskNames.any { taskName ->
+    val normalizedTaskName = taskName.substringAfterLast(':').lowercase()
+    (normalizedTaskName.startsWith("assemble") || normalizedTaskName.startsWith("bundle")) &&
+        normalizedTaskName.endsWith("release")
+}
+
+if (releaseBuildRequested) {
+    if (!keystorePropertiesFile.exists()) {
+        throw GradleException(
+            """
+            Release signing is not configured.
+
+            Create android/key.properties from android/key.properties.example and
+            make sure android/keystores/btchess-release.jks exists. Release APKs
+            must be signed before Android can install them.
+            """.trimIndent(),
+        )
+    }
+
+    if (!hasCompleteKeystoreProperties) {
+        val missingProperties = requiredKeystoreProperties
+            .filter { keystoreProperties.getProperty(it).isNullOrBlank() }
+            .joinToString(", ")
+
+        throw GradleException(
+            """
+            Release signing is incomplete.
+
+            Missing key.properties value(s): $missingProperties.
+            Use android/key.properties.example as the template.
+            """.trimIndent(),
+        )
+    }
+
+    val configuredKeystoreFile = file(keystoreProperties.getProperty("storeFile"))
+    if (!configuredKeystoreFile.exists()) {
+        throw GradleException(
+            """
+            Release signing keystore was not found.
+
+            Expected: ${configuredKeystoreFile.absolutePath}
+            Create or restore the sideload release keystore before building.
+            """.trimIndent(),
+        )
+    }
 }
 
 android {
@@ -38,19 +95,19 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (keystorePropertiesFile.exists() && hasCompleteKeystoreProperties) {
             create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
     }
 
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (keystorePropertiesFile.exists() && hasCompleteKeystoreProperties) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
