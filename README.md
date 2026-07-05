@@ -4,10 +4,8 @@
 
 <h3><b>Turn any moment into a chess match. No internet. No accounts. Just you and your opponent.</b></h3>
 
-[![GitHub stars](https://img.shields.io/github/stars/KaitoJD/btchess)](https://github.com/KaitoJD/btchess/stargazers)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Android size](https://img.shields.io/badge/On_Android-23.4_MB-3DDC84)
-![iOS size](https://img.shields.io/badge/On_iOS-26.6_MB-7D7D7D)
+![App size](https://img.shields.io/badge/App_Size-<_30_MB-3DDC84)
 
 </div>
 
@@ -18,12 +16,12 @@
 
 ## ✨ Features
 
-- __Play via Bluetooth (No Wi-Fi required - No mobile data needed)__
-- Play on the Same Device (One phone, two players)
-- Auto Save Your Games
-    - Resume unfinished games anytime
-    - Review past matches
-    - Analyze your moves and improve
+- __Play over Bluetooth__ without Wi-Fi, mobile data, or accounts.
+- __Play on one device__ with a friend using local hotseat mode.
+- __Save games automatically__ so you can:
+    - Resume unfinished matches.
+    - Review past games.
+    - Learn from your moves and improve.
 
 ## 📸 Demo
 
@@ -40,24 +38,26 @@
 ## 🧭 How to Play
 
 - Open the app.
-- Choose "New Game".
-- Choose:
-    - Local Game: If you want to play on the same device with a friend.
-    - Host Bluetooth Game / Join Bluetooth Game: One opens a lobby, and one joins it.
+- Tap "New Game".
+- Pick how you want to play:
+    - Local Game: play together on the same device.
+    - Host Bluetooth Game / Join Bluetooth Game: one player creates a lobby, and the other joins it.
 - Start your match!
 
 > [!tip]
 >
-> __Make sure you have added the device of the opponent you are about to connect to in the Bluetooth Settings beforehand to ensure an uninterrupted experience.__
+> __For the smoothest Bluetooth experience, pair your opponent's device in system Bluetooth settings before starting a match.__
 
 ## 📬 Feedback & Support
 
-It would be great if you would like to contribute to this project. We can work together through:
+BTChess is for everyone who enjoys simple, offline chess. You can help make it better by reporting bugs, suggesting improvements, asking questions, or contributing code.
 
-- [GitHub Issues](https://github.com/KaitoJD/btchess/issues): Where you report bugs when using the app, as well as where we will discuss an exciting idea you propose.
-- [GitHub Discussions](https://github.com/KaitoJD/btchess/discussions): A place to exchange additional information about the app.
+- Found a bug or connection problem? Start with [Report a Bug](/docs/README.md#report-a-bug).
+- Have an idea for a new feature or improvement? Start with [Suggest a Feature](/docs/README.md#suggest-a-feature).
+- Want to ask a broader question or discuss an early idea? Use [GitHub Discussions](https://github.com/KaitoJD/btchess/discussions).
+- Want to contribute code? Start with [Contribute Code](/docs/README.md#contribute-code).
 
-Additionally, you can also contact me directly via:
+You can also contact me directly via:
 
 - Discord: **@_notnguyen**
 - Email: **contact.nguyensynguyen@gmail.com**
