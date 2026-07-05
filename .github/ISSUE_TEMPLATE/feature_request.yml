@@ -1,0 +1,139 @@
+name: Feature Request / Improvement
+description: Suggest a new feature, improvement, setting, UI change, or quality-of-life update for BTChess.
+labels: ["enhancement"]
+title: "[FEATURE] "
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve BTChess! Please describe the idea clearly so it is easier to discuss, prioritize, and eventually implement.
+
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request Type
+      description: What kind of change are you suggesting?
+      options:
+        - New feature
+        - Improvement to an existing feature
+        - UI / UX improvement
+        - Settings / customization option
+        - Performance or reliability improvement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A short and clear description of the feature or improvement.
+      placeholder: "e.g. Add a rematch button after a BLE multiplayer game ends."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: What problem, friction, or missing workflow does this solve?
+      placeholder: "e.g. After a game ends, both players must return to the lobby and create/join a new game manually."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe how you think this should work in the app.
+      placeholder: |
+        e.g.
+        - Show a Rematch button on the Game Over screen.
+        - If both players accept, start a new game with colors swapped.
+        - If one player declines, return to the lobby.
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: Why This Would Help
+      description: Explain who benefits from this change and why it would make BTChess better.
+      placeholder: "e.g. It makes repeated BLE matches faster and smoother when playing with a friend."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of BTChess does this idea affect most?
+      options:
+        - BLE / Connection
+        - Game Flow
+        - Chess Logic
+        - Board / Pieces / Themes
+        - Persistence / Game History
+        - Settings
+        - Audio
+        - UI / Navigation
+        - Build / Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game_mode
+    attributes:
+      label: Game Mode
+      description: Which game mode is most related to this request?
+      options:
+        - Hotseat (two players, one device)
+        - BLE Multiplayer (two devices)
+        - Both Hotseat and BLE Multiplayer
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Optional. Are there other ways this could be solved?
+      placeholder: "e.g. Instead of a rematch button, the lobby could keep the previous opponent visible for quick reconnect."
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or References
+      description: Optional. Add screenshots, sketches, links, or examples from other apps if they help explain the idea.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you interested in helping implement this?
+      options:
+        - I only want to suggest the idea
+        - I can help clarify the idea during discussion
+        - I would like to work on a pull request
+        - I am not sure yet
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have described the problem or motivation, not only the solution.
+          required: true
+        - label: I understand this request may need discussion before it is accepted or implemented.
+          required: true
