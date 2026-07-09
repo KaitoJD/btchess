@@ -6,7 +6,7 @@ import 'package:btchess/application/states/lobby_state.dart';
 import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/services/chess_service.dart';
 import 'package:btchess/core/utils/user_error_formatter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifier;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

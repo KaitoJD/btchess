@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifierProvider;
 import '../../infrastructure/bluetooth/ble_permissions.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../../infrastructure/bluetooth/connection_manager.dart';

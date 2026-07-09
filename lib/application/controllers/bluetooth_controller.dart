@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifier;
 import '../../core/constants/error_codes.dart';
 import '../../core/utils/logger.dart';
 import '../../core/utils/user_error_formatter.dart';

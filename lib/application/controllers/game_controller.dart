@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifier;
 import 'package:uuid/uuid.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/enums/game_end_reason.dart';

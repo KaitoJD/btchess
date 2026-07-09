@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifierProvider;
 import '../../domain/enums/game_status.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/game_state.dart';
