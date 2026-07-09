@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifier;
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/piece.dart';
 import '../../domain/models/player.dart';

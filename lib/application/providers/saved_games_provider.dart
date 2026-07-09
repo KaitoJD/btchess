@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifierProvider;
 
 import '../controllers/saved_games_controller.dart';
 import 'game_provider.dart';

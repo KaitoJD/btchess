@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifierProvider;
 import '../../domain/models/settings_models.dart';
 import '../../infrastructure/persistence/settings_repository.dart';
 import '../controllers/settings_controller.dart';

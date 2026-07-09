@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateNotifier;
 
 import '../../core/utils/logger.dart';
 import '../../domain/models/saved_game.dart';
