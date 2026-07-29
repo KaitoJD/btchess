@@ -350,10 +350,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_blue_plus
-      sha256: "8b2e2f5870539e2d2a8a6473557455b990b87bc0cd86e7224bb3e20ee2eb00df"
+      sha256: "2ff21c8aa1a6798f13519782627759f6f1703afac11fc1d25877f4a45bfd426d"
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.10"
+    version: "2.3.11"
   flutter_blue_plus_android:
     dependency: transitive
     description:
