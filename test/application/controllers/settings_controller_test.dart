@@ -27,6 +27,9 @@ void main() {
       when(
         () => repository.getPieceTheme(),
       ).thenAnswer((_) async => PieceTheme.neo);
+      when(
+        () => repository.getAppThemeMode(),
+      ).thenAnswer((_) async => AppThemeMode.dark);
       when(() => repository.getDebugMode()).thenAnswer((_) async => true);
       when(() => repository.getAutoFlipBoard()).thenAnswer((_) async => true);
 
@@ -37,6 +40,7 @@ void main() {
       expect(controller.state.showLegalMoves, isFalse);
       expect(controller.state.boardTheme, BoardTheme.green);
       expect(controller.state.pieceTheme, PieceTheme.neo);
+      expect(controller.state.appThemeMode, AppThemeMode.dark);
       expect(controller.state.debugMode, isTrue);
       expect(controller.state.autoFlipBoard, isTrue);
       expect(controller.state.lastError, isNull);
@@ -67,6 +71,17 @@ void main() {
 
       expect(controller.state.soundEnabled, isFalse);
       verify(() => repository.setSoundEnabled(value: false)).called(1);
+    });
+
+    test('setAppThemeMode persists the updated value', () async {
+      when(
+        () => repository.setAppThemeMode(AppThemeMode.light),
+      ).thenAnswer((_) async {});
+
+      await controller.setAppThemeMode(AppThemeMode.light);
+
+      expect(controller.state.appThemeMode, AppThemeMode.light);
+      verify(() => repository.setAppThemeMode(AppThemeMode.light)).called(1);
     });
   });
 }

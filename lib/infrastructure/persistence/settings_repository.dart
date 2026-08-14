@@ -10,6 +10,7 @@ abstract class SettingsKeys {
   static const String showCoordinates = 'show_coordinates';
   static const String boardTheme = 'board_theme';
   static const String pieceTheme = 'piece_theme';
+  static const String appThemeMode = 'app_theme_mode';
   static const String debugMode = 'debug_mode';
   static const String autoFlipBoard = 'auto_flip_board';
 }
@@ -91,6 +92,23 @@ class SettingsRepository {
     await prefs.setInt(SettingsKeys.pieceTheme, theme.index);
   }
 
+  Future<AppThemeMode> getAppThemeMode() async {
+    final prefs = await _getPrefs();
+    final index = prefs.getInt(SettingsKeys.appThemeMode);
+
+    if (index == null) {
+      return AppThemeMode.system;
+    }
+
+    return AppThemeMode.values[index.clamp(0, AppThemeMode.values.length - 1)];
+  }
+
+  Future<void> setAppThemeMode(AppThemeMode themeMode) async {
+    final prefs = await _getPrefs();
+
+    await prefs.setInt(SettingsKeys.appThemeMode, themeMode.index);
+  }
+
   Future<bool> getDebugMode() async {
     final prefs = await _getPrefs();
 
@@ -122,6 +140,7 @@ class SettingsRepository {
       SettingsKeys.showCoordinates: await getShowCoordinates(),
       SettingsKeys.boardTheme: await getBoardTheme(),
       SettingsKeys.pieceTheme: await getPieceTheme(),
+      SettingsKeys.appThemeMode: await getAppThemeMode(),
       SettingsKeys.debugMode: await getDebugMode(),
       SettingsKeys.autoFlipBoard: await getAutoFlipBoard(),
     };
@@ -135,6 +154,7 @@ class SettingsRepository {
     await prefs.remove(SettingsKeys.showCoordinates);
     await prefs.remove(SettingsKeys.boardTheme);
     await prefs.remove(SettingsKeys.pieceTheme);
+    await prefs.remove(SettingsKeys.appThemeMode);
     await prefs.remove(SettingsKeys.debugMode);
     await prefs.remove(_deprecatedPlayerNameKey);
     await prefs.remove(SettingsKeys.autoFlipBoard);

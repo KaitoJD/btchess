@@ -41,6 +41,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           const _SectionHeader(title: 'Appearance'),
+          _ThemeSelector<AppThemeMode>(
+            title: 'App Theme',
+            value: settings.appThemeMode,
+            values: AppThemeMode.values,
+            getLabel: (mode) => mode.displayName,
+            onChanged: (mode) => controller.setAppThemeMode(mode),
+          ),
           _ThemeSelector<BoardTheme>(
             title: 'Board Theme',
             value: settings.boardTheme,

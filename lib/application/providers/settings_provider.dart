@@ -40,6 +40,10 @@ final pieceThemeProvider = Provider<PieceTheme>((ref) {
   return ref.watch(settingsControllerProvider).pieceTheme;
 });
 
+final appThemeModeProvider = Provider<AppThemeMode>((ref) {
+  return ref.watch(settingsControllerProvider).appThemeMode;
+});
+
 final debugModeProvider = Provider<bool>((ref) {
   return ref.watch(settingsControllerProvider).debugMode;
 });

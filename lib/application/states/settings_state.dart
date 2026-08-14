@@ -8,6 +8,7 @@ class SettingsState extends Equatable {
     this.showCoordinates = true,
     this.boardTheme = BoardTheme.classic,
     this.pieceTheme = PieceTheme.standard,
+    this.appThemeMode = AppThemeMode.system,
     this.debugMode = false,
     this.autoFlipBoard = false,
     this.isLoaded = false,
@@ -21,6 +22,7 @@ class SettingsState extends Equatable {
   final bool showCoordinates;
   final BoardTheme boardTheme;
   final PieceTheme pieceTheme;
+  final AppThemeMode appThemeMode;
   final bool debugMode;
   final bool autoFlipBoard;
   final bool isLoaded;
@@ -32,6 +34,7 @@ class SettingsState extends Equatable {
     bool? showCoordinates,
     BoardTheme? boardTheme,
     PieceTheme? pieceTheme,
+    AppThemeMode? appThemeMode,
     bool? debugMode,
     bool? autoFlipBoard,
     bool? isLoaded,
@@ -44,6 +47,7 @@ class SettingsState extends Equatable {
       showCoordinates: showCoordinates ?? this.showCoordinates,
       boardTheme: boardTheme ?? this.boardTheme,
       pieceTheme: pieceTheme ?? this.pieceTheme,
+      appThemeMode: appThemeMode ?? this.appThemeMode,
       debugMode: debugMode ?? this.debugMode,
       autoFlipBoard: autoFlipBoard ?? this.autoFlipBoard,
       isLoaded: isLoaded ?? this.isLoaded,
@@ -58,6 +62,7 @@ class SettingsState extends Equatable {
     showCoordinates,
     boardTheme,
     pieceTheme,
+    appThemeMode,
     debugMode,
     autoFlipBoard,
     isLoaded,
