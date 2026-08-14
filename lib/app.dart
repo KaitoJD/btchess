@@ -4,6 +4,7 @@ import 'application/providers/settings_provider.dart';
 import 'core/constants/app_constants.dart';
 import 'core/utils/logger.dart';
 import 'core/utils/user_error_formatter.dart';
+import 'domain/models/settings_models.dart';
 import 'presentation/routes/app_router.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/themes/app_theme.dart';
@@ -36,11 +37,18 @@ class _BTChessAppState extends ConsumerState<BTChessApp> {
       Logger.setLevel(enabled ? LogLevel.debug : LogLevel.error);
     });
 
+    final appThemeMode = ref.watch(appThemeModeProvider);
+
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: switch (appThemeMode) {
+        AppThemeMode.light => ThemeMode.light,
+        AppThemeMode.dark => ThemeMode.dark,
+        AppThemeMode.system => ThemeMode.system,
+      },
       onGenerateRoute: AppRouter.onGenerateRoute,
       home: const _AppLoader(),
     );

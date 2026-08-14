@@ -20,6 +20,7 @@ class SettingsController extends StateNotifier<SettingsState> {
       final showCoordinates = await _repository.getShowCoordinates();
       final boardTheme = await _repository.getBoardTheme();
       final pieceTheme = await _repository.getPieceTheme();
+      final appThemeMode = await _repository.getAppThemeMode();
       final debugMode = await _repository.getDebugMode();
       final autoFlipBoard = await _repository.getAutoFlipBoard();
 
@@ -29,6 +30,7 @@ class SettingsController extends StateNotifier<SettingsState> {
         showCoordinates: showCoordinates,
         boardTheme: boardTheme,
         pieceTheme: pieceTheme,
+        appThemeMode: appThemeMode,
         debugMode: debugMode,
         autoFlipBoard: autoFlipBoard,
         isLoaded: true,
@@ -92,6 +94,12 @@ class SettingsController extends StateNotifier<SettingsState> {
     state = state.copyWith(pieceTheme: theme);
 
     await _repository.setPieceTheme(theme);
+  }
+
+  Future<void> setAppThemeMode(AppThemeMode themeMode) async {
+    state = state.copyWith(appThemeMode: themeMode);
+
+    await _repository.setAppThemeMode(themeMode);
   }
 
   Future<void> toggleDebugMode() async {
