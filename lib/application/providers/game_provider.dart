@@ -11,12 +11,23 @@ import '../controllers/game_controller.dart';
 import 'persistence_provider.dart';
 import 'services_provider.dart';
 
-final gameControllerProvider = StateNotifierProvider<GameController, GameState?>((ref) {
-  final chessService = ref.watch(chessServiceProvider);
-  final gameRepository = ref.watch(gameRepositoryProvider);
+final gameControllerProvider =
+    StateNotifierProvider<GameController, GameState?>((ref) {
+      final chessService = ref.watch(chessServiceProvider);
+      final gameRepository = ref.watch(gameRepositoryProvider);
 
-  return GameController(chessService: chessService, gameRepository: gameRepository);
-});
+      return GameController(
+        chessService: chessService,
+        gameRepository: gameRepository,
+        onGameSaved: () {
+          ref.invalidate(savedGamesProvider);
+          ref.invalidate(inProgressGamesProvider);
+          ref.invalidate(completedGamesProvider);
+          ref.invalidate(mostRecentGameProvider);
+          ref.invalidate(savedGameCountProvider);
+        },
+      );
+    });
 
 final gameStateProvider = Provider<GameState?>((ref) {
   return ref.watch(gameControllerProvider);
