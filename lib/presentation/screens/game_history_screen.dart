@@ -240,14 +240,14 @@ class _GameTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: colorScheme.inverseSurface,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: colorScheme.inversePrimary),
+        border: Border.all(color: colorScheme.inverseSurface),
       ),
       child: Text(
         text,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.onInverseSurface,
+          color: colorScheme.inverseSurface,
           fontWeight: FontWeight.bold,
         ),
       ),
