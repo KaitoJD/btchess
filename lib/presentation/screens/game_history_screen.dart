@@ -230,36 +230,24 @@ class _GameTile extends StatelessWidget {
 
   Widget _buildResultBadge(BuildContext context) {
     final theme = Theme.of(context);
-    String text;
-    Color color;
-
-    switch (game.result?.winner) {
-      case null:
-      case Winner.draw:
-        text = 'Draw';
-        color = theme.colorScheme.secondary;
-        break;
-      case Winner.white:
-        text = 'White';
-        color = Colors.grey;
-        break;
-      case Winner.black:
-        text = 'Black';
-        color = Colors.black87;
-        break;
-    }
+    final colorScheme = theme.colorScheme;
+    final text = switch (game.result?.winner) {
+      Winner.white => 'White',
+      Winner.black => 'Black',
+      Winner.draw || null => 'Draw',
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: colorScheme.inverseSurface,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: colorScheme.inversePrimary),
       ),
       child: Text(
         text,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
+          color: colorScheme.onInverseSurface,
           fontWeight: FontWeight.bold,
         ),
       ),
