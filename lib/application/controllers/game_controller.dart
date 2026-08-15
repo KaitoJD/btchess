@@ -19,13 +19,17 @@ class GameController extends StateNotifier<GameState?> {
   GameController({
     required ChessService chessService,
     GameRepository? gameRepository,
+    void Function()? onGameSaved,
   }) : _chessService = chessService,
        _gameRepository = gameRepository,
+       _onGameSaved = onGameSaved,
        super(null);
 
   final ChessService _chessService;
   final GameRepository? _gameRepository;
+  final void Function()? _onGameSaved;
   final Uuid _uuid = const Uuid();
+  Future<void> _autoSaveQueue = Future<void>.value();
 
   bool get hasActiveGame => state != null;
   bool get isGameInProgress => state?.isInProgress ?? false;
@@ -317,6 +321,8 @@ class GameController extends StateNotifier<GameState?> {
       status: actualStatus,
       result: result,
     );
+
+    _autoSave();
   }
 
   bool applyRemoteMove(Move move) {
@@ -372,10 +378,25 @@ class GameController extends StateNotifier<GameState?> {
     }
   }
 
-  Future<void> _autoSave() async {
-    if (state == null || _gameRepository == null) return;
+  void _autoSave() {
+    final gameState = state;
+    final gameRepository = _gameRepository;
+    if (gameState == null || gameRepository == null) return;
+
+    // Hive writes are asynchronous. Queue snapshots so a delayed save from an
+    // earlier position can never overwrite a completed game.
+    _autoSaveQueue = _autoSaveQueue.then<void>(
+      (_) => _saveGame(gameRepository: gameRepository, gameState: gameState),
+    );
+  }
+
+  Future<void> _saveGame({
+    required GameRepository gameRepository,
+    required GameState gameState,
+  }) async {
     try {
-      await _gameRepository.saveGame(state!);
+      await gameRepository.saveGame(gameState);
+      _onGameSaved?.call();
     } catch (e, stackTrace) {
       Logger.error(
         'Failed to auto-save game',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:btchess/application/controllers/game_controller.dart';
 import 'package:btchess/domain/services/chess_service.dart';
@@ -8,6 +10,8 @@ import 'package:btchess/domain/models/move.dart';
 import 'package:btchess/domain/enums/game_status.dart';
 import 'package:btchess/domain/enums/promotion_piece.dart';
 import 'package:btchess/domain/enums/winner.dart';
+import 'package:btchess/domain/models/game_state.dart';
+import 'package:btchess/infrastructure/persistence/game_repository.dart';
 import '../../fixtures/fen_fixtures.dart';
 
 void main() {
@@ -103,16 +107,70 @@ void main() {
       test('detects checkmate', () {
         controller.newGame(mode: GameMode.hotseat);
         // Play fool's mate: 1. f3 e5 2. g4 Qh4#
-        controller.makeMove(from: Square.fromAlgebraic('f2'), to: Square.fromAlgebraic('f3'));
-        controller.makeMove(from: Square.fromAlgebraic('e7'), to: Square.fromAlgebraic('e5'));
-        controller.makeMove(from: Square.fromAlgebraic('g2'), to: Square.fromAlgebraic('g4'));
-        controller.makeMove(from: Square.fromAlgebraic('d8'), to: Square.fromAlgebraic('h4'));
+        controller.makeMove(
+          from: Square.fromAlgebraic('f2'),
+          to: Square.fromAlgebraic('f3'),
+        );
+        controller.makeMove(
+          from: Square.fromAlgebraic('e7'),
+          to: Square.fromAlgebraic('e5'),
+        );
+        controller.makeMove(
+          from: Square.fromAlgebraic('g2'),
+          to: Square.fromAlgebraic('g4'),
+        );
+        controller.makeMove(
+          from: Square.fromAlgebraic('d8'),
+          to: Square.fromAlgebraic('h4'),
+        );
 
         expect(controller.state!.status, GameStatus.checkmate);
         expect(controller.state!.result, isNotNull);
         expect(controller.state!.result!.winner, Winner.black);
         expect(controller.isGameEnded, isTrue);
       });
+
+      test(
+        'saves a resumed game completion after earlier saves finish',
+        () async {
+          final repository = _DelayedGameRepository();
+          controller = GameController(
+            chessService: const ChessService(),
+            gameRepository: repository,
+          );
+          controller.loadGame(
+            GameState.newGame(id: 'resumed-game', mode: GameMode.hotseat),
+          );
+
+          // Fool's mate: 1. f3 e5 2. g4 Qh4#
+          controller.makeMove(
+            from: Square.fromAlgebraic('f2'),
+            to: Square.fromAlgebraic('f3'),
+          );
+          controller.makeMove(
+            from: Square.fromAlgebraic('e7'),
+            to: Square.fromAlgebraic('e5'),
+          );
+          controller.makeMove(
+            from: Square.fromAlgebraic('g2'),
+            to: Square.fromAlgebraic('g4'),
+          );
+          controller.makeMove(
+            from: Square.fromAlgebraic('d8'),
+            to: Square.fromAlgebraic('h4'),
+          );
+
+          await repository.firstSaveStarted.future;
+          repository.allowFirstSave.complete();
+          await repository.firstSaveFinished.future;
+          await repository.completedSaveFinished.future;
+
+          expect(repository.savedGame.id, 'resumed-game');
+          expect(repository.savedGame.moves, hasLength(4));
+          expect(repository.savedGame.isEnded, isTrue);
+          expect(repository.savedGame.result!.winner, Winner.black);
+        },
+      );
     });
 
     group('undoMove', () {
@@ -325,3 +383,26 @@ void main() {
   });
 }
 
+class _DelayedGameRepository extends GameRepository {
+  final firstSaveStarted = Completer<void>();
+  final allowFirstSave = Completer<void>();
+  final firstSaveFinished = Completer<void>();
+  final completedSaveFinished = Completer<void>();
+  late GameState savedGame;
+  var _saveCount = 0;
+
+  @override
+  Future<void> saveGame(GameState gameState) async {
+    _saveCount++;
+    if (_saveCount == 1) {
+      firstSaveStarted.complete();
+      await allowFirstSave.future;
+      firstSaveFinished.complete();
+    }
+
+    savedGame = gameState;
+    if (gameState.isEnded) {
+      completedSaveFinished.complete();
+    }
+  }
+}
