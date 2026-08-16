@@ -55,4 +55,23 @@ class SavedGamesController extends StateNotifier<AsyncValue<void>> {
       rethrow;
     }
   }
+
+  Future<void> deleteGames(Iterable<String> ids) async {
+    state = const AsyncLoading();
+
+    try {
+      await _gameRepository.deleteGames(ids);
+      _onChanged();
+      state = const AsyncData(null);
+    } catch (e, stackTrace) {
+      Logger.error(
+        'Failed to delete selected saved games',
+        tag: 'SavedGamesController',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      state = AsyncError(e, stackTrace);
+      rethrow;
+    }
+  }
 }

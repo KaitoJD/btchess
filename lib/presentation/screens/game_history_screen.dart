@@ -18,6 +18,9 @@ class GameHistoryScreen extends ConsumerStatefulWidget {
 class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final Set<String> _selectedGameIds = <String>{};
+
+  bool get _isSelectionMode => _selectedGameIds.isNotEmpty;
 
   @override
   void initState() {
@@ -33,36 +36,120 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Game History'),
-        centerTitle: true,
-        bottom: TabBar(
+    final allGames = ref.watch(savedGamesProvider).when(
+      loading: () => const <SavedGame>[],
+      error: (_, _) => const <SavedGame>[],
+      data: (games) => games,
+    );
+
+    return PopScope(
+      canPop: !_isSelectionMode,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _isSelectionMode) _cancelSelection();
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(allGames),
+        body: TabBarView(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'In Progress'),
-            Tab(text: 'Completed'),
+          children: [
+            _GameList(
+              games: ref.watch(inProgressGamesProvider),
+              emptyMessage: 'No games in progress',
+              isSelectionMode: _isSelectionMode,
+              selectedGameIds: _selectedGameIds,
+              onGameTap: (game) => _resumeGame(game),
+              onGameLongPress: (game) => _startSelection(game),
+              onGameSelectionToggle: (game) => _toggleSelection(game.id),
+              onGameDelete: (game) => _deleteGame(game),
+            ),
+            _GameList(
+              games: ref.watch(completedGamesProvider),
+              emptyMessage: 'No completed games',
+              isSelectionMode: _isSelectionMode,
+              selectedGameIds: _selectedGameIds,
+              onGameTap: (game) => _viewGame(game),
+              onGameLongPress: (game) => _startSelection(game),
+              onGameSelectionToggle: (game) => _toggleSelection(game.id),
+              onGameDelete: (game) => _deleteGame(game),
+            ),
           ],
         ),
       ),
-      body: TabBarView(
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(List<SavedGame> allGames) {
+    final areAllGamesSelected =
+        allGames.isNotEmpty &&
+        allGames.every((game) => _selectedGameIds.contains(game.id));
+
+    return AppBar(
+      leading: _isSelectionMode
+          ? IconButton(
+              tooltip: 'Cancel selection',
+              onPressed: _cancelSelection,
+              icon: const Icon(Icons.close),
+            )
+          : null,
+      title: Text(
+        _isSelectionMode
+            ? '${_selectedGameIds.length} selected'
+            : 'Game History',
+      ),
+      centerTitle: true,
+      actions: _isSelectionMode
+          ? [
+              IconButton(
+                tooltip: 'Select all',
+                onPressed: areAllGamesSelected
+                    ? null
+                    : () => _selectAllGames(allGames),
+                icon: const Icon(Icons.select_all),
+              ),
+              IconButton(
+                tooltip: 'Delete selected games',
+                onPressed: _deleteSelectedGames,
+                icon: const Icon(Icons.delete),
+              ),
+            ]
+          : null,
+      bottom: TabBar(
         controller: _tabController,
-        children: [
-          _GameList(
-            games: ref.watch(inProgressGamesProvider),
-            emptyMessage: 'No games in progress',
-            onGameTap: (game) => _resumeGame(game),
-            onGameDelete: (game) => _deleteGame(game),
-          ),
-          _GameList(
-            games: ref.watch(completedGamesProvider),
-            emptyMessage: 'No completed games',
-            onGameTap: (game) => _viewGame(game),
-            onGameDelete: (game) => _deleteGame(game),
-          ),
+        tabs: const [
+          Tab(text: 'In Progress'),
+          Tab(text: 'Completed'),
         ],
       ),
     );
+  }
+
+  void _startSelection(SavedGame game) {
+    if (_isSelectionMode) {
+      _toggleSelection(game.id);
+      return;
+    }
+
+    setState(() {
+      _selectedGameIds.add(game.id);
+    });
+  }
+
+  void _toggleSelection(String gameId) {
+    setState(() {
+      if (!_selectedGameIds.add(gameId)) {
+        _selectedGameIds.remove(gameId);
+      }
+    });
+  }
+
+  void _selectAllGames(List<SavedGame> games) {
+    setState(() {
+      _selectedGameIds.addAll(games.map((game) => game.id));
+    });
+  }
+
+  void _cancelSelection() {
+    setState(_selectedGameIds.clear);
   }
 
   void _resumeGame(SavedGame game) {
@@ -105,19 +192,63 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen>
       await ref.read(savedGamesControllerProvider.notifier).deleteGame(game.id);
     }
   }
+
+  Future<void> _deleteSelectedGames() async {
+    final selectedGameIds = _selectedGameIds.toList(growable: false);
+    final count = selectedGameIds.length;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Games'),
+        content: Text(
+          'Are you sure you want to delete $count selected ${count == 1 ? 'game' : 'games'}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await ref
+        .read(savedGamesControllerProvider.notifier)
+        .deleteGames(selectedGameIds);
+
+    if (mounted) _cancelSelection();
+  }
 }
 
 class _GameList extends StatelessWidget {
   const _GameList({
     required this.games,
     required this.emptyMessage,
+    required this.isSelectionMode,
+    required this.selectedGameIds,
     required this.onGameTap,
+    required this.onGameLongPress,
+    required this.onGameSelectionToggle,
     required this.onGameDelete,
   });
 
   final AsyncValue<List<SavedGame>> games;
   final String emptyMessage;
+  final bool isSelectionMode;
+  final Set<String> selectedGameIds;
   final void Function(SavedGame) onGameTap;
+  final void Function(SavedGame) onGameLongPress;
+  final void Function(SavedGame) onGameSelectionToggle;
   final Future<void> Function(SavedGame) onGameDelete;
 
   @override
@@ -154,7 +285,16 @@ class _GameList extends StatelessWidget {
             final game = games[index];
             return _GameTile(
               game: game,
-              onTap: () => onGameTap(game),
+              isSelectionMode: isSelectionMode,
+              isSelected: selectedGameIds.contains(game.id),
+              onTap: () {
+                if (isSelectionMode) {
+                  onGameSelectionToggle(game);
+                } else {
+                  onGameTap(game);
+                }
+              },
+              onLongPress: () => onGameLongPress(game),
               onDelete: () => onGameDelete(game),
             );
           },
@@ -167,18 +307,69 @@ class _GameList extends StatelessWidget {
 class _GameTile extends StatelessWidget {
   const _GameTile({
     required this.game,
+    required this.isSelectionMode,
+    required this.isSelected,
     required this.onTap,
+    required this.onLongPress,
     required this.onDelete,
   });
 
   final SavedGame game;
+  final bool isSelectionMode;
+  final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final tile = ListTile(
+      selected: isSelected,
+      selectedTileColor: colorScheme.secondaryContainer,
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: game.isInProgress
+              ? colorScheme.primaryContainer
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          game.isInProgress ? Icons.play_arrow : Icons.check,
+          color: game.isInProgress
+              ? colorScheme.onPrimaryContainer
+              : colorScheme.onSurfaceVariant,
+        ),
+      ),
+      title: Text(
+        game.opponentName ?? game.mode.displayName,
+        style: theme.textTheme.titleMedium,
+      ),
+      subtitle: Text(
+        '${game.moves.length} moves - ${game.updatedAt.toRelative()}',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      trailing: isSelectionMode
+          ? Icon(
+              isSelected ? Icons.check_circle : Icons.circle_outlined,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            )
+          : game.isCompleted
+          ? _buildResultBadge(context)
+          : const Icon(Icons.arrow_forward_ios, size: 16),
+      onTap: onTap,
+      onLongPress: onLongPress,
+    );
+
+    if (isSelectionMode) return tile;
 
     return Dismissible(
       key: Key(game.id),
@@ -193,38 +384,7 @@ class _GameTile extends StatelessWidget {
         await onDelete();
         return false;
       },
-      child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: game.isInProgress
-                ? colorScheme.primaryContainer
-                : colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            game.isInProgress ? Icons.play_arrow : Icons.check,
-            color: game.isInProgress
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSurfaceVariant,
-          ),
-        ),
-        title: Text(
-          game.opponentName ?? game.mode.displayName,
-          style: theme.textTheme.titleMedium,
-        ),
-        subtitle: Text(
-          '${game.moves.length} moves - ${game.updatedAt.toRelative()}',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        trailing: game.isCompleted
-            ? _buildResultBadge(context)
-            : const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
-      ),
+      child: tile,
     );
   }
 
