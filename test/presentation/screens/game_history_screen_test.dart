@@ -1,4 +1,6 @@
 import 'package:btchess/application/providers/persistence_provider.dart';
+import 'package:btchess/domain/enums/game_end_reason.dart';
+import 'package:btchess/domain/enums/winner.dart';
 import 'package:btchess/domain/models/game_mode.dart';
 import 'package:btchess/domain/models/game_state.dart';
 import 'package:btchess/domain/models/saved_game.dart';
@@ -17,14 +19,21 @@ void main() {
       final games = [
         _savedGame(id: 'game-1', opponentName: 'Game one'),
         _savedGame(id: 'game-2', opponentName: 'Game two'),
+        _savedGame(
+          id: 'game-3',
+          opponentName: 'Completed game',
+          isCompleted: true,
+        ),
       ];
 
       when(() => repository.init()).thenAnswer((_) async {});
       when(() => repository.getAllGames()).thenAnswer((_) async => games);
-      when(
-        () => repository.getInProgressGames(),
-      ).thenAnswer((_) async => games);
-      when(() => repository.getCompletedGames()).thenAnswer((_) async => []);
+      when(() => repository.getInProgressGames()).thenAnswer(
+        (_) async => games.where((game) => game.isInProgress).toList(),
+      );
+      when(() => repository.getCompletedGames()).thenAnswer(
+        (_) async => games.where((game) => game.isCompleted).toList(),
+      );
       when(() => repository.deleteGames(any())).thenAnswer((invocation) async {
         final ids =
             invocation.positionalArguments.single as Iterable<String>;
@@ -45,9 +54,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('1 selected'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(find.text('Select all'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Select all'));
+      final selectAllCheckbox = find.byWidgetPredicate(
+        (widget) => widget is Checkbox && widget.tristate,
+      );
+      await tester.tap(selectAllCheckbox);
       await tester.pumpAndSettle();
 
       expect(find.text('2 selected'), findsOneWidget);
@@ -74,7 +86,11 @@ void main() {
   });
 }
 
-SavedGame _savedGame({required String id, required String opponentName}) {
+SavedGame _savedGame({
+  required String id,
+  required String opponentName,
+  bool isCompleted = false,
+}) {
   final timestamp = DateTime(2026, 8, 16, 12);
 
   return SavedGame(
@@ -85,5 +101,7 @@ SavedGame _savedGame({required String id, required String opponentName}) {
     updatedAt: timestamp,
     modeIndex: GameMode.hotseat.index,
     opponentName: opponentName,
+    winnerIndex: isCompleted ? Winner.draw.index : null,
+    endReasonIndex: isCompleted ? GameEndReason.drawAgreement.index : null,
   );
 }
