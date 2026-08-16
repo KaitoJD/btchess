@@ -180,6 +180,26 @@ void main() {
       });
     });
 
+    group('deleteGames', () {
+      test('deletes only the selected games', () async {
+        await repository.saveGame(
+          GameState.newGame(id: 'selected-1', mode: GameMode.hotseat),
+        );
+        await repository.saveGame(
+          GameState.newGame(id: 'selected-2', mode: GameMode.hotseat),
+        );
+        await repository.saveGame(
+          GameState.newGame(id: 'remaining', mode: GameMode.hotseat),
+        );
+
+        await repository.deleteGames(['selected-1', 'selected-2']);
+
+        expect(await repository.getGame('selected-1'), isNull);
+        expect(await repository.getGame('selected-2'), isNull);
+        expect(await repository.getGame('remaining'), isNotNull);
+      });
+    });
+
     group('deleteAllGames', () {
       test('clears all games', () async {
         await repository.saveGame(

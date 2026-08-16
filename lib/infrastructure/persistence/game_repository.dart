@@ -105,6 +105,12 @@ class GameRepository {
     await box.delete(id);
   }
 
+  Future<void> deleteGames(Iterable<String> ids) async {
+    final box = await _getBox();
+
+    await box.deleteAll(ids);
+  }
+
   Future<void> deleteAllGames() async {
     final box = await _getBox();
 
