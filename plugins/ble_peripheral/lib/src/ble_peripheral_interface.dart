@@ -95,6 +95,8 @@ typedef BondStateCallback = void Function(String deviceId, BondState bondState);
 typedef CharacteristicSubscriptionChangeCallback = void Function(
     String deviceId, String characteristicId, bool isSubscribed, String? name);
 
+/// Raw Android GATT link state. A connected link is not necessarily paired or
+/// subscribed to the protocol's notification characteristic yet.
 typedef ConnectionStateChangeCallback = void Function(
     String deviceId, bool connected);
 
