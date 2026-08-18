@@ -11,5 +11,14 @@ void main() {
     test('uses extended handshake timeout for cross-platform handshaking', () {
       expect(TimingConstants.handshakeTimeoutMs, 45000);
     });
+
+    test('keeps pairing and reconnect inside the shared setup deadline', () {
+      expect(TimingConstants.pairingSetupTimeoutMs, 90000);
+      expect(TimingConstants.pairingReconnectTimeoutMs, 30000);
+      expect(
+        TimingConstants.pairingReconnectTimeoutMs,
+        lessThan(TimingConstants.pairingSetupTimeoutMs),
+      );
+    });
   });
 }
