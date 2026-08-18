@@ -130,6 +130,14 @@ class ConnectionStatusWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
+            if ((_showProgress || status == BleConnectionStatus.reconnecting) &&
+                onCancel != null) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: onCancel,
+                child: const Text('Cancel'),
+              ),
+            ],
           ],
         ),
       ),
@@ -139,6 +147,11 @@ class ConnectionStatusWidget extends StatelessWidget {
   Widget _buildIcon(ColorScheme colorScheme) {
     switch (status) {
       case BleConnectionStatus.connecting:
+        return _AnimatedStatusIcon(
+          icon: Icons.bluetooth_searching,
+          color: colorScheme.primary,
+        );
+      case BleConnectionStatus.pairing:
         return _AnimatedStatusIcon(
           icon: Icons.bluetooth_searching,
           color: colorScheme.primary,
@@ -178,6 +191,8 @@ class ConnectionStatusWidget extends StatelessWidget {
     switch (status) {
       case BleConnectionStatus.connecting:
         return 'Connecting...';
+      case BleConnectionStatus.pairing:
+        return 'Pairing devices...';
       case BleConnectionStatus.handshaking:
         return 'Handshaking...';
       case BleConnectionStatus.connected:
@@ -197,6 +212,9 @@ class ConnectionStatusWidget extends StatelessWidget {
     switch (status) {
       case BleConnectionStatus.connecting:
         return 'Establishing Bluetooth connection';
+      case BleConnectionStatus.pairing:
+        return 'Please confirm or enter the code in the system dialog on both devices. '
+            'BTChess will automatically continue.';
       case BleConnectionStatus.handshaking:
         return 'Exchanging protocol handshake';
       case BleConnectionStatus.connected:
@@ -214,6 +232,7 @@ class ConnectionStatusWidget extends StatelessWidget {
 
   bool get _showProgress {
     return status == BleConnectionStatus.connecting ||
+        status == BleConnectionStatus.pairing ||
         status == BleConnectionStatus.handshaking;
   }
 

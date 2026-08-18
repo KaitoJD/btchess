@@ -84,6 +84,24 @@ void main() {
       expect(controller.state.lastError, isNull);
     });
 
+    test('host lobby remains waiting while the system pairing prompt is open',
+        () async {
+      when(() => mockBluetoothController.createLobby(any()))
+          .thenAnswer((_) async {});
+
+      await controller.createLobby(
+        gameName: 'test-game',
+        playerName: 'host',
+      );
+
+      bleStateNotifier.state = bleStateNotifier.state.copyWith(
+        connectionStatus: BleConnectionStatus.pairing,
+      );
+
+      expect(controller.state.status, LobbyStatus.waitingForOpponent);
+      expect(controller.state.lastError, isNull);
+    });
+
     test('transitions to error when createLobby fails', () async {
       when(() => mockBluetoothController.createLobby(any()))
           .thenThrow(Exception('advertising failed'));

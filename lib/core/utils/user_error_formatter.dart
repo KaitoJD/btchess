@@ -60,6 +60,15 @@ abstract class UserErrorFormatter {
     if (lower.contains('device not found')) {
       return 'Complete the system pairing prompt, keep both devices nearby, then retry.';
     }
+    if (_isStalePairing(lower)) {
+      return 'Forget this device on both phones, then scan and pair again.';
+    }
+    if (_isPairingRejected(lower)) {
+      return 'Pairing was cancelled or rejected. Please retry.';
+    }
+    if (_isPairingTimedOut(lower)) {
+      return 'Pairing timed out. Please retry.';
+    }
     if (lower.contains('bond') || lower.contains('pair')) {
       return 'Finish Bluetooth pairing on both devices and keep the app open.';
     }
@@ -138,6 +147,15 @@ abstract class UserErrorFormatter {
     if (lower.contains('device not found')) {
       return 'Device temporarily unavailable while pairing. Retrying...';
     }
+    if (_isStalePairing(lower)) {
+      return 'Pairing information may be stale. Forget this device on both phones, then scan again.';
+    }
+    if (_isPairingRejected(lower)) {
+      return 'Bluetooth pairing was cancelled or rejected. Please retry.';
+    }
+    if (_isPairingTimedOut(lower)) {
+      return 'Bluetooth pairing timed out. Please retry.';
+    }
     if (lower.contains('bond') || lower.contains('pair')) {
       return 'Bluetooth pairing in progress. Please complete pairing and wait.';
     }
@@ -178,6 +196,24 @@ abstract class UserErrorFormatter {
         lower.contains('poweredoff') ||
         lower.contains('powered off') ||
         (lower.contains('bluetooth') && lower.contains('off'));
+  }
+
+  static bool _isPairingRejected(String lower) {
+    return (lower.contains('pair') || lower.contains('bond')) &&
+        (lower.contains('cancel') ||
+            lower.contains('reject') ||
+            lower.contains('declin'));
+  }
+
+  static bool _isStalePairing(String lower) {
+    return lower.contains('stale pairing') ||
+        lower.contains('forget this device') ||
+        lower.contains('reconnect after pairing');
+  }
+
+  static bool _isPairingTimedOut(String lower) {
+    return (lower.contains('pair') || lower.contains('bond')) &&
+        (lower.contains('timeout') || lower.contains('timed out'));
   }
 
   static String _stripTypePrefix(String message) {
