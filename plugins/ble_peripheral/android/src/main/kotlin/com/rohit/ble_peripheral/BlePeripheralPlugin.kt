@@ -516,7 +516,6 @@ class BlePeripheralPlugin : FlutterPlugin, BlePeripheralChannel, ActivityAware {
                 }
             }
         }
-    }
 
     private val gattServerCallback: BluetoothGattServerCallback =
         object : BluetoothGattServerCallback() {
