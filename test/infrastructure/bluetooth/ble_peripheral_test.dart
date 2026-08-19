@@ -76,7 +76,22 @@ void main() {
       isSubscribed: true,
     );
 
-    expect(await received, handshake);
+    expect(
+      await received,
+      isA<HandshakeMessage>()
+          .having(
+            (message) => message.messageId,
+            'message id',
+            handshake.messageId,
+          )
+          .having(
+            (message) => message.protocolVersion,
+            'protocol version',
+            handshake.protocolVersion,
+          )
+          .having((message) => message.role, 'role', handshake.role)
+          .having((message) => message.hostColor, 'host color', handshake.hostColor),
+    );
   });
 
   test('keeps a pairing attempt alive across a bonding disconnect', () async {
