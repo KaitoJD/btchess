@@ -25,15 +25,13 @@ class BleHostTransport implements BleTransport {
     );
 
     _clientDisconnectedSubscription = _peripheral.clientDisconnected.listen(
-      (deviceId) {
+      (_) {
         if (_messagesController.isClosed) {
           return;
         }
 
         _messagesController.addError(
-          BleDisconnectedException(
-            'Host transport detected client disconnect: $deviceId',
-          ),
+          const BleDisconnectedException('Host transport detected client disconnect'),
         );
       },
     );

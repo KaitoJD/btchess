@@ -15,6 +15,7 @@ import '../../domain/models/square.dart';
 import '../../infrastructure/bluetooth/ble_connection.dart';
 import '../../infrastructure/bluetooth/ble_host_transport.dart';
 import '../../infrastructure/bluetooth/ble_permissions.dart';
+import '../../infrastructure/bluetooth/ble_setup.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../../infrastructure/bluetooth/connection_manager.dart' as cm;
 import '../../infrastructure/bluetooth/message_models.dart';
@@ -60,6 +61,12 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   StreamSubscription<BleMessage>? _messageSubscription;
   StreamSubscription<List<BleDeviceInfo>>? _deviceScanSubscription;
   StreamSubscription<String>? _clientConnectedSubscription;
+  StreamSubscription<PeerSetupEvent>? _hostSetupSubscription;
+  StreamSubscription<PeerSetupEvent>? _connectionPhaseSubscription;
+  BleConnectionAttempt? _activeConnectionAttempt;
+  int? _activeConnectionAttemptId;
+  int _latestHostSetupAttemptId = 0;
+  int _hostSetupSessionGeneration = 0;
 
   void _init() {
     // Listen to infrastructure connection state changes
@@ -200,21 +207,40 @@ class BluetoothController extends StateNotifier<BluetoothState> {
       _connectionManager.setHostColor(_hostColorCode);
 
       // Listen for client connections from the peripheral manager
+      final hostSetupSession = ++_hostSetupSessionGeneration;
       _clientConnectedSubscription?.cancel();
       _clientConnectedSubscription = _bluetoothService
           .peripheralManager
           .clientConnected
-          .listen(_onHostClientConnected);
+          .listen((deviceId) {
+            if (hostSetupSession != _hostSetupSessionGeneration) return;
+            unawaited(_onHostClientConnected(deviceId));
+          });
+      _hostSetupSubscription?.cancel();
+      _hostSetupSubscription = _bluetoothService
+          .peripheralManager
+          .setupEvents
+          .listen((event) {
+            if (hostSetupSession != _hostSetupSessionGeneration) return;
+            _onHostSetupEvent(event);
+          });
 
       await _bluetoothService.startAdvertising(gameName);
 
-      // Advertising is active and waiting for peer connection callbacks.
-      state = state.copyWith(
-        connectionStatus: BleConnectionStatus.disconnected,
-      );
+      // Advertising is active and waiting for peer connection callbacks. If a
+      // very fast Android callback already moved us into pairing, do not erase
+      // that setup phase by resetting the UI to disconnected.
+      if (state.connectionStatus == BleConnectionStatus.connecting) {
+        state = state.copyWith(
+          connectionStatus: BleConnectionStatus.disconnected,
+        );
+      }
     } catch (e) {
+      _hostSetupSessionGeneration++;
       await _clientConnectedSubscription?.cancel();
       _clientConnectedSubscription = null;
+      await _hostSetupSubscription?.cancel();
+      _hostSetupSubscription = null;
       try {
         await _bluetoothService.stopAdvertising();
       } catch (_) {}
@@ -233,8 +259,11 @@ class BluetoothController extends StateNotifier<BluetoothState> {
   // Stops advertising (host tears down lobby)
   Future<void> stopAdvertising() async {
     try {
+      _hostSetupSessionGeneration++;
       _clientConnectedSubscription?.cancel();
       _clientConnectedSubscription = null;
+      _hostSetupSubscription?.cancel();
+      _hostSetupSubscription = null;
       await _bluetoothService.stopAdvertising();
     } catch (_) {
       // Ignore stop errors
@@ -276,6 +305,9 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
   // Connects to a discovered host device and begins the handshake
   Future<void> joinGame(BleDeviceInfo device) async {
+    await _cancelActiveConnectionAttempt();
+
+    BleConnectionAttempt? attempt;
     try {
       state = state.copyWith(
         connectionStatus: BleConnectionStatus.connecting,
@@ -286,8 +318,33 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
       await stopScanning();
 
-      final connection = await _bluetoothService.connect(device);
-      await _connectionManager.setupConnection(connection);
+      final connectionAttempt = _bluetoothService.startConnectionAttempt(
+        device,
+      );
+      attempt = connectionAttempt;
+      _activeConnectionAttempt = connectionAttempt;
+      _activeConnectionAttemptId = connectionAttempt.id;
+      final attemptId = connectionAttempt.id;
+      _connectionPhaseSubscription = connectionAttempt.phaseStream.listen(
+        _onConnectionSetupEvent,
+        onDone: () {
+          if (_activeConnectionAttemptId == attemptId) {
+            _connectionPhaseSubscription = null;
+            _activeConnectionAttempt = null;
+            _activeConnectionAttemptId = null;
+          }
+        },
+      );
+
+      final connection = await connectionAttempt.connection;
+      if (!_isCurrentConnectionAttempt(connectionAttempt)) return;
+
+      connectionAttempt.reportPhase(BleSetupPhase.handshaking);
+      await _connectionManager.setupConnection(
+        connection,
+        handshakeTimeout: connectionAttempt.remaining,
+      );
+      if (!_isCurrentConnectionAttempt(connectionAttempt)) return;
 
       // Read host color from handshake and propagate to state
       final hostColorCode = _connectionManager.receivedHostColor;
@@ -295,21 +352,154 @@ class BluetoothController extends StateNotifier<BluetoothState> {
           ? PieceColor.black
           : PieceColor.white;
       state = state.copyWith(hostColor: hostColor);
+      connectionAttempt.complete();
     } catch (e) {
+      final currentAttempt = attempt;
+      if (currentAttempt == null ||
+          !_isCurrentConnectionAttempt(currentAttempt) ||
+          currentAttempt.isCancelled) {
+        return;
+      }
+
+      if (currentAttempt.phase != BleSetupPhase.failed) {
+        currentAttempt.fail(e, reason: _safeSetupFailureReason(e));
+      }
+
       // Clean up transport/connection on failure
       try {
         await _connectionManager.disconnect();
       } catch (_) {}
+    }
+  }
 
+  bool _isCurrentConnectionAttempt(BleConnectionAttempt attempt) {
+    return identical(_activeConnectionAttempt, attempt) &&
+        _activeConnectionAttemptId == attempt.id;
+  }
+
+  Future<void> _cancelActiveConnectionAttempt() async {
+    final attempt = _activeConnectionAttempt;
+    _activeConnectionAttempt = null;
+    _activeConnectionAttemptId = null;
+
+    final phaseSubscription = _connectionPhaseSubscription;
+    _connectionPhaseSubscription = null;
+    await phaseSubscription?.cancel();
+
+    if (attempt != null) {
+      await attempt.cancel();
+    }
+  }
+
+  void _onConnectionSetupEvent(PeerSetupEvent event) {
+    if (!mounted ||
+        event.isHost ||
+        event.attemptId != _activeConnectionAttemptId) {
+      return;
+    }
+
+    _applySetupEvent(event, isHost: false);
+  }
+
+  void _onHostSetupEvent(PeerSetupEvent event) {
+    if (!mounted || !event.isHost) return;
+
+    // A stopped/cancelled host attempt can still deliver queued stream events.
+    // Only accept a new attempt from its initial connecting transition.
+    if (event.attemptId < _latestHostSetupAttemptId) {
+      Logger.debug(
+        'Ignoring stale host setup event: $event',
+        tag: 'BluetoothController',
+      );
+      return;
+    }
+    if (event.attemptId > _latestHostSetupAttemptId) {
+      if (event.phase != BleSetupPhase.connecting) {
+        Logger.debug(
+          'Ignoring host setup event without a connecting transition: $event',
+          tag: 'BluetoothController',
+        );
+        return;
+      }
+      _latestHostSetupAttemptId = event.attemptId;
+    }
+
+    if (event.phase == BleSetupPhase.ready) {
+      // Peripheral readiness means the GATT link and required subscription are
+      // ready. The protocol handshake still has to run in ConnectionManager.
       state = state.copyWith(
-        connectionStatus: BleConnectionStatus.error,
-        lastError: UserErrorFormatter.formatError(
-          e,
-          context: 'Failed to join game',
-        ),
+        connectionStatus: BleConnectionStatus.handshaking,
+        clearError: true,
+      );
+      return;
+    }
+
+    _applySetupEvent(event, isHost: true);
+  }
+
+  void _applySetupEvent(
+    PeerSetupEvent event, {
+    required bool isHost,
+  }) {
+    final phase = event.phase;
+    final isFailure = phase == BleSetupPhase.failed;
+    final isCancelled = phase == BleSetupPhase.cancelled;
+
+    if (isFailure && isHost) {
+      // The peripheral resumes advertising itself after a failed pairing. Keep
+      // the host in its waiting lobby rather than making it press Retry.
+      state = state.copyWith(
+        connectionStatus: BleConnectionStatus.disconnected,
+        lastError: _setupFailureMessage(event),
         clearConnectedDevice: true,
       );
+      return;
     }
+
+    state = state.copyWith(
+      connectionStatus: phase.toBleStatus(),
+      lastError: isFailure ? _setupFailureMessage(event) : null,
+      clearError: !isFailure,
+      clearConnectedDevice: isFailure || isCancelled,
+    );
+  }
+
+  String _setupFailureMessage(PeerSetupEvent event) {
+    final reason = event.reason?.trim();
+    if (reason == null || reason.isEmpty) {
+      return UserErrorFormatter.genericErrorMessage;
+    }
+
+    final normalizedReason = reason.toLowerCase();
+    if (normalizedReason.contains('deadline') ||
+        normalizedReason.contains('timeout') ||
+        normalizedReason.contains('timed out')) {
+      return UserErrorFormatter.formatMessage('Pairing timed out');
+    }
+
+    return UserErrorFormatter.formatMessage(reason);
+  }
+
+  String _safeSetupFailureReason(Object error) {
+    final normalizedError = error.toString().toLowerCase();
+    final isPairingIssue =
+        normalizedError.contains('pair') || normalizedError.contains('bond');
+
+    if (isPairingIssue &&
+        (normalizedError.contains('cancel') ||
+            normalizedError.contains('reject') ||
+            normalizedError.contains('declin'))) {
+      return 'Pairing was cancelled or rejected';
+    }
+    if (normalizedError.contains('timeout') ||
+        normalizedError.contains('timed out')) {
+      return 'Pairing timed out';
+    }
+    if (normalizedError.contains('disconnect')) {
+      return 'Connection lost during setup';
+    }
+
+    return 'Failed to complete Bluetooth setup';
   }
 
   // Called when a client connects to this host's peripheral
@@ -317,7 +507,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
     if (!mounted) return;
 
     state = state.copyWith(
-      connectionStatus: BleConnectionStatus.connecting,
+      connectionStatus: BleConnectionStatus.handshaking,
       clearError: true,
     );
 
@@ -362,6 +552,7 @@ class BluetoothController extends StateNotifier<BluetoothState> {
         preserveRematchDeclined && state.rematchDeclined;
 
     try {
+      await _cancelActiveConnectionAttempt();
       await stopAdvertising();
       await _connectionManager.disconnect();
     } catch (_) {
@@ -1082,10 +1273,15 @@ class BluetoothController extends StateNotifier<BluetoothState> {
 
   @override
   void dispose() {
+    _hostSetupSessionGeneration++;
     _connectionStateSubscription?.cancel();
     _messageSubscription?.cancel();
     _deviceScanSubscription?.cancel();
     _clientConnectedSubscription?.cancel();
+    _hostSetupSubscription?.cancel();
+    _connectionPhaseSubscription?.cancel();
+    _connectionPhaseSubscription = null;
+    unawaited(_cancelActiveConnectionAttempt());
     unawaited(_connectionManager.dispose());
     _bluetoothService.dispose();
     super.dispose();

@@ -210,8 +210,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       child: Column(
         children: [
           const Spacer(),
-          // Show connection status if connecting/handshaking
-          if (bleState.isConnecting)
+          // Keep setup progress visible through pairing and link recovery.
+          if (bleState.isConnecting ||
+              bleState.connectionStatus == BleConnectionStatus.reconnecting)
             ConnectionStatusWidget(
               status: bleState.connectionStatus,
             )
@@ -538,6 +539,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Future<void> _startScan() async {
+    // A failed client setup leaves the lobby controller in its error state.
+    // Clear that state before retrying so the scan view can render again.
+    ref.read(lobbyControllerProvider.notifier).reset();
     final btController = ref.read(bluetoothControllerProvider.notifier);
     await btController.startScanning();
   }

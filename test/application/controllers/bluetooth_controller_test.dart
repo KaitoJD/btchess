@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:btchess/application/controllers/bluetooth_controller.dart';
@@ -12,11 +13,18 @@ import 'package:btchess/domain/models/piece.dart';
 import 'package:btchess/domain/models/square.dart';
 import 'package:btchess/domain/services/chess_service.dart';
 import 'package:btchess/infrastructure/bluetooth/bluetooth_service.dart';
+import 'package:btchess/infrastructure/bluetooth/ble_connection.dart';
+import 'package:btchess/infrastructure/bluetooth/ble_setup.dart';
 import 'package:btchess/infrastructure/bluetooth/connection_manager.dart' as cm;
 import 'package:btchess/infrastructure/bluetooth/message_models.dart';
 import '../../mocks/mock_ble_peripheral_manager.dart';
 import '../../mocks/mock_bluetooth_service.dart';
 import '../../mocks/mock_connection_manager.dart';
+
+class _MockBluetoothDevice extends Mock implements BluetoothDevice {}
+
+class _MockBleConnectionAttempt extends Mock
+    implements BleConnectionAttempt {}
 
 void main() {
   late MockBluetoothService mockBluetoothService;
@@ -26,6 +34,7 @@ void main() {
   late BluetoothController controller;
   late StreamController<cm.ConnectionState> connStateController;
   late StreamController<BleMessage> messageController;
+  late StreamController<PeerSetupEvent> hostSetupEventController;
   late bool hasPermission;
   late bool requestGranted;
   late bool permanentlyDenied;
@@ -44,6 +53,7 @@ void main() {
 
     connStateController = StreamController<cm.ConnectionState>.broadcast();
     messageController = StreamController<BleMessage>.broadcast();
+    hostSetupEventController = StreamController<PeerSetupEvent>.broadcast();
 
     // Stub streams so _init() doesn't crash
     when(
@@ -65,6 +75,9 @@ void main() {
     when(
       () => mockPeripheralManager.clientConnected,
     ).thenAnswer((_) => const Stream<String>.empty());
+    when(
+      () => mockPeripheralManager.setupEvents,
+    ).thenAnswer((_) => hostSetupEventController.stream);
 
     hasPermission = true;
     requestGranted = true;
@@ -90,6 +103,7 @@ void main() {
     gameController.dispose();
     connStateController.close();
     messageController.close();
+    hostSetupEventController.close();
   });
 
   group('BluetoothController', () {
@@ -225,6 +239,94 @@ void main() {
       });
     });
 
+    group('connection setup phases', () {
+      test('maps client pairing and reconnect phases and ignores late events after cancel',
+          () async {
+        final device = _MockBluetoothDevice();
+        final attempt = _MockBleConnectionAttempt();
+        final phaseController = StreamController<PeerSetupEvent>.broadcast();
+        final connectionCompleter = Completer<BleConnection>();
+        final deviceInfo = BleDeviceInfo(
+          id: 'host-1',
+          name: 'BTChess-Test',
+          rssi: -50,
+          device: device,
+        );
+
+        when(() => mockBluetoothService.stopScanning()).thenAnswer((_) async {});
+        when(() => mockBluetoothService.stopAdvertising())
+            .thenAnswer((_) async {});
+        when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
+        when(() => mockBluetoothService.startConnectionAttempt(deviceInfo))
+            .thenReturn(attempt);
+        when(() => attempt.id).thenReturn(42);
+        when(() => attempt.phaseStream).thenAnswer((_) => phaseController.stream);
+        when(() => attempt.connection).thenAnswer((_) => connectionCompleter.future);
+        when(() => attempt.phase).thenReturn(null);
+        when(() => attempt.isCancelled).thenReturn(false);
+        when(() => attempt.cancel()).thenAnswer((_) async {
+          if (!connectionCompleter.isCompleted) {
+            connectionCompleter.completeError(
+              const BleDisconnectedException('Bluetooth setup attempt cancelled'),
+            );
+          }
+        });
+
+        final joinFuture = controller.joinGame(deviceInfo);
+        await Future<void>.delayed(Duration.zero);
+
+        phaseController.add(
+          PeerSetupEvent(
+            attemptId: 42,
+            phase: BleSetupPhase.pairing,
+            isHost: false,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.pairing);
+        expect(controller.state.isConnecting, isTrue);
+
+        phaseController.add(
+          PeerSetupEvent(
+            attemptId: 42,
+            phase: BleSetupPhase.awaitingReconnect,
+            isHost: false,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.reconnecting,
+        );
+
+        await controller.disconnect();
+        await joinFuture;
+
+        phaseController.add(
+          PeerSetupEvent(
+            attemptId: 42,
+            phase: BleSetupPhase.ready,
+            isHost: false,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
+        await phaseController.close();
+      });
+    });
+
     group('disconnect', () {
       test('disconnect resets state', () async {
         when(() => mockConnectionManager.disconnect()).thenAnswer((_) async {});
@@ -296,6 +398,108 @@ void main() {
         verify(
           () => mockBluetoothService.startAdvertising('test-game'),
         ).called(1);
+      });
+
+      test('host reports pairing and reconnect progress without closing lobby',
+          () async {
+        when(
+          () => mockBluetoothService.startAdvertising(any()),
+        ).thenAnswer((_) async {});
+
+        await controller.createLobby('test-game');
+
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.connecting,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.pairing,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.state.connectionStatus, BleConnectionStatus.pairing);
+        expect(controller.state.isConnecting, isTrue);
+
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.awaitingReconnect,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.reconnecting,
+        );
+
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.ready,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.handshaking,
+        );
+      });
+
+      test('host returns to waiting state after a rejected pairing', () async {
+        when(
+          () => mockBluetoothService.startAdvertising(any()),
+        ).thenAnswer((_) async {});
+
+        await controller.createLobby('test-game');
+
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.connecting,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+          ),
+        );
+        hostSetupEventController.add(
+          PeerSetupEvent(
+            attemptId: 1,
+            phase: BleSetupPhase.failed,
+            isHost: true,
+            platform: 'android',
+            occurredAt: DateTime.now(),
+            reason: 'Pairing was cancelled or rejected',
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          controller.state.connectionStatus,
+          BleConnectionStatus.disconnected,
+        );
+        expect(
+          controller.state.lastError,
+          'Bluetooth pairing was cancelled or rejected. Please retry.',
+        );
       });
 
       test(

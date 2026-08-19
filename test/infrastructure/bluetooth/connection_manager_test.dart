@@ -268,6 +268,21 @@ void main() {
     },
   );
 
+  test('rejects setup when the shared attempt has no handshake time left', () async {
+    final hostManager = ConnectionManager();
+    final transport = _FakeHostTransport();
+
+    await expectLater(
+      hostManager.setupConnection(
+        transport,
+        handshakeTimeout: Duration.zero,
+      ),
+      throwsA(isA<BleTimeoutException>()),
+    );
+
+    await hostManager.disconnect();
+  });
+
   test(
     'pending ACK completes with disconnect error when transport closes',
     () async {

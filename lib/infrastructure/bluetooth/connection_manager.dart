@@ -116,8 +116,12 @@ class ConnectionManager {
   static const int _maxDedupCacheSize = 64;
 
   // Sets up connection with an existing BleTransport (client or host)
-  Future<void> setupConnection(BleTransport connection) async {
+  Future<void> setupConnection(
+    BleTransport connection, {
+    Duration? handshakeTimeout,
+  }) async {
     final generation = ++_setupGeneration;
+    final effectiveHandshakeTimeout = _resolveHandshakeTimeout(handshakeTimeout);
 
     // Cancel any existing subscription to prevent duplicate listeners on reconnect.
     final existingSubscription = _messageSubscription;
@@ -151,7 +155,7 @@ class ConnectionManager {
     );
 
     try {
-      await _performHandshake();
+      await _performHandshake(timeout: effectiveHandshakeTimeout);
 
       if (_isStaleGeneration(generation)) {
         throw const BleDisconnectedException(
@@ -177,17 +181,15 @@ class ConnectionManager {
     }
   }
 
-  Future<void> _performHandshake() async {
+  Future<void> _performHandshake({required Duration timeout}) async {
     if (isHost) {
       Logger.debug(
-        'Handshake(host) waiting for client handshake (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        'Handshake(host) waiting for client handshake (timeout=${timeout.inMilliseconds}ms, transport=${_connection.runtimeType})',
         tag: 'ConnectionManager',
       );
       // Host waits for client handshake first, then responds
       final clientHandshake = await _waitForMessage<HandshakeMessage>(
-        timeout: const Duration(
-          milliseconds: TimingConstants.handshakeTimeoutMs,
-        ),
+        timeout: timeout,
       );
 
       if (clientHandshake.protocolVersion != BleConstants.protocolVersion) {
@@ -211,7 +213,7 @@ class ConnectionManager {
       await _connection!.sendControl(response);
     } else {
       Logger.debug(
-        'Handshake(client) preparing response listener (timeout=${TimingConstants.handshakeTimeoutMs}ms, transport=${_connection.runtimeType})',
+        'Handshake(client) preparing response listener (timeout=${timeout.inMilliseconds}ms, transport=${_connection.runtimeType})',
         tag: 'ConnectionManager',
       );
       // Client sends handshake first, then waits for host response
@@ -225,9 +227,7 @@ class ConnectionManager {
       // Subscribe for the handshake response before sending to avoid
       // dropping an immediate host response on broadcast streams.
       final responseFuture = _waitForMessage<HandshakeMessage>(
-        timeout: const Duration(
-          milliseconds: TimingConstants.handshakeTimeoutMs,
-        ),
+        timeout: timeout,
       );
 
       Logger.debug(
@@ -248,6 +248,23 @@ class ConnectionManager {
       // Store the host's color choice for the client to read
       _receivedHostColor = response.hostColor;
     }
+  }
+
+  Duration _resolveHandshakeTimeout(Duration? requestedTimeout) {
+    const defaultTimeout = Duration(
+      milliseconds: TimingConstants.handshakeTimeoutMs,
+    );
+    if (requestedTimeout == null ||
+        requestedTimeout.compareTo(defaultTimeout) >= 0) {
+      return defaultTimeout;
+    }
+    if (requestedTimeout.inMilliseconds <= 0) {
+      throw const BleTimeoutException(
+        'No time remaining for BLE handshake',
+        timeout: Duration.zero,
+      );
+    }
+    return requestedTimeout;
   }
 
   Future<T> _waitForMessage<T extends BleMessage>({
@@ -377,19 +394,17 @@ class ConnectionManager {
   }
 
   void _handleError(Object error) {
-    Logger.error('Error: $error', tag: 'ConnectionManager');
+    Logger.error(
+      'Transport stream error (${error.runtimeType})',
+      tag: 'ConnectionManager',
+    );
     if (!(_connectionClosedCompleter?.isCompleted ?? true)) {
       _connectionClosedCompleter?.complete();
     }
     _completePendingAcksWith(
-      BleDisconnectedException(
-        'Connection error while waiting for ACK: $error',
-      ),
+      const BleDisconnectedException('Connection error while waiting for ACK'),
     );
-    _lastError = UserErrorFormatter.formatError(
-      error,
-      context: 'Connection error',
-    );
+    _lastError = UserErrorFormatter.formatMessage('Connection lost');
     _updateState(ConnectionState.error);
   }
 

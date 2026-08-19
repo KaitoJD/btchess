@@ -216,10 +216,14 @@ class LobbyController extends StateNotifier<LobbyState> {
 
     // Drive lobby transitions based on connection state changes
     switch (newStatus) {
+      case BleConnectionStatus.connecting:
+      case BleConnectionStatus.pairing:
       case BleConnectionStatus.handshaking:
-        // Connection established, handshake in progress
-        if (state.status == LobbyStatus.joining || state.status == LobbyStatus.waitingForOpponent) {
-          // Keep current status — handshake is part of the joining/waiting phase
+        // Setup is in progress. Pairing is owned by the operating system, so
+        // keep the lobby active while the user completes its system prompt.
+        if (state.status == LobbyStatus.joining ||
+            state.status == LobbyStatus.waitingForOpponent) {
+          // Keep the current joining/waiting status.
         }
 
       case BleConnectionStatus.connected:

@@ -6,6 +6,13 @@ abstract class TimingConstants {
   static const int pingIntervalMs = 15000;
   static const int disconnectTimeoutMs = 30000;
   static const int connectionTimeoutMs = 10000;
+  // One deadline covers the initial link, OS-managed pairing, any required
+  // reconnect, GATT setup, and the protocol handshake.
+  static const int connectionSetupTimeoutMs = 90000;
+  static const int pairingSetupTimeoutMs = connectionSetupTimeoutMs;
+  static const int pairingReconnectTimeoutMs = 30000;
+  static const int pairingObservationDelayMs = 500;
+  static const int staleHandleRescanCooldownMs = 6000;
   static const int connectionRecoveryBudgetMs = 30000;
   static const int connectionRetryDelayMs = 1200;
   static const int handshakeTimeoutMs = 45000;

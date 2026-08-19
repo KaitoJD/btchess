@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/models/piece.dart';
+import '../../infrastructure/bluetooth/ble_setup.dart';
 import '../../infrastructure/bluetooth/bluetooth_service.dart';
 import '../../infrastructure/bluetooth/connection_manager.dart' as cm;
 
@@ -7,6 +8,7 @@ enum BleConnectionStatus {
   disconnected,
   scanning,
   connecting,
+  pairing,
   handshaking,
   connected,
   reconnecting,
@@ -81,6 +83,7 @@ class BluetoothState extends Equatable {
   // Whether a connection attempt is in progress
   bool get isConnecting =>
     connectionStatus == BleConnectionStatus.connecting ||
+    connectionStatus == BleConnectionStatus.pairing ||
     connectionStatus == BleConnectionStatus.handshaking;
 
   // Whether there's an active error
@@ -168,6 +171,30 @@ extension ConnectionStateToStatus on cm.ConnectionState {
         return BleConnectionStatus.reconnecting;
       case cm.ConnectionState.error:
         return BleConnectionStatus.error;
+    }
+  }
+}
+
+// Extension to convert the fine-grained setup lifecycle into a UI status.
+extension BleSetupPhaseToStatus on BleSetupPhase {
+  BleConnectionStatus toBleStatus() {
+    switch (this) {
+      case BleSetupPhase.connecting:
+      case BleSetupPhase.discovering:
+      case BleSetupPhase.subscribing:
+        return BleConnectionStatus.connecting;
+      case BleSetupPhase.pairing:
+        return BleConnectionStatus.pairing;
+      case BleSetupPhase.awaitingReconnect:
+        return BleConnectionStatus.reconnecting;
+      case BleSetupPhase.handshaking:
+        return BleConnectionStatus.handshaking;
+      case BleSetupPhase.ready:
+        return BleConnectionStatus.connected;
+      case BleSetupPhase.failed:
+        return BleConnectionStatus.error;
+      case BleSetupPhase.cancelled:
+        return BleConnectionStatus.disconnected;
     }
   }
 }

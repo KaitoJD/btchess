@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:ble_peripheral/ble_peripheral.dart';
 import 'package:ble_peripheral/src/pigeon/ble_callback_handler.dart';
-import 'package:ble_peripheral/src/ble_peripheral_interface.dart';
 import 'package:flutter/foundation.dart';
 
 class BlePeripheralPigeon extends BlePeripheralInterface {
@@ -17,8 +16,11 @@ class BlePeripheralPigeon extends BlePeripheralInterface {
   /// Make sure to call this method before calling any other method
   @override
   Future initialize() async {
-    await _channel.initialize();
+    // Register native-to-Dart callbacks before opening the Android GATT
+    // server. A central can connect immediately after initialization, and the
+    // raw link/bond events must not be lost during that small race window.
     BleCallback.setUp(_callbackHandler);
+    await _channel.initialize();
   }
 
   /// check if blePeripheral is supported on the device
@@ -127,13 +129,13 @@ class BlePeripheralPigeon extends BlePeripheralInterface {
   void setBondStateChangeCallback(BondStateCallback callback) =>
       _callbackHandler.bondStateChange = callback;
 
-  /// Only available on iOS/Mac/Windows
+  /// Reports CCCD subscription changes. Android emits these events too.
   @override
   void setCharacteristicSubscriptionChangeCallback(
           CharacteristicSubscriptionChangeCallback callback) =>
       _callbackHandler.characteristicSubscriptionChange = callback;
 
-  /// Only available on Android
+  /// Reports raw Android GATT link changes, not protocol readiness.
   @override
   void setConnectionStateChangeCallback(
           ConnectionStateChangeCallback callback) =>

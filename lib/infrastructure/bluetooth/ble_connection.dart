@@ -8,6 +8,8 @@ import 'ble_transport.dart';
 import 'message_codec.dart';
 import 'message_models.dart';
 
+enum BleConnectionInitializationPhase { discovering, subscribing }
+
 class BleConnection implements BleTransport {
   BleConnection({
     required this.device,
@@ -45,6 +47,10 @@ class BleConnection implements BleTransport {
   // Subscription to control notifications
   StreamSubscription<List<int>>? _controlSubscription;
 
+  // Watches the raw GATT link so ConnectionManager does not wait for its
+  // handshake timeout after a pairing-induced disconnect.
+  StreamSubscription<BluetoothConnectionState>? _deviceConnectionSubscription;
+
   // Connection state
   bool _isConnected = false;
 
@@ -55,8 +61,15 @@ class BleConnection implements BleTransport {
   String get deviceName => device.platformName;
   String get deviceId => device.remoteId.str;
 
-  Future<void> initialize() async {
+  Future<void> initialize({
+    Future<void> Function()? beforeDiscovery,
+    Future<void> Function()? beforeSubscription,
+    void Function(BleConnectionInitializationPhase phase)? onPhase,
+  }) async {
     try {
+      _watchDeviceConnection();
+      await beforeDiscovery?.call();
+
       // Clear Android GATT cache to force fresh service discovery.
       // Without this, Android may return a stale cached service list from
       // a previous connection that didn't have the chess service registered.
@@ -65,8 +78,13 @@ class BleConnection implements BleTransport {
         await device.clearGattCache();
         await Future.delayed(const Duration(milliseconds: 300));
       } catch (e) {
-        Logger.debug('clearGattCache not supported or failed: $e', tag: 'BleConnection');
+        Logger.debug(
+          'clearGattCache not supported or failed (${e.runtimeType})',
+          tag: 'BleConnection',
+        );
       }
+
+      onPhase?.call(BleConnectionInitializationPhase.discovering);
 
       // Discover services
       Logger.debug('Discovering services...', tag: 'BleConnection');
@@ -105,6 +123,9 @@ class BleConnection implements BleTransport {
         throw const BleConnectionException('Required characteristics not found');
       }
 
+      await beforeSubscription?.call();
+      onPhase?.call(BleConnectionInitializationPhase.subscribing);
+
       // Subscribe to notifications
       Logger.debug('Setting up notifications...', tag: 'BleConnection');
       await _setupNotifications();
@@ -112,8 +133,47 @@ class BleConnection implements BleTransport {
 
       _isConnected = true;
     } catch (e) {
-      Logger.error('initialize() failed: $e', tag: 'BleConnection');
-      throw BleConnectionException('Failed to initialize connection: $e', originalError: e);
+      // This instance is discarded after a failed discovery/subscription
+      // attempt. Tear down its raw-link listener so a pairing-induced retry
+      // starts with fresh handles and no stale stream callbacks.
+      _isConnected = false;
+      await _deviceConnectionSubscription?.cancel();
+      _deviceConnectionSubscription = null;
+      await _closeMessageStream();
+      Logger.error(
+        'initialize() failed (${e.runtimeType})',
+        tag: 'BleConnection',
+      );
+      throw BleConnectionException(
+        'Failed to initialize BLE GATT setup',
+        originalError: e,
+      );
+    }
+  }
+
+  void _watchDeviceConnection() {
+    _deviceConnectionSubscription ??= device.connectionState.listen((state) {
+      if (state != BluetoothConnectionState.disconnected || !_isConnected) {
+        return;
+      }
+
+      Logger.warn(
+        'Raw GATT link disconnected; closing client transport',
+        tag: 'BleConnection',
+      );
+      _isConnected = false;
+      unawaited(_closeMessageStream());
+    });
+  }
+
+  Future<void> _closeMessageStream() async {
+    await _stateSubscription?.cancel();
+    await _controlSubscription?.cancel();
+    _stateSubscription = null;
+    _controlSubscription = null;
+
+    if (!_messageController.isClosed) {
+      await _messageController.close();
     }
   }
 
@@ -173,7 +233,8 @@ class BleConnection implements BleTransport {
       );
     } catch (e) {
       final message =
-          'Failed to enable notifications for $label ($uuid): $e';
+          'Failed to enable notifications for $label ($uuid) '
+          '(${e.runtimeType})';
       if (requiredSubscription) {
         throw BleConnectionException(message, originalError: e);
       }
@@ -184,17 +245,24 @@ class BleConnection implements BleTransport {
   }
 
   void _handleIncomingData(List<int> data) {
+    if (_messageController.isClosed) return;
+
     try {
       final bytes = Uint8List.fromList(data);
       final message = _codec.decode(bytes);
-      _messageController.add(message);
+      if (!_messageController.isClosed) {
+        _messageController.add(message);
+      }
     } catch (e) {
-      Logger.error('Failed to decode message: $e', tag: 'BleConnection');
+      Logger.error(
+        'Failed to decode message (${e.runtimeType})',
+        tag: 'BleConnection',
+      );
     }
   }
 
   void _handleError(Object error) {
-    Logger.error('Stream error: $error', tag: 'BleConnection');
+    Logger.error('Stream error (${error.runtimeType})', tag: 'BleConnection');
   }
 
   // Sends a move messge (for clients)
@@ -248,8 +316,9 @@ class BleConnection implements BleTransport {
   Future<void> disconnect() async {
     _isConnected = false;
 
-    await _stateSubscription?.cancel();
-    await _controlSubscription?.cancel();
+    await _deviceConnectionSubscription?.cancel();
+    _deviceConnectionSubscription = null;
+    await _closeMessageStream();
 
     try {
       await device.disconnect();
@@ -257,6 +326,5 @@ class BleConnection implements BleTransport {
       // Ignore disconnect errors
     }
 
-    await _messageController.close();
   }
 }

@@ -72,6 +72,33 @@ void main() {
 
       expect(message, 'Bluetooth pairing in progress. Please complete pairing and wait.');
     });
+
+    test('maps a rejected pairing to a retryable error', () {
+      final message = UserErrorFormatter.formatMessage(
+        'Pairing was cancelled or rejected',
+      );
+
+      expect(
+        message,
+        'Bluetooth pairing was cancelled or rejected. Please retry.',
+      );
+    });
+
+    test('maps a pairing timeout to a retryable error', () {
+      final message = UserErrorFormatter.formatMessage(
+        'Pairing and reconnect timed out',
+      );
+
+      expect(message, 'Bluetooth pairing timed out. Please retry.');
+    });
+
+    test('maps a stale pairing to forget-device guidance', () {
+      final message = UserErrorFormatter.formatMessage(
+        'Stale pairing information. Forget this device on both phones, then scan again.',
+      );
+
+      expect(message, contains('Forget this device on both phones'));
+    });
   });
 
   group('UserErrorFormatter.fixHintForMessage', () {

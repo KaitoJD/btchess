@@ -1,13 +1,11 @@
 package com.rohit.ble_peripheral
 
 import android.app.Activity
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.content.pm.PackageManager
 import android.util.Log
-import java.lang.Exception
 import java.util.Collections
 import java.util.UUID
 
@@ -15,7 +13,6 @@ private val bluetoothGattCharacteristics: MutableMap<String, BluetoothGattCharac
     HashMap()
 private val descriptorValueReadMap: MutableMap<String, ByteArray> =
     HashMap()
-val subscribedCharDevicesMap: MutableMap<String, MutableList<String>> = HashMap()
 const val descriptorCCUUID = "00002902-0000-1000-8000-00805f9b34fb"
 
 
@@ -168,14 +165,5 @@ fun Int.toPermission(): Int {
         2 -> BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED
         3 -> BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
         else -> 0
-    }
-}
-
-fun Int.toBondState(): BondState {
-    return when (this) {
-        BluetoothDevice.BOND_BONDING -> BondState.BONDING
-        BluetoothDevice.BOND_BONDED -> BondState.BONDED
-        BluetoothDevice.BOND_NONE -> BondState.NONE
-        else -> BondState.NONE
     }
 }

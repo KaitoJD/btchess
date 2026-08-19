@@ -6,6 +6,7 @@ import 'package:ble_peripheral/src/pigeon/ble_peripheral_pigeon.dart';
 import 'package:flutter/foundation.dart';
 export 'package:ble_peripheral/src/models/ble_enums.dart';
 export 'package:ble_peripheral/src/generated/ble_peripheral.g.dart';
+export 'package:ble_peripheral/src/ble_peripheral_interface.dart';
 
 /// [BlePeripheral] is the main class to interact with the BLE peripheral plugin.
 class BlePeripheral {
@@ -99,12 +100,12 @@ class BlePeripheral {
   static void setBondStateChangeCallback(BondStateCallback callback) =>
       _platform.setBondStateChangeCallback(callback);
 
-  /// Only available on iOS/Mac/Windows
+  /// Reports CCCD subscription changes. Android emits these events too.
   static void setCharacteristicSubscriptionChangeCallback(
           CharacteristicSubscriptionChangeCallback callback) =>
       _platform.setCharacteristicSubscriptionChangeCallback(callback);
 
-  /// Only available on Android
+  /// Reports raw Android GATT link changes, not protocol readiness.
   static void setConnectionStateChangeCallback(
           ConnectionStateChangeCallback callback) =>
       _platform.setConnectionStateChangeCallback(callback);
