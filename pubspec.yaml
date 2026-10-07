@@ -19,7 +19,7 @@ dependencies:
   riverpod_annotation: ^4.0.3
 
   # Chess Engine
-  dartchess: ^0.13.1
+  dartchess: ^0.14.0
 
   # Bluetooth Low Energy
   flutter_blue_plus: ^2.3.11
